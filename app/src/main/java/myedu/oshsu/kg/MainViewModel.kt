@@ -630,7 +630,7 @@ class MainViewModel : ViewModel() {
         val mov = profile.studentMovement ?: return
         try {
             val years = NetworkClient.api.getYears()
-            val activeYearId = years.find { it.active }?.id ?: 25
+            val activeYearId = years.find { it.active }?.id ?: AppConstants.DEFAULT_ACTIVE_YEAR_ID
             val times = try { NetworkClient.api.getLessonTimes(mov.id_speciality!!, mov.id_edu_form!!, activeYearId) } catch (e: Exception) { emptyList() }
             val wrappers = NetworkClient.api.getSchedule(mov.id_speciality!!, mov.id_edu_form!!, activeYearId, profile.active_semester ?: 1)
             withContext(Dispatchers.Main) {
