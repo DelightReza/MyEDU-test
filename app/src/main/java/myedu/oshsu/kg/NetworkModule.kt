@@ -325,10 +325,11 @@ class UniversalCookieJar : CookieJar {
     override fun loadForRequest(url: HttpUrl): List<Cookie> = ArrayList(cookieStore)
     fun injectSessionCookies(token: String) {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000000'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
+        val domain = AppConstants.WEB_BASE_URL.removePrefix("https://").removePrefix("http://").removeSuffix("/")
         cookieStore.removeAll { it.name == "myedu-jwt-token" || it.name == "my_edu_update" || it.name == "have_2fa" }
-        cookieStore.add(Cookie.Builder().domain("myedu.oshsu.kg").path("/").name("myedu-jwt-token").value(token).build())
-        cookieStore.add(Cookie.Builder().domain("myedu.oshsu.kg").path("/").name("my_edu_update").value(sdf.format(Date())).build())
-        cookieStore.add(Cookie.Builder().domain("myedu.oshsu.kg").path("/").name("have_2fa").value("yes").build())
+        cookieStore.add(Cookie.Builder().domain(domain).path("/").name("myedu-jwt-token").value(token).build())
+        cookieStore.add(Cookie.Builder().domain(domain).path("/").name("my_edu_update").value(sdf.format(Date())).build())
+        cookieStore.add(Cookie.Builder().domain(domain).path("/").name("have_2fa").value("yes").build())
     }
     fun clear() { cookieStore.clear() }
 }
@@ -339,8 +340,8 @@ class WindowsInterceptor : Interceptor {
         val builder = chain.request().newBuilder()
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
             .header("Accept", "application/json, text/plain, */*")
-            .header("Referer", "https://myedu.oshsu.kg/")
-            .header("Origin", "https://myedu.oshsu.kg") 
+            .header("Referer", AppConstants.WEB_BASE_URL)
+            .header("Origin", AppConstants.WEB_BASE_URL) 
         if (authToken != null) builder.header("Authorization", "Bearer $authToken")
         return chain.proceed(builder.build())
     }
@@ -400,13 +401,13 @@ object NetworkClient {
     val interceptor = WindowsInterceptor()
     val deepSpy = DeepSpyInterceptor()
     
-    val api: OshSuApi = Retrofit.Builder().baseUrl("https://api.myedu.oshsu.kg/")
+    val api: OshSuApi = Retrofit.Builder().baseUrl(AppConstants.BASE_URL)
         .client(OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .addInterceptor(interceptor)
             .addInterceptor(deepSpy)
-            .connectTimeout(60, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
+            .connectTimeout(AppConstants.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(AppConstants.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build())
         .addConverterFactory(GsonConverterFactory.create(GsonBuilder().setLenient().create()))
         .build().create(OshSuApi::class.java)
