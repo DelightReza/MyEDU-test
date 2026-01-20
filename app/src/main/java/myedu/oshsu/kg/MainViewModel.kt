@@ -488,8 +488,9 @@ class MainViewModel : ViewModel() {
     /**
      * Authenticates user with email and password.
      * Validates input and handles credential storage securely.
+     * Automatically appends @oshsu.kg domain if not present in email.
      * 
-     * @param email User's email address
+     * @param email User's email address (can be with or without @oshsu.kg)
      * @param pass User's password
      */
     fun login(email: String, pass: String) {
@@ -500,7 +501,7 @@ class MainViewModel : ViewModel() {
             NetworkClient.interceptor.authToken = null
             
             // Input validation
-            val trimmedEmail = email.trim()
+            var trimmedEmail = email.trim()
             val trimmedPass = pass.trim()
             
             if (trimmedEmail.isEmpty()) {
@@ -513,6 +514,12 @@ class MainViewModel : ViewModel() {
                 errorMsg = appContext?.getString(R.string.error_password_empty) ?: "Password cannot be empty"
                 isLoading = false
                 return@launch
+            }
+            
+            // Auto-append university domain if email doesn't contain @
+            if (!trimmedEmail.contains("@")) {
+                trimmedEmail += AppConstants.UNIVERSITY_EMAIL_DOMAIN
+                DebugLogger.log("AUTH", "Auto-appended domain: $trimmedEmail")
             }
             
             // Email format validation using Android's Patterns

@@ -12,6 +12,9 @@ object AppConstants {
     const val BASE_URL = "https://api3.myedu.oshsu.kg/"
     const val WEB_BASE_URL = "https://myedu.oshsu.kg/"
     
+    // University Configuration
+    const val UNIVERSITY_EMAIL_DOMAIN = "@oshsu.kg"
+    
     // Network Configuration
     const val CONNECT_TIMEOUT_SECONDS = 60L
     const val READ_TIMEOUT_SECONDS = 60L
