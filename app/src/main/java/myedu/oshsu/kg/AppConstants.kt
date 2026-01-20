@@ -1,5 +1,7 @@
 package myedu.oshsu.kg
 
+import java.util.Calendar
+
 /**
  * Application-wide constants for MyEDU app.
  * Centralizes hardcoded values for better maintainability.
@@ -57,6 +59,42 @@ object AppConstants {
     // Debug Configuration
     const val MAX_DEBUG_LOGS = 1000
     
-    // Default Values
-    const val DEFAULT_ACTIVE_YEAR_ID = 25
+    // Academic Year Configuration
+    const val ACADEMIC_YEAR_START_MONTH = Calendar.SEPTEMBER // Academic year starts in September
+    
+    /**
+     * Calculates the current academic year ID based on the current date.
+     * Academic years start in September.
+     * 
+     * Examples:
+     * - January 2026 → still in 2025-2026 academic year → returns 25
+     * - September 2026 → start of 2026-2027 academic year → returns 26
+     * - August 2026 → still in 2025-2026 academic year → returns 25
+     * 
+     * @return The academic year ID (last 2 digits of the year)
+     */
+    fun getCurrentAcademicYearId(): Int {
+        val calendar = Calendar.getInstance()
+        val currentYear = calendar.get(Calendar.YEAR)
+        val currentMonth = calendar.get(Calendar.MONTH) // 0-based: January = 0, September = 8
+        
+        // If we're in September or later, use current year
+        // If we're before September (Jan-Aug), we're still in previous academic year
+        val academicYear = if (currentMonth >= ACADEMIC_YEAR_START_MONTH) {
+            currentYear
+        } else {
+            currentYear - 1
+        }
+        
+        // Return last 2 digits (e.g., 2025 → 25, 2026 → 26)
+        return academicYear % 100
+    }
+    
+    /**
+     * Default active year ID - dynamically calculated based on current date.
+     * Falls back to this value when API call fails or returns no active year.
+     */
+    val DEFAULT_ACTIVE_YEAR_ID: Int
+        get() = getCurrentAcademicYearId()
 }
+
