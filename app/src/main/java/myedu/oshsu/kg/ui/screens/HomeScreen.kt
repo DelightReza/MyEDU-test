@@ -9,11 +9,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -34,7 +37,20 @@ fun HomeScreen(vm: MainViewModel) {
     
     val displayName = vm.customName ?: user?.name ?: stringResource(R.string.student_default)
 
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+    val pullToRefreshState = rememberPullToRefreshState()
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            vm.refresh()
+        }
+    }
+    
+    LaunchedEffect(vm.isRefreshing) {
+        if (!vm.isRefreshing) {
+            pullToRefreshState.endRefresh()
+        }
+    }
+
+    Box(Modifier.fillMaxSize().nestedScroll(pullToRefreshState.nestedScrollConnection), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.fillMaxSize().widthIn(max = 840.dp).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
             Spacer(Modifier.height(16.dp))
@@ -87,6 +103,11 @@ fun HomeScreen(vm: MainViewModel) {
             }
             Spacer(Modifier.height(80.dp))
         }
+        
+        PullToRefreshContainer(
+            state = pullToRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }    
     if (showNewsSheet) {
         ModalBottomSheet(onDismissRequest = { showNewsSheet = false }, containerColor = BottomSheetDefaults.ContainerColor) { 
