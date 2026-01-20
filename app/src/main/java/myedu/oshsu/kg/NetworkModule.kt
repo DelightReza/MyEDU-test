@@ -335,7 +335,7 @@ class UniversalCookieJar : CookieJar {
 }
 
 class WindowsInterceptor : Interceptor {
-    @Volatile var authToken: String? = null
+    var authToken: String? = null
     override fun intercept(chain: Interceptor.Chain): Response {
         val builder = chain.request().newBuilder()
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
