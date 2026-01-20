@@ -6,7 +6,8 @@ package myedu.oshsu.kg
  */
 object AppConstants {
     // API Configuration
-    const val BASE_URL = "https://api.myedu.oshsu.kg/"
+    // Updated to api3 subdomain based on actual network traffic from myedu.oshsu.kg website
+    const val BASE_URL = "https://api3.myedu.oshsu.kg/"
     const val WEB_BASE_URL = "https://myedu.oshsu.kg/"
     
     // Network Configuration
