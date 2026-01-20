@@ -106,6 +106,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
 
     private fun checkForUpdates(oldList: List<SessionResponse>, newList: List<SessionResponse>, context: Context): List<String> {
         val updates = ArrayList<String>()
+        val portalOpened = ArrayList<String>()
         val lang = context.resources.configuration.locales.get(0).language
         val oldMap = oldList.flatMap { it.subjects ?: emptyList() }.associateBy { it.subject?.get(lang) ?: context.getString(R.string.unknown) }
 
@@ -125,16 +126,33 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                 // FIX: Use finalScore instead of finally
                 check(context.getString(R.string.exam_short), oldMarks.finalScore, newMarks.finalScore)
             }
-            if (oldWrapper?.graphic == null && newWrapper.graphic != null) updates.add(context.getString(R.string.notif_portal_opened, name))
+            if (oldWrapper?.graphic == null && newWrapper.graphic != null) {
+                portalOpened.add(context.getString(R.string.notif_portal_opened, name))
+            }
+        }
+        
+        // Send separate notifications for portal openings and grade updates
+        if (portalOpened.isNotEmpty()) {
+            sendPortalNotification(context, portalOpened)
         }
         return updates
     }
 
     private fun sendNotification(context: Context, updates: List<String>) {
+        if (updates.isEmpty()) return
         val intent = android.content.Intent(context, NotificationReceiver::class.java).apply {
             putExtra("TITLE", context.getString(R.string.notif_new_grades_title))
             putExtra("MESSAGE", if (updates.size > 4) context.getString(R.string.notif_grades_msg_multiple, updates.size) else updates.joinToString("\n"))
             putExtra("ID", AppConstants.BACKGROUND_SYNC_NOTIFICATION_ID)
+        }
+        context.sendBroadcast(intent)
+    }
+    
+    private fun sendPortalNotification(context: Context, portalOpened: List<String>) {
+        val intent = android.content.Intent(context, NotificationReceiver::class.java).apply {
+            putExtra("TITLE", context.getString(R.string.notif_portal_title))
+            putExtra("MESSAGE", portalOpened.joinToString("\n"))
+            putExtra("ID", AppConstants.BACKGROUND_SYNC_NOTIFICATION_ID + 1)
         }
         context.sendBroadcast(intent)
     }

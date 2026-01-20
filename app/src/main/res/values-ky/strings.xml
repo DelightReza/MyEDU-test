@@ -203,6 +203,7 @@
     <string name="notif_class_msg">%1$s\nУбакыт: %2$s\nЛокация: %3$s\nАудитория: %4$s</string>
     <string name="class_default">Сабак</string>
 
+    <string name="notif_portal_title">Портал ачылды</string>
     <string name="notif_portal_opened">Портал ачылды: %1$s</string>
 
     <string name="update_available_title">Жаңыртуу жеткиликтүү</string>
