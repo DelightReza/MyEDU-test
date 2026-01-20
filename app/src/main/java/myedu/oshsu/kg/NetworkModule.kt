@@ -285,35 +285,35 @@ data class GitHubAsset(@SerializedName("browser_download_url") val downloadUrl: 
 
 // --- INTERFACES ---
 interface OshSuApi {
-    @POST("public/api/login") suspend fun login(@Body request: LoginRequest): LoginResponse
-    @GET("public/api/user") suspend fun getUser(): UserResponse
-    @GET("public/api/studentinfo") suspend fun getProfile(): StudentInfoResponse
-    @GET("public/api/control/regulations/eduyear") suspend fun getYears(): List<EduYear>
-    @GET("public/api/studentPayStatus") suspend fun getPayStatus(): PayStatusResponse
-    @GET("public/api/appupdate") suspend fun getNews(): List<NewsItem>
-    @POST("public/api/verify2FA") suspend fun verify2FA(): Verify2FAResponse
-    @GET("public/api/ep/schedule/schedulelessontime") suspend fun getLessonTimes(@Query("id_speciality") specId: Int, @Query("id_edu_form") formId: Int, @Query("id_edu_year") yearId: Int): List<LessonTimeResponse>
-    @GET("public/api/studentscheduleitem") suspend fun getSchedule(@Query("id_speciality") specId: Int, @Query("id_edu_form") formId: Int, @Query("id_edu_year") yearId: Int, @Query("id_semester") semId: Int): List<ScheduleWrapper>
-    @GET("public/api/studentsession") suspend fun getSession(@Query("id_semester") semesterId: Int): List<SessionResponse>
-    @GET("public/api/studenttranscript") suspend fun getTranscript(@Query("id_student") studentId: Long, @Query("id_movement") movementId: Long): List<TranscriptYear>
-    @GET("public/api/searchstudentinfo") suspend fun getStudentInfoRaw(@Query("id_student") studentId: Long): ResponseBody
-    @GET("public/api/studenttranscript") suspend fun getTranscriptDataRaw(@Query("id_student") sId: Long, @Query("id_movement") mId: Long): ResponseBody
-    @GET("public/api/control/structure/specialitylicense") suspend fun getSpecialityLicense(@Query("id_speciality") sId: Int, @Query("id_edu_form") eId: Int): ResponseBody
-    @GET("public/api/control/structure/university") suspend fun getUniversityInfo(): ResponseBody
-    @POST("public/api/student/doc/form13link") suspend fun getTranscriptLink(@Body req: DocIdRequest): ResponseBody
-    @Multipart @POST("public/api/student/doc/form13") suspend fun uploadPdf(@Part("id") id: RequestBody, @Part("id_student") idStudent: RequestBody, @Part pdf: MultipartBody.Part): ResponseBody
-    @POST("public/api/student/doc/form8link") suspend fun getReferenceLink(@Body req: DocIdRequest): ResponseBody
-    @Multipart @POST("public/api/student/doc/form8") suspend fun uploadReferencePdf(@Part("id") id: RequestBody, @Part("id_student") idStudent: RequestBody, @Part pdf: MultipartBody.Part): ResponseBody
-    @POST("public/api/open/doc/showlink") suspend fun resolveDocLink(@Body req: DocKeyRequest): ResponseBody
+    @POST("api/login") suspend fun login(@Body request: LoginRequest): LoginResponse
+    @GET("api/user") suspend fun getUser(): UserResponse
+    @GET("api/studentinfo") suspend fun getProfile(): StudentInfoResponse
+    @GET("api/control/regulations/eduyear") suspend fun getYears(): List<EduYear>
+    @GET("api/studentPayStatus") suspend fun getPayStatus(): PayStatusResponse
+    @GET("api/appupdate") suspend fun getNews(): List<NewsItem>
+    @POST("api/verify2FA") suspend fun verify2FA(): Verify2FAResponse
+    @GET("api/ep/schedule/schedulelessontime") suspend fun getLessonTimes(@Query("id_speciality") specId: Int, @Query("id_edu_form") formId: Int, @Query("id_edu_year") yearId: Int): List<LessonTimeResponse>
+    @GET("api/studentscheduleitem") suspend fun getSchedule(@Query("id_speciality") specId: Int, @Query("id_edu_form") formId: Int, @Query("id_edu_year") yearId: Int, @Query("id_semester") semId: Int): List<ScheduleWrapper>
+    @GET("api/studentsession") suspend fun getSession(@Query("id_semester") semesterId: Int): List<SessionResponse>
+    @GET("api/studenttranscript") suspend fun getTranscript(@Query("id_student") studentId: Long, @Query("id_movement") movementId: Long): List<TranscriptYear>
+    @GET("api/searchstudentinfo") suspend fun getStudentInfoRaw(@Query("id_student") studentId: Long): ResponseBody
+    @GET("api/studenttranscript") suspend fun getTranscriptDataRaw(@Query("id_student") sId: Long, @Query("id_movement") mId: Long): ResponseBody
+    @GET("api/control/structure/specialitylicense") suspend fun getSpecialityLicense(@Query("id_speciality") sId: Int, @Query("id_edu_form") eId: Int): ResponseBody
+    @GET("api/control/structure/university") suspend fun getUniversityInfo(): ResponseBody
+    @POST("api/student/doc/form13link") suspend fun getTranscriptLink(@Body req: DocIdRequest): ResponseBody
+    @Multipart @POST("api/student/doc/form13") suspend fun uploadPdf(@Part("id") id: RequestBody, @Part("id_student") idStudent: RequestBody, @Part pdf: MultipartBody.Part): ResponseBody
+    @POST("api/student/doc/form8link") suspend fun getReferenceLink(@Body req: DocIdRequest): ResponseBody
+    @Multipart @POST("api/student/doc/form8") suspend fun uploadReferencePdf(@Part("id") id: RequestBody, @Part("id_student") idStudent: RequestBody, @Part pdf: MultipartBody.Part): ResponseBody
+    @POST("api/open/doc/showlink") suspend fun resolveDocLink(@Body req: DocKeyRequest): ResponseBody
 
     // --- DICTIONARIES ---
-    @GET("public/api/open/pdscountry") suspend fun getCountries(): List<DictionaryItem>
-    @GET("public/api/open/pdsoblast") suspend fun getOblasts(): List<DictionaryItem>
-    @GET("public/api/open/pdsregion") suspend fun getRegions(): List<DictionaryItem>
-    @GET("public/api/open/pdsnational") suspend fun getNationalities(): List<DictionaryItem>
-    @GET("public/api/open/pdsschool") suspend fun getSchools(): List<DictionaryItem>
-    @GET("public/api/open/pdsmale") suspend fun getGenders(): List<DictionaryItem>
-    @GET("public/api/control/regulations/period") suspend fun getPeriods(): List<PeriodItem>
+    @GET("api/open/pdscountry") suspend fun getCountries(): List<DictionaryItem>
+    @GET("api/open/pdsoblast") suspend fun getOblasts(): List<DictionaryItem>
+    @GET("api/open/pdsregion") suspend fun getRegions(): List<DictionaryItem>
+    @GET("api/open/pdsnational") suspend fun getNationalities(): List<DictionaryItem>
+    @GET("api/open/pdsschool") suspend fun getSchools(): List<DictionaryItem>
+    @GET("api/open/pdsmale") suspend fun getGenders(): List<DictionaryItem>
+    @GET("api/control/regulations/period") suspend fun getPeriods(): List<PeriodItem>
 }
 
 interface GitHubApi { @GET suspend fun getLatestRelease(@Url url: String): GitHubRelease }
@@ -325,10 +325,11 @@ class UniversalCookieJar : CookieJar {
     override fun loadForRequest(url: HttpUrl): List<Cookie> = ArrayList(cookieStore)
     fun injectSessionCookies(token: String) {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000000'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
+        val domain = AppConstants.WEB_BASE_URL.removePrefix("https://").removePrefix("http://").removeSuffix("/")
         cookieStore.removeAll { it.name == "myedu-jwt-token" || it.name == "my_edu_update" || it.name == "have_2fa" }
-        cookieStore.add(Cookie.Builder().domain("myedu.oshsu.kg").path("/").name("myedu-jwt-token").value(token).build())
-        cookieStore.add(Cookie.Builder().domain("myedu.oshsu.kg").path("/").name("my_edu_update").value(sdf.format(Date())).build())
-        cookieStore.add(Cookie.Builder().domain("myedu.oshsu.kg").path("/").name("have_2fa").value("yes").build())
+        cookieStore.add(Cookie.Builder().domain(domain).path("/").name("myedu-jwt-token").value(token).build())
+        cookieStore.add(Cookie.Builder().domain(domain).path("/").name("my_edu_update").value(sdf.format(Date())).build())
+        cookieStore.add(Cookie.Builder().domain(domain).path("/").name("have_2fa").value("yes").build())
     }
     fun clear() { cookieStore.clear() }
 }
@@ -339,8 +340,8 @@ class WindowsInterceptor : Interceptor {
         val builder = chain.request().newBuilder()
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
             .header("Accept", "application/json, text/plain, */*")
-            .header("Referer", "https://myedu.oshsu.kg/")
-            .header("Origin", "https://myedu.oshsu.kg") 
+            .header("Referer", AppConstants.WEB_BASE_URL)
+            .header("Origin", AppConstants.WEB_BASE_URL) 
         if (authToken != null) builder.header("Authorization", "Bearer $authToken")
         return chain.proceed(builder.build())
     }
@@ -400,13 +401,13 @@ object NetworkClient {
     val interceptor = WindowsInterceptor()
     val deepSpy = DeepSpyInterceptor()
     
-    val api: OshSuApi = Retrofit.Builder().baseUrl("https://api.myedu.oshsu.kg/")
+    val api: OshSuApi = Retrofit.Builder().baseUrl(AppConstants.BASE_URL)
         .client(OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .addInterceptor(interceptor)
             .addInterceptor(deepSpy)
-            .connectTimeout(60, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
+            .connectTimeout(AppConstants.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(AppConstants.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build())
         .addConverterFactory(GsonConverterFactory.create(GsonBuilder().setLenient().create()))
         .build().create(OshSuApi::class.java)

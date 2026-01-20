@@ -46,8 +46,8 @@ object DebugLogger {
         
         synchronized(logs) {
             logs.add(0, logEntry)
-            // Keep max 1000 lines to prevent memory issues in UI
-            if (logs.size > 1000) logs.removeRange(1000, logs.size)
+            // Keep max logs to prevent memory issues in UI
+            if (logs.size > AppConstants.MAX_DEBUG_LOGS) logs.removeRange(AppConstants.MAX_DEBUG_LOGS, logs.size)
         }
         // Also print to Android Logcat
         Log.d("MyEduDebug", "[$tag] $msg")
