@@ -17,6 +17,9 @@
     <string name="sign_in">Кирүү</string>
     <string name="error_credentials">Туура эмес маалыматтар</string>
     <string name="error_login_failed">Кирүү катасы: %s</string>
+    <string name="error_email_empty">Почта бош болбошу керек</string>
+    <string name="error_password_empty">Сыр сөз бош болбошу керек</string>
+    <string name="error_email_invalid">Почтанын форматы туура эмес</string>
     <string name="desc_settings">Орнотуулар</string>
     <string name="debug_enabled">Мүчүлүштүктөрдү оңдоо режими күйгүзүлдү</string>
     <string name="debug_disabled">Мүчүлүштүктөрдү оңдоо режими өчүрүлдү</string>
