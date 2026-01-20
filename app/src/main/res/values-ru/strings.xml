@@ -17,6 +17,9 @@
     <string name="sign_in">Войти</string>
     <string name="error_credentials">Неверные данные</string>
     <string name="error_login_failed">Ошибка входа: %s</string>
+    <string name="error_email_empty">Поле почты не может быть пустым</string>
+    <string name="error_password_empty">Поле пароля не может быть пустым</string>
+    <string name="error_email_invalid">Неверный формат почты</string>
     <string name="desc_settings">Настройки</string>
     <string name="debug_enabled">Режим отладки включен</string>
     <string name="debug_disabled">Режим отладки выключен</string>
@@ -200,6 +203,7 @@
     <string name="notif_class_msg">%1$s\nВремя: %2$s\nАдрес: %3$s\nКомната: %4$s</string>
     <string name="class_default">Занятие</string>
     
+    <string name="notif_portal_title">Портал открыт</string>
     <string name="notif_portal_opened">Портал открыт: %1$s</string>
 
     <string name="update_available_title">Доступно обновление</string>

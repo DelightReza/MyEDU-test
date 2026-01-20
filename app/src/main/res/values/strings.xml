@@ -19,6 +19,9 @@
     <string name="sign_in">Sign In</string>
     <string name="error_credentials">Incorrect credentials</string>
     <string name="error_login_failed">Login Failed: %s</string>
+    <string name="error_email_empty">Email cannot be empty</string>
+    <string name="error_password_empty">Password cannot be empty</string>
+    <string name="error_email_invalid">Invalid email format</string>
     <string name="desc_settings">Settings</string>
     <string name="debug_enabled">Debug Mode Enabled</string>
     <string name="debug_disabled">Debug Mode Disabled</string>
@@ -364,6 +367,7 @@
     <string name="notif_class_title">Class Reminder</string>
     <string name="notif_class_msg">%1$s\nTime: %2$s\nLocation: %3$s\nRoom: %4$s</string>
     <string name="class_default">Class</string>
+    <string name="notif_portal_title">Portal Opened</string>
     <string name="notif_portal_opened">Portal Opened: %1$s</string>
 
     <!-- Update -->

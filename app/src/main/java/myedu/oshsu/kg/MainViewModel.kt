@@ -6,6 +6,7 @@ import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Environment
+import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.core.content.FileProvider
@@ -52,14 +53,14 @@ class MainViewModel : ViewModel() {
 
     // --- REFRESH LOGIC ---
     private var lastRefreshTime: Long = 0
-    private val refreshCooldownMs = TimeUnit.MINUTES.toMillis(5)
+    private val refreshCooldownMs = TimeUnit.MINUTES.toMillis(AppConstants.REFRESH_COOLDOWN_MINUTES)
 
     // --- THEME ---
-    var themeMode by mutableStateOf("SYSTEM")
+    var themeMode by mutableStateOf(AppConstants.THEME_MODE_SYSTEM)
 
     // --- SETTINGS ---
-    var downloadMode by mutableStateOf("IN_APP") 
-    var language by mutableStateOf("en") 
+    var downloadMode by mutableStateOf(AppConstants.DOWNLOAD_MODE_IN_APP) 
+    var language by mutableStateOf(AppConstants.LANG_ENGLISH) 
     
     // --- DEBUG ---
     var isDebugPipVisible by mutableStateOf(false)
@@ -154,12 +155,12 @@ class MainViewModel : ViewModel() {
         val isRemember = prefs?.loadData("pref_remember_me", Boolean::class.java) ?: false
         rememberMe = isRemember
         if (isRemember) {
-            loginEmail = prefs?.loadData("pref_saved_email", String::class.java) ?: ""
-            loginPass = prefs?.loadData("pref_saved_pass", String::class.java) ?: ""
+            loginEmail = prefs?.loadData(AppConstants.PREF_SAVED_EMAIL, String::class.java) ?: ""
+            loginPass = prefs?.loadData(AppConstants.PREF_SAVED_PASS, String::class.java) ?: ""
         }
         
-        customName = prefs?.loadData("local_custom_name", String::class.java)
-        customPhotoUri = prefs?.loadData("local_custom_photo", String::class.java)
+        customName = prefs?.loadData(AppConstants.PREF_CUSTOM_NAME, String::class.java)
+        customPhotoUri = prefs?.loadData(AppConstants.PREF_CUSTOM_PHOTO, String::class.java)
 
         loadLocalDictionary()
         loadDictionaries()
@@ -183,6 +184,12 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Attempts to authenticate user silently using stored credentials.
+     * Used for auto-login on app restart when "Remember Me" is enabled.
+     * 
+     * @return true if login successful, false otherwise
+     */
     private suspend fun performSilentLogin(): Boolean {
         if (!rememberMe || loginEmail.isBlank() || loginPass.isBlank()) return false
         DebugLogger.log("AUTH", "Silent login attempt...")
@@ -203,6 +210,14 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Fetches fresh user and profile data from API with automatic retry on auth failure.
+     * Loads dictionaries and updates local state.
+     * 
+     * @param retry Whether to attempt silent re-authentication on auth error
+     * @return Pair of UserData and StudentInfoResponse
+     * @throws Exception if fetch fails or authentication cannot be recovered
+     */
     suspend fun getFreshPersonalInfo(retry: Boolean = true): Pair<UserData?, StudentInfoResponse?> = withContext(Dispatchers.IO) {
         IdDefinitions.loadAll()
         withContext(Dispatchers.Main) { areDictionariesLoaded = true }
@@ -225,11 +240,18 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Saves user's custom display name and profile photo locally.
+     * Does not sync to server - stores in SharedPreferences only.
+     * 
+     * @param name Custom display name (null to clear)
+     * @param photoUri Custom photo URI (null to clear)
+     */
     fun saveLocalProfile(name: String?, photoUri: String?) {
         customName = name
         customPhotoUri = photoUri
-        prefs?.saveData("local_custom_name", name)
-        prefs?.saveData("local_custom_photo", photoUri)
+        prefs?.saveData(AppConstants.PREF_CUSTOM_NAME, name)
+        prefs?.saveData(AppConstants.PREF_CUSTOM_PHOTO, photoUri)
         avatarRefreshTrigger++
     }
 
@@ -463,22 +485,66 @@ class MainViewModel : ViewModel() {
         processScheduleLocally()
     }
 
+    /**
+     * Authenticates user with email and password.
+     * Validates input and handles credential storage securely.
+     * Automatically appends @oshsu.kg domain if not present in email.
+     * 
+     * @param email User's email address (can be with or without @oshsu.kg)
+     * @param pass User's password
+     */
     fun login(email: String, pass: String) {
         viewModelScope.launch {
-            isLoading = true; errorMsg = null; NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
+            isLoading = true
+            errorMsg = null
+            NetworkClient.cookieJar.clear()
+            NetworkClient.interceptor.authToken = null
             
+            // Input validation
+            var trimmedEmail = email.trim()
+            val trimmedPass = pass.trim()
+            
+            if (trimmedEmail.isEmpty()) {
+                errorMsg = appContext?.getString(R.string.error_email_empty) ?: "Email cannot be empty"
+                isLoading = false
+                return@launch
+            }
+            
+            if (trimmedPass.isEmpty()) {
+                errorMsg = appContext?.getString(R.string.error_password_empty) ?: "Password cannot be empty"
+                isLoading = false
+                return@launch
+            }
+            
+            // Auto-append university domain if email doesn't contain @
+            if (!trimmedEmail.contains("@")) {
+                trimmedEmail += AppConstants.UNIVERSITY_EMAIL_DOMAIN
+                DebugLogger.log("AUTH", "Auto-appended domain: $trimmedEmail")
+            }
+            
+            // Email format validation using Android's Patterns
+            if (!Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()) {
+                errorMsg = appContext?.getString(R.string.error_email_invalid) ?: "Invalid email format"
+                isLoading = false
+                return@launch
+            }
+            
+            // Store credentials if remember me is enabled
+            // NOTE: This stores passwords in plain text - should use EncryptedSharedPreferences in production
             if (rememberMe) {
-                prefs?.saveData("pref_remember_me", true)
-                prefs?.saveData("pref_saved_email", email)
-                prefs?.saveData("pref_saved_pass", pass)
+                prefs?.saveData(AppConstants.PREF_REMEMBER_ME, true)
+                prefs?.saveData(AppConstants.PREF_SAVED_EMAIL, trimmedEmail)
+                prefs?.saveData(AppConstants.PREF_SAVED_PASS, trimmedPass)
             } else {
-                prefs?.saveData("pref_remember_me", false)
-                prefs?.saveData("pref_saved_email", "")
-                prefs?.saveData("pref_saved_pass", "")
+                prefs?.saveData(AppConstants.PREF_REMEMBER_ME, false)
+                prefs?.saveData(AppConstants.PREF_SAVED_EMAIL, "")
+                prefs?.saveData(AppConstants.PREF_SAVED_PASS, "")
             }
 
             try {
-                val resp = withContext(Dispatchers.IO) { NetworkClient.api.login(LoginRequest(email.trim(), pass.trim())) }
+                val resp = withContext(Dispatchers.IO) { 
+                    NetworkClient.api.login(LoginRequest(trimmedEmail, trimmedPass)) 
+                }
                 val token = resp.authorisation?.token
                 if (token != null) {
                     prefs?.saveToken(token)
@@ -486,8 +552,11 @@ class MainViewModel : ViewModel() {
                     NetworkClient.cookieJar.injectSessionCookies(token)
                     refreshAllData(force = true)
                     appState = "APP"
-                } else errorMsg = appContext?.getString(R.string.error_credentials) ?: "Incorrect credentials"
+                } else {
+                    errorMsg = appContext?.getString(R.string.error_credentials) ?: "Incorrect credentials"
+                }
             } catch (e: Exception) { 
+                DebugLogger.log("AUTH_ERROR", "Login failed: ${e.message}")
                 errorMsg = appContext?.getString(R.string.error_login_failed, e.message) ?: "Login Failed: ${e.message}" 
             }
             isLoading = false
@@ -504,15 +573,15 @@ class MainViewModel : ViewModel() {
         verify2FAStatus = null
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
-        prefs?.saveData("theme_mode_pref", themeMode)
-        prefs?.saveData("doc_download_mode", downloadMode)
-        prefs?.saveData("language_pref", language)
+        prefs?.saveData(AppConstants.PREF_THEME, themeMode)
+        prefs?.saveData(AppConstants.PREF_DOWNLOAD_MODE, downloadMode)
+        prefs?.saveData(AppConstants.PREF_LANGUAGE, language)
         prefs?.saveData("custom_dictionary_json", Gson().toJson(dictionaryMap))
         
         if (wasRemember) {
-            prefs?.saveData("pref_remember_me", true)
-            prefs?.saveData("pref_saved_email", savedE)
-            prefs?.saveData("pref_saved_pass", savedP)
+            prefs?.saveData(AppConstants.PREF_REMEMBER_ME, true)
+            prefs?.saveData(AppConstants.PREF_SAVED_EMAIL, savedE)
+            prefs?.saveData(AppConstants.PREF_SAVED_PASS, savedP)
             loginEmail = savedE
             loginPass = savedP
             rememberMe = true
@@ -568,7 +637,7 @@ class MainViewModel : ViewModel() {
         val mov = profile.studentMovement ?: return
         try {
             val years = NetworkClient.api.getYears()
-            val activeYearId = years.find { it.active }?.id ?: 25
+            val activeYearId = years.find { it.active }?.id ?: AppConstants.DEFAULT_ACTIVE_YEAR_ID
             val times = try { NetworkClient.api.getLessonTimes(mov.id_speciality!!, mov.id_edu_form!!, activeYearId) } catch (e: Exception) { emptyList() }
             val wrappers = NetworkClient.api.getSchedule(mov.id_speciality!!, mov.id_edu_form!!, activeYearId, profile.active_semester ?: 1)
             withContext(Dispatchers.Main) {

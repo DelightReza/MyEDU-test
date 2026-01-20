@@ -54,8 +54,7 @@ class NotificationReceiver : BroadcastReceiver() {
     private fun showVisualNotification(context: Context, title: String, message: String, id: Int) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
-        // New ID to reset any previous system-managed sound settings
-        val channelId = "myedu_notif_channel"
+        val channelId = AppConstants.NOTIFICATION_CHANNEL_ID
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (manager.getNotificationChannel(channelId) == null) {
@@ -64,7 +63,7 @@ class NotificationReceiver : BroadcastReceiver() {
                     context.getString(R.string.notif_channel_name),
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
-                    description = "Class alerts"
+                    description = AppConstants.NOTIFICATION_CHANNEL_NAME
                     enableVibration(true)
                     vibrationPattern = longArrayOf(0, 500, 200, 500)
                     enableLights(true)

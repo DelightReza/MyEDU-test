@@ -22,7 +22,7 @@ class ScheduleAlarmManager(private val context: Context) {
         val intent = Intent(context, NotificationReceiver::class.java)
         val summaryPending = PendingIntent.getBroadcast(context, 9999, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)
         if (summaryPending != null) { alarmManager.cancel(summaryPending); summaryPending.cancel() }
-        for (day in 0..6) { for (lesson in 1..15) {
+        for (day in 0..6) { for (lesson in AppConstants.MIN_LESSON_ID..AppConstants.MAX_LESSON_ID) {
                 val id = day * 100 + lesson
                 val pending = PendingIntent.getBroadcast(context, id, intent, PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE)
                 if (pending != null) { alarmManager.cancel(pending); pending.cancel() }
@@ -31,7 +31,11 @@ class ScheduleAlarmManager(private val context: Context) {
 
     @SuppressLint("ScheduleExactAlarm")
     private fun scheduleEveningSummary(schedule: List<ScheduleItem>, language: String) {
-        val calendar = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 20); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }
+        val calendar = Calendar.getInstance().apply { 
+            set(Calendar.HOUR_OF_DAY, AppConstants.EVENING_SUMMARY_HOUR)
+            set(Calendar.MINUTE, AppConstants.EVENING_SUMMARY_MINUTE)
+            set(Calendar.SECOND, 0) 
+        }
         if (calendar.timeInMillis < System.currentTimeMillis()) return
         val tomorrowCal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
         val javaDay = tomorrowCal.get(Calendar.DAY_OF_WEEK)

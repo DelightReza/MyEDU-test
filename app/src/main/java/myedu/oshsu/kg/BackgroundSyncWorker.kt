@@ -58,7 +58,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
             if (mov != null) {
                 try {
                     val years = NetworkClient.api.getYears()
-                    val activeYearId = years.find { it.active }?.id ?: 25
+                    val activeYearId = years.find { it.active }?.id ?: AppConstants.DEFAULT_ACTIVE_YEAR_ID
                     val times = try { NetworkClient.api.getLessonTimes(mov.id_speciality!!, mov.id_edu_form!!, activeYearId) } catch (e: Exception) { emptyList() }
                     val wrappers = NetworkClient.api.getSchedule(mov.id_speciality!!, mov.id_edu_form!!, activeYearId, profile.active_semester ?: 1)
                     val fullSchedule = wrappers.flatMap { it.schedule_items ?: emptyList() }.sortedBy { it.id_lesson }
@@ -68,7 +68,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                         if (times.isNotEmpty()) {
                             val timeMap = times.associate { (it.lesson?.num ?: 0) to "${it.begin_time ?: ""} - ${it.end_time ?: ""}" }
                             val localizedContext = getLocalizedContext(context, prefs)
-                            ScheduleAlarmManager(localizedContext).scheduleNotifications(fullSchedule, timeMap, prefs.loadData("language_pref", String::class.java)?.replace("\"", "") ?: "en")
+                            ScheduleAlarmManager(localizedContext).scheduleNotifications(fullSchedule, timeMap, prefs.loadData("language_pref", String::class.java)?.replace("\"", "") ?: AppConstants.LANG_ENGLISH)
                         }
                     }
                 } catch (e: Exception) { e.printStackTrace() }
@@ -106,6 +106,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
 
     private fun checkForUpdates(oldList: List<SessionResponse>, newList: List<SessionResponse>, context: Context): List<String> {
         val updates = ArrayList<String>()
+        val portalOpened = ArrayList<String>()
         val lang = context.resources.configuration.locales.get(0).language
         val oldMap = oldList.flatMap { it.subjects ?: emptyList() }.associateBy { it.subject?.get(lang) ?: context.getString(R.string.unknown) }
 
@@ -125,16 +126,33 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                 // FIX: Use finalScore instead of finally
                 check(context.getString(R.string.exam_short), oldMarks.finalScore, newMarks.finalScore)
             }
-            if (oldWrapper?.graphic == null && newWrapper.graphic != null) updates.add(context.getString(R.string.notif_portal_opened, name))
+            if (oldWrapper?.graphic == null && newWrapper.graphic != null) {
+                portalOpened.add(context.getString(R.string.notif_portal_opened, name))
+            }
+        }
+        
+        // Send separate notifications for portal openings and grade updates
+        if (portalOpened.isNotEmpty()) {
+            sendPortalNotification(context, portalOpened)
         }
         return updates
     }
 
     private fun sendNotification(context: Context, updates: List<String>) {
+        if (updates.isEmpty()) return
         val intent = android.content.Intent(context, NotificationReceiver::class.java).apply {
             putExtra("TITLE", context.getString(R.string.notif_new_grades_title))
             putExtra("MESSAGE", if (updates.size > 4) context.getString(R.string.notif_grades_msg_multiple, updates.size) else updates.joinToString("\n"))
-            putExtra("ID", 777)
+            putExtra("ID", AppConstants.BACKGROUND_SYNC_NOTIFICATION_ID)
+        }
+        context.sendBroadcast(intent)
+    }
+    
+    private fun sendPortalNotification(context: Context, portalOpened: List<String>) {
+        val intent = android.content.Intent(context, NotificationReceiver::class.java).apply {
+            putExtra("TITLE", context.getString(R.string.notif_portal_title))
+            putExtra("MESSAGE", portalOpened.joinToString("\n"))
+            putExtra("ID", AppConstants.BACKGROUND_SYNC_NOTIFICATION_ID + 1)
         }
         context.sendBroadcast(intent)
     }
