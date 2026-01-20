@@ -6,6 +6,7 @@ import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Environment
+import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.core.content.FileProvider
@@ -154,12 +155,12 @@ class MainViewModel : ViewModel() {
         val isRemember = prefs?.loadData("pref_remember_me", Boolean::class.java) ?: false
         rememberMe = isRemember
         if (isRemember) {
-            loginEmail = prefs?.loadData("pref_saved_email", String::class.java) ?: ""
-            loginPass = prefs?.loadData("pref_saved_pass", String::class.java) ?: ""
+            loginEmail = prefs?.loadData(AppConstants.PREF_SAVED_EMAIL, String::class.java) ?: ""
+            loginPass = prefs?.loadData(AppConstants.PREF_SAVED_PASS, String::class.java) ?: ""
         }
         
-        customName = prefs?.loadData("local_custom_name", String::class.java)
-        customPhotoUri = prefs?.loadData("local_custom_photo", String::class.java)
+        customName = prefs?.loadData(AppConstants.PREF_CUSTOM_NAME, String::class.java)
+        customPhotoUri = prefs?.loadData(AppConstants.PREF_CUSTOM_PHOTO, String::class.java)
 
         loadLocalDictionary()
         loadDictionaries()
@@ -514,8 +515,8 @@ class MainViewModel : ViewModel() {
                 return@launch
             }
             
-            // Basic email format validation
-            if (!trimmedEmail.contains("@") || !trimmedEmail.contains(".")) {
+            // Email format validation using Android's Patterns
+            if (!Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches()) {
                 errorMsg = appContext?.getString(R.string.error_email_invalid) ?: "Invalid email format"
                 isLoading = false
                 return@launch
@@ -565,15 +566,15 @@ class MainViewModel : ViewModel() {
         verify2FAStatus = null
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
-        prefs?.saveData("theme_mode_pref", themeMode)
-        prefs?.saveData("doc_download_mode", downloadMode)
-        prefs?.saveData("language_pref", language)
+        prefs?.saveData(AppConstants.PREF_THEME, themeMode)
+        prefs?.saveData(AppConstants.PREF_DOWNLOAD_MODE, downloadMode)
+        prefs?.saveData(AppConstants.PREF_LANGUAGE, language)
         prefs?.saveData("custom_dictionary_json", Gson().toJson(dictionaryMap))
         
         if (wasRemember) {
-            prefs?.saveData("pref_remember_me", true)
-            prefs?.saveData("pref_saved_email", savedE)
-            prefs?.saveData("pref_saved_pass", savedP)
+            prefs?.saveData(AppConstants.PREF_REMEMBER_ME, true)
+            prefs?.saveData(AppConstants.PREF_SAVED_EMAIL, savedE)
+            prefs?.saveData(AppConstants.PREF_SAVED_PASS, savedP)
             loginEmail = savedE
             loginPass = savedP
             rememberMe = true
