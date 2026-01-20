@@ -617,14 +617,13 @@ class MainViewModel : ViewModel() {
                 val isAuthError = e.message?.contains("401") == true || e.message?.contains("HTTP 401") == true || e.message?.contains("Unauthenticated") == true
                 
                 if (isAuthError && retryCount == 0) {
-                    withContext(Dispatchers.Main) { isRefreshing = false; isLoading = false }
                     val reloginSuccess = performSilentLogin()
                     if (reloginSuccess) {
                         refreshAllData(force, retryCount = 1) 
+                        return@launch
                     } else {
                         withContext(Dispatchers.Main) { logout() }
                     }
-                    return@launch
                 } else if (isAuthError) {
                     withContext(Dispatchers.Main) { logout() }
                 }
