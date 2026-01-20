@@ -8,8 +8,8 @@ import java.util.Calendar
  */
 object AppConstants {
     // API Configuration
-    // Updated to api3 subdomain based on actual network traffic from myedu.oshsu.kg website
-    const val BASE_URL = "https://api3.myedu.oshsu.kg/"
+    // Using the stable public API endpoint
+    const val BASE_URL = "https://api.myedu.oshsu.kg/public/"
     const val WEB_BASE_URL = "https://myedu.oshsu.kg/"
     
     // University Configuration

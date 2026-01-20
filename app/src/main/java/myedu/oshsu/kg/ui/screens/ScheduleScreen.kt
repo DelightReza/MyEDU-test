@@ -18,12 +18,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Weekend
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,9 +48,23 @@ fun ScheduleScreen(vm: MainViewModel) {
     val pagerState = rememberPagerState(initialPage = vm.selectedScheduleDay) { tabs.size }
     LaunchedEffect(pagerState.currentPage) { vm.selectedScheduleDay = pagerState.currentPage }
 
+    val pullToRefreshState = rememberPullToRefreshState()
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(true) {
+            vm.refresh()
+        }
+    }
+    
+    LaunchedEffect(vm.isRefreshing) {
+        if (!vm.isRefreshing) {
+            pullToRefreshState.endRefresh()
+        }
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
-        topBar = { CenterAlignedTopAppBar(title = { OshSuLogo(modifier = Modifier.width(100.dp).height(40.dp), themeMode = vm.themeMode) }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)) }
+        topBar = { CenterAlignedTopAppBar(title = { OshSuLogo(modifier = Modifier.width(100.dp).height(40.dp), themeMode = vm.themeMode) }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)) },
+        modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection)
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 80.dp, bottom = 100.dp)) { pageIndex ->
@@ -72,6 +89,11 @@ fun ScheduleScreen(vm: MainViewModel) {
             Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp, start = 16.dp, end = 16.dp)) {
                 FloatingDayTabs(tabs = tabs, selectedIndex = pagerState.currentPage, onTabSelected = { index -> scope.launch { pagerState.animateScrollToPage(index) } })
             }
+            
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
 }
