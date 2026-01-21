@@ -6,6 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
@@ -17,7 +21,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -62,7 +65,7 @@ fun ThemedBackground(themeMode: String = "SYSTEM", content: @Composable BoxScope
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun MyEduPullToRefreshBox(
     isRefreshing: Boolean,
@@ -70,30 +73,20 @@ fun MyEduPullToRefreshBox(
     themeMode: String = "SYSTEM",
     content: @Composable BoxScope.() -> Unit
 ) {
-    val pullRefreshState = rememberPullToRefreshState()
-    
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            pullRefreshState.startRefresh()
-        } else {
-            pullRefreshState.endRefresh()
-        }
-    }
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = onRefresh
+    )
     
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .nestedScroll(pullRefreshState.nestedScrollConnection)
+            .pullRefresh(pullRefreshState)
     ) {
         content()
         
-        if (pullRefreshState.isRefreshing) {
-            LaunchedEffect(true) {
-                onRefresh()
-            }
-        }
-        
-        PullToRefreshContainer(
+        PullRefreshIndicator(
+            refreshing = isRefreshing,
             state = pullRefreshState,
             modifier = Modifier.align(Alignment.TopCenter)
         )
