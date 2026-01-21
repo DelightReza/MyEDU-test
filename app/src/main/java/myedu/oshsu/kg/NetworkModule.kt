@@ -321,15 +321,17 @@ interface GitHubApi { @GET suspend fun getLatestRelease(@Url url: String): GitHu
 // --- CLIENT ---
 class UniversalCookieJar : CookieJar {
     private val cookieStore = ArrayList<Cookie>()
-    override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) = synchronized(cookieStore) {
+    private val lock = Any()
+    
+    override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) = synchronized(lock) {
         val names = cookies.map { it.name }
         cookieStore.removeAll { it.name in names }
         cookieStore.addAll(cookies)
     }
-    override fun loadForRequest(url: HttpUrl): List<Cookie> = synchronized(cookieStore) {
+    override fun loadForRequest(url: HttpUrl): List<Cookie> = synchronized(lock) {
         ArrayList(cookieStore)
     }
-    fun injectSessionCookies(token: String) = synchronized(cookieStore) {
+    fun injectSessionCookies(token: String) = synchronized(lock) {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000000'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
         val domain = AppConstants.WEB_BASE_URL.removePrefix("https://").removePrefix("http://").removeSuffix("/")
         cookieStore.removeAll { it.name == "myedu-jwt-token" || it.name == "my_edu_update" || it.name == "have_2fa" }
@@ -337,7 +339,7 @@ class UniversalCookieJar : CookieJar {
         cookieStore.add(Cookie.Builder().domain(domain).path("/").name("my_edu_update").value(sdf.format(Date())).build())
         cookieStore.add(Cookie.Builder().domain(domain).path("/").name("have_2fa").value("yes").build())
     }
-    fun clear() = synchronized(cookieStore) { cookieStore.clear() }
+    fun clear() = synchronized(lock) { cookieStore.clear() }
 }
 
 class WindowsInterceptor : Interceptor {
