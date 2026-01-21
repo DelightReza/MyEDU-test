@@ -201,6 +201,7 @@
     <string name="class_default">Занятие</string>
     
     <string name="notif_portal_opened">Портал открыт: %1$s</string>
+    <string name="notif_portal_opened_title">Портал открыт</string>
 
     <string name="update_available_title">Доступно обновление</string>
     <string name="update_available_msg">Доступна новая версия (%1$s).\n\n%2$s</string>

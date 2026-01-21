@@ -48,8 +48,9 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
 
                 if (oldSession.isNotEmpty() && newSession.isNotEmpty()) {
                     val localizedContext = getLocalizedContext(context, prefs)
-                    val updates = checkForUpdates(oldSession, newSession, localizedContext)
-                    if (updates.isNotEmpty()) sendNotification(localizedContext, updates)
+                    val (gradeUpdates, portalUpdates) = checkForUpdates(oldSession, newSession, localizedContext)
+                    if (gradeUpdates.isNotEmpty()) sendNotification(localizedContext, gradeUpdates, isPortalOpening = false)
+                    if (portalUpdates.isNotEmpty()) sendNotification(localizedContext, portalUpdates, isPortalOpening = true)
                 }
                 prefs.saveList("session_list", newSession)
             } catch (e: Exception) { e.printStackTrace() }
@@ -104,8 +105,9 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
         return context.createConfigurationContext(config)
     }
 
-    private fun checkForUpdates(oldList: List<SessionResponse>, newList: List<SessionResponse>, context: Context): List<String> {
-        val updates = ArrayList<String>()
+    private fun checkForUpdates(oldList: List<SessionResponse>, newList: List<SessionResponse>, context: Context): Pair<List<String>, List<String>> {
+        val gradeUpdates = ArrayList<String>()
+        val portalUpdates = ArrayList<String>()
         val lang = context.resources.configuration.locales.get(0).language
         val oldMap = oldList.flatMap { it.subjects ?: emptyList() }.associateBy { it.subject?.get(lang) ?: context.getString(R.string.unknown) }
 
@@ -117,7 +119,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
             
             fun check(label: String, oldVal: Double?, newVal: Double?) {
                 val v2 = newVal ?: 0.0
-                if (v2 > (oldVal ?: 0.0) && v2 > 0) updates.add(context.getString(R.string.notif_grades_msg_single, name, label, v2.toInt()))
+                if (v2 > (oldVal ?: 0.0) && v2 > 0) gradeUpdates.add(context.getString(R.string.notif_grades_msg_single, name, label, v2.toInt()))
             }
             if (oldMarks != null && newMarks != null) {
                 check(context.getString(R.string.m1), oldMarks.point1, newMarks.point1)
@@ -125,16 +127,28 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                 // FIX: Use finalScore instead of finally
                 check(context.getString(R.string.exam_short), oldMarks.finalScore, newMarks.finalScore)
             }
-            if (oldWrapper?.graphic == null && newWrapper.graphic != null) updates.add(context.getString(R.string.notif_portal_opened, name))
+            if (oldWrapper?.graphic == null && newWrapper.graphic != null) portalUpdates.add(context.getString(R.string.notif_portal_opened, name))
         }
-        return updates
+        return Pair(gradeUpdates, portalUpdates)
     }
 
-    private fun sendNotification(context: Context, updates: List<String>) {
+    private fun sendNotification(context: Context, updates: List<String>, isPortalOpening: Boolean) {
+        val title = if (isPortalOpening) {
+            context.getString(R.string.notif_portal_opened_title)
+        } else {
+            context.getString(R.string.notif_new_grades_title)
+        }
+        
+        val message = if (!isPortalOpening && updates.size > 4) {
+            context.getString(R.string.notif_grades_msg_multiple, updates.size)
+        } else {
+            updates.joinToString("\n")
+        }
+        
         val intent = android.content.Intent(context, NotificationReceiver::class.java).apply {
-            putExtra("TITLE", context.getString(R.string.notif_new_grades_title))
-            putExtra("MESSAGE", if (updates.size > 4) context.getString(R.string.notif_grades_msg_multiple, updates.size) else updates.joinToString("\n"))
-            putExtra("ID", 777)
+            putExtra("TITLE", title)
+            putExtra("MESSAGE", message)
+            putExtra("ID", if (isPortalOpening) 778 else 777)
         }
         context.sendBroadcast(intent)
     }
