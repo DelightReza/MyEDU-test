@@ -145,7 +145,6 @@ fun ProfileScreen(vm: MainViewModel) {
 
             InfoSection(stringResource(R.string.documents), vm.themeMode)
             
-            // CHANGED: Use IntrinsicSize.Max to match heights
             Row(
                 Modifier
                     .fillMaxWidth()
@@ -156,7 +155,6 @@ fun ProfileScreen(vm: MainViewModel) {
                     text = stringResource(R.string.reference), 
                     icon = Icons.Default.Description, 
                     themeMode = vm.themeMode, 
-                    // CHANGED: Use fillMaxHeight
                     modifier = Modifier.weight(1f).fillMaxHeight(), 
                     onClick = { vm.showReferenceScreen = true }
                 )
@@ -165,7 +163,6 @@ fun ProfileScreen(vm: MainViewModel) {
                     icon = Icons.Default.School, 
                     themeMode = vm.themeMode, 
                     isLoading = vm.isTranscriptLoading, 
-                    // CHANGED: Use fillMaxHeight
                     modifier = Modifier.weight(1f).fillMaxHeight(), 
                     onClick = { vm.fetchTranscript() }
                 )

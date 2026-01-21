@@ -170,7 +170,6 @@ fun FloatingPdfBar(vm: MainViewModel, onGenerateRu: () -> Unit, onGenerateEn: ()
     val elevation = 12.dp
 
     Surface(
-        // CHANGED: Use defaultMinSize for flexible height
         modifier = Modifier
             .padding(bottom = 24.dp, start = 16.dp, end = 16.dp)
             .defaultMinSize(minHeight = 72.dp)
@@ -191,7 +190,6 @@ fun FloatingPdfBar(vm: MainViewModel, onGenerateRu: () -> Unit, onGenerateEn: ()
         ) { state ->
             when (state) {
                 "SUCCESS" -> {
-                    // CHANGED: Use IntrinsicSize.Max for symmetric expansion
                     Row(
                         modifier = Modifier
                             .padding(16.dp)
@@ -207,7 +205,6 @@ fun FloatingPdfBar(vm: MainViewModel, onGenerateRu: () -> Unit, onGenerateEn: ()
                                 } catch (e: Exception) { Toast.makeText(context, context.getString(R.string.error_no_pdf_viewer), Toast.LENGTH_SHORT).show() }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                            // CHANGED: Use weight and fillMaxHeight
                             modifier = Modifier.weight(1f).defaultMinSize(minHeight = 48.dp).fillMaxHeight()
                         ) { Text(stringResource(R.string.open), textAlign = TextAlign.Center) }
                         
@@ -236,7 +233,6 @@ fun FloatingPdfBar(vm: MainViewModel, onGenerateRu: () -> Unit, onGenerateEn: ()
                     }
                 }
                 else -> {
-                    // CHANGED: Use IntrinsicSize.Max for symmetric expansion
                     Row(
                         modifier = Modifier
                             .padding(8.dp)
@@ -246,7 +242,6 @@ fun FloatingPdfBar(vm: MainViewModel, onGenerateRu: () -> Unit, onGenerateEn: ()
                     ) {
                         val buttonColors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
                         
-                        // CHANGED: Use weight and fillMaxHeight with center text align
                         Button(
                             onClick = onGenerateRu, 
                             colors = buttonColors, 

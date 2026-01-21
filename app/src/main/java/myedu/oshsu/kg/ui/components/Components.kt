@@ -141,7 +141,6 @@ fun BeautifulDocButton(
 ) {
     Button(
         onClick = onClick,
-        // CHANGED: Use defaultMinSize to allow vertical expansion
         modifier = modifier.defaultMinSize(minHeight = 56.dp),
         enabled = !isLoading,
         shape = RoundedCornerShape(16.dp),
@@ -157,7 +156,6 @@ fun BeautifulDocButton(
                 strokeWidth = 2.dp
             )
         } else {
-            // CHANGED: Fill max size to center content
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
@@ -170,7 +168,6 @@ fun BeautifulDocButton(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(Modifier.width(8.dp))
-                // CHANGED: Center text alignment
                 Text(
                     text,
                     style = MaterialTheme.typography.labelLarge,
