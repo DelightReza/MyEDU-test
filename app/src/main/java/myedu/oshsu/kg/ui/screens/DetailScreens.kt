@@ -194,7 +194,6 @@ fun FloatingPdfBar(vm: MainViewModel, onGenerateRu: () -> Unit, onGenerateEn: ()
                     // CHANGED: Use IntrinsicSize.Max for symmetric expansion
                     Row(
                         modifier = Modifier
-                            .fillMaxSize()
                             .padding(16.dp)
                             .height(IntrinsicSize.Max),
                         verticalAlignment = Alignment.CenterVertically,
@@ -224,7 +223,6 @@ fun FloatingPdfBar(vm: MainViewModel, onGenerateRu: () -> Unit, onGenerateEn: ()
                 "LOADING" -> {
                     Row(
                         modifier = Modifier
-                            .fillMaxSize()
                             .padding(vertical = 16.dp, horizontal = 24.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
