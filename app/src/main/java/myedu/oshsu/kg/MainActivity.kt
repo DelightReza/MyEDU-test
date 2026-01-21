@@ -253,7 +253,7 @@ fun MainAppStructure(vm: MainViewModel) {
                         title = docTitle, 
                         fileName = fileName, 
                         authToken = vm.getAuthToken(),
-                        loginEmail = vm.loginEmail,
+                        loginEmail = EmailHelper.normalizeEmail(vm.loginEmail),
                         loginPass = vm.loginPass,
                         themeMode = vm.themeMode, 
                         onClose = { vm.webDocumentUrl = null }

@@ -291,7 +291,7 @@ fun ReferenceView(vm: MainViewModel, onClose: () -> Unit) {
         topBar = { TopAppBar(title = { Text(stringResource(R.string.reference_title)) }, navigationIcon = { IconButton(onClick = onClose) { Icon(Icons.Default.ArrowBack, stringResource(R.string.desc_back)) } }, actions = { if (isWebsiteMode) { IconButton(onClick = { vm.webDocumentUrl = "https://myedu.oshsu.kg/#/studentCertificate" }) { Icon(Icons.Default.Print, stringResource(R.string.print_download)) } } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)) }
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize().widthIn(max = 840.dp).align(Alignment.TopCenter).verticalScroll(rememberScrollState()).padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(modifier = Modifier.widthIn(max = 840.dp).align(Alignment.TopCenter).verticalScroll(rememberScrollState()).padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 ThemedCard(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(8.dp)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) { OshSuLogo(modifier = Modifier.width(180.dp).height(60.dp), themeMode = vm.themeMode); Spacer(Modifier.height(16.dp)); Text(stringResource(R.string.cert_header), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface) }
