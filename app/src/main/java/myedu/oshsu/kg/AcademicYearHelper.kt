@@ -12,6 +12,9 @@ object AcademicYearHelper {
      * - September 2026 → returns 26 (new 2026-2027 academic year starts)
      * - August 2026 → returns 25 (still in 2025-2026 academic year)
      * 
+     * Note: This assumes years 2000-2099. For years beyond 2099, 
+     * the system would need updates to handle 3-digit year IDs.
+     * 
      * @return Last 2 digits of the academic year
      */
     fun getDefaultActiveYearId(): Int {
@@ -27,7 +30,7 @@ object AcademicYearHelper {
             currentYear - 1
         }
         
-        // Return last 2 digits
+        // Return last 2 digits (works for years 2000-2099)
         return academicYear % 100
     }
 }
