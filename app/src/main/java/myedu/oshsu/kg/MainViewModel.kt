@@ -616,7 +616,17 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 withContext(Dispatchers.Main) { isGradesLoading = true }
+                val oldSession = prefs?.loadList<SessionResponse>("session_list") ?: emptyList()
                 val session = NetworkClient.api.getSession(profile.active_semester ?: 1)
+                
+                // Check for updates and send notifications
+                if (oldSession.isNotEmpty() && session.isNotEmpty() && appContext != null && prefs != null) {
+                    val localizedContext = NotificationHelper.getLocalizedContext(appContext!!, prefs!!)
+                    val (gradeUpdates, portalUpdates) = NotificationHelper.checkForUpdates(oldSession, session, localizedContext)
+                    if (gradeUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, gradeUpdates, isPortalOpening = false)
+                    if (portalUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, portalUpdates, isPortalOpening = true)
+                }
+                
                 withContext(Dispatchers.Main) { sessionData = session; prefs?.saveList("session_list", session) }
             } catch (_: Exception) {} finally { withContext(Dispatchers.Main) { isGradesLoading = false } }
         }
