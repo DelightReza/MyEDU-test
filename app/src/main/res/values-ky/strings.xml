@@ -202,6 +202,7 @@
 
     <string name="notif_portal_opened">Портал ачылды: %1$s</string>
     <string name="notif_portal_opened_title">Портал ачылды</string>
+    <string name="notif_portal_opened_multiple">%d порталдар ачылды</string>
 
     <string name="update_available_title">Жаңыртуу жеткиликтүү</string>
     <string name="update_available_msg">Жаңы версия (%1$s) жеткиликтүү.\n\n%2$s</string>

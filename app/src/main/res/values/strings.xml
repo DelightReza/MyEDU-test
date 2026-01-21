@@ -366,6 +366,7 @@
     <string name="class_default">Class</string>
     <string name="notif_portal_opened">Portal Opened: %1$s</string>
     <string name="notif_portal_opened_title">Portal Opened</string>
+    <string name="notif_portal_opened_multiple">%d portals have been opened</string>
 
     <!-- Update -->
     <string name="update_api_url" translatable="false">https://api.github.com/</string>

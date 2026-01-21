@@ -139,8 +139,12 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
             context.getString(R.string.notif_new_grades_title)
         }
         
-        val message = if (!isPortalOpening && updates.size > 4) {
-            context.getString(R.string.notif_grades_msg_multiple, updates.size)
+        val message = if (updates.size > 4) {
+            if (isPortalOpening) {
+                context.getString(R.string.notif_portal_opened_multiple, updates.size)
+            } else {
+                context.getString(R.string.notif_grades_msg_multiple, updates.size)
+            }
         } else {
             updates.joinToString("\n")
         }
