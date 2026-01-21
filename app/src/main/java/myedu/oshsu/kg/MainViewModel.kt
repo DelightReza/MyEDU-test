@@ -623,8 +623,10 @@ class MainViewModel : ViewModel() {
                 val session = NetworkClient.api.getSession(profile.active_semester ?: 1)
                 
                 // Check for updates and send notifications
-                if (oldSession.isNotEmpty() && session.isNotEmpty() && appContext != null && prefs != null) {
-                    val localizedContext = NotificationHelper.getLocalizedContext(appContext, prefs)
+                val currentContext = appContext
+                val currentPrefs = prefs
+                if (oldSession.isNotEmpty() && session.isNotEmpty() && currentContext != null && currentPrefs != null) {
+                    val localizedContext = NotificationHelper.getLocalizedContext(currentContext, currentPrefs)
                     val (gradeUpdates, portalUpdates) = NotificationHelper.checkForUpdates(oldSession, session, localizedContext)
                     if (gradeUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, gradeUpdates, isPortalOpening = false)
                     if (portalUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, portalUpdates, isPortalOpening = true)

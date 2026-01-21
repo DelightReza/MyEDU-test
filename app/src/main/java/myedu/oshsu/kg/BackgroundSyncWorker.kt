@@ -68,7 +68,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                         prefs.saveList("schedule_list", fullSchedule)
                         if (times.isNotEmpty()) {
                             val timeMap = times.associate { (it.lesson?.num ?: 0) to "${it.begin_time ?: ""} - ${it.end_time ?: ""}" }
-                            val localizedContext = getLocalizedContext(context, prefs)
+                            val localizedContext = NotificationHelper.getLocalizedContext(context, prefs)
                             ScheduleAlarmManager(localizedContext).scheduleNotifications(fullSchedule, timeMap, prefs.loadData("language_pref", String::class.java)?.replace("\"", "") ?: "en")
                         }
                     }
