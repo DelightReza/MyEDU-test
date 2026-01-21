@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -61,6 +62,7 @@ fun ThemedBackground(themeMode: String = "SYSTEM", content: @Composable BoxScope
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyEduPullToRefreshBox(
     isRefreshing: Boolean,
@@ -68,13 +70,33 @@ fun MyEduPullToRefreshBox(
     themeMode: String = "SYSTEM",
     content: @Composable BoxScope.() -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        content()
+    val pullRefreshState = rememberPullToRefreshState()
+    
+    LaunchedEffect(isRefreshing) {
         if (isRefreshing) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp)
-            )
+            pullRefreshState.startRefresh()
+        } else {
+            pullRefreshState.endRefresh()
         }
+    }
+    
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(pullRefreshState.nestedScrollConnection)
+    ) {
+        content()
+        
+        if (pullRefreshState.isRefreshing) {
+            LaunchedEffect(true) {
+                onRefresh()
+            }
+        }
+        
+        PullToRefreshContainer(
+            state = pullRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }
 
