@@ -59,7 +59,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
             if (mov != null) {
                 try {
                     val years = NetworkClient.api.getYears()
-                    val activeYearId = years.find { it.active }?.id ?: 25
+                    val activeYearId = years.find { it.active }?.id ?: AcademicYearHelper.getDefaultActiveYearId()
                     val times = try { NetworkClient.api.getLessonTimes(mov.id_speciality!!, mov.id_edu_form!!, activeYearId) } catch (e: Exception) { emptyList() }
                     val wrappers = NetworkClient.api.getSchedule(mov.id_speciality!!, mov.id_edu_form!!, activeYearId, profile.active_semester ?: 1)
                     val fullSchedule = wrappers.flatMap { it.schedule_items ?: emptyList() }.sortedBy { it.id_lesson }
