@@ -8,9 +8,9 @@ object AcademicYearHelper {
      * Academic year starts in September.
      * 
      * Examples:
-     * - January 2026 → returns 25 (still in 2025-2026 academic year)
-     * - September 2026 → returns 26 (new 2026-2027 academic year starts)
-     * - August 2026 → returns 25 (still in 2025-2026 academic year)
+     * - January 2024 → returns 23 (still in 2023-2024 academic year)
+     * - September 2024 → returns 24 (new 2024-2025 academic year starts)
+     * - August 2024 → returns 23 (still in 2023-2024 academic year)
      * 
      * Note: This assumes years 2000-2099. For years beyond 2099, 
      * the system would need updates to handle 3-digit year IDs.
