@@ -382,24 +382,26 @@ class ApiFallbackInterceptor : Interceptor {
     }
     
     private fun attemptFallback(chain: Interceptor.Chain, originalRequest: Request, originalUrl: String): Response {
-        val fallbackUrl = originalUrl.replace(primaryBaseUrl, fallbackBaseUrl)
+        // Only attempt fallback if the URL starts with the primary base URL
+        if (!originalUrl.startsWith(primaryBaseUrl)) {
+            throw Exception("API request failed and URL does not match primary base URL")
+        }
         
-        if (fallbackUrl != originalUrl) {
-            DebugLogger.log("API_FALLBACK", "Attempting fallback URL: $fallbackUrl")
-            val fallbackRequest = originalRequest.newBuilder()
-                .url(fallbackUrl)
-                .tag(fallbackAttemptedTag)
-                .build()
-            
-            return try {
-                chain.proceed(fallbackRequest)
-            } catch (e: Exception) {
-                DebugLogger.log("API_FALLBACK", "Fallback API also failed: ${e.message}")
-                throw e
-            }
-        } else {
-            // URL didn't change, this means we're already using fallback or neither URL matches
-            throw Exception("Primary API failed")
+        // Replace only the base URL prefix (not any occurrences in the path)
+        val pathAndQuery = originalUrl.removePrefix(primaryBaseUrl)
+        val fallbackUrl = fallbackBaseUrl + pathAndQuery
+        
+        DebugLogger.log("API_FALLBACK", "Attempting fallback URL: $fallbackUrl")
+        val fallbackRequest = originalRequest.newBuilder()
+            .url(fallbackUrl)
+            .tag(fallbackAttemptedTag)
+            .build()
+        
+        return try {
+            chain.proceed(fallbackRequest)
+        } catch (e: Exception) {
+            DebugLogger.log("API_FALLBACK", "Fallback API also failed: ${e.message}")
+            throw e
         }
     }
 }
