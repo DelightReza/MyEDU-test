@@ -347,6 +347,63 @@ class WindowsInterceptor : Interceptor {
     }
 }
 
+class ApiFallbackInterceptor : Interceptor {
+    private val primaryBaseUrl = "https://api3.myedu.oshsu.kg/"
+    private val fallbackBaseUrl = "https://api.myedu.oshsu.kg/public/"
+    private val fallbackAttemptedTag = "FALLBACK_ATTEMPTED"
+    
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val originalRequest = chain.request()
+        
+        // If this request already attempted fallback, just proceed normally
+        if (originalRequest.tag() == fallbackAttemptedTag) {
+            return chain.proceed(originalRequest)
+        }
+        
+        val originalUrl = originalRequest.url.toString()
+        
+        // Try primary API first
+        return try {
+            val response = chain.proceed(originalRequest)
+            // Check if response is successful
+            if (response.isSuccessful) {
+                response
+            } else {
+                DebugLogger.log("API_FALLBACK", "Primary API returned error ${response.code}, trying fallback...")
+                response.close()
+                // Try fallback
+                attemptFallback(chain, originalRequest, originalUrl)
+            }
+        } catch (e: Exception) {
+            DebugLogger.log("API_FALLBACK", "Primary API failed: ${e.message}, trying fallback...")
+            // Try fallback
+            attemptFallback(chain, originalRequest, originalUrl)
+        }
+    }
+    
+    private fun attemptFallback(chain: Interceptor.Chain, originalRequest: Request, originalUrl: String): Response {
+        val fallbackUrl = originalUrl.replace(primaryBaseUrl, fallbackBaseUrl)
+        
+        if (fallbackUrl != originalUrl) {
+            DebugLogger.log("API_FALLBACK", "Attempting fallback URL: $fallbackUrl")
+            val fallbackRequest = originalRequest.newBuilder()
+                .url(fallbackUrl)
+                .tag(fallbackAttemptedTag)
+                .build()
+            
+            return try {
+                chain.proceed(fallbackRequest)
+            } catch (e: Exception) {
+                DebugLogger.log("API_FALLBACK", "Fallback API also failed: ${e.message}")
+                throw e
+            }
+        } else {
+            // URL didn't change, this means we're already using fallback or neither URL matches
+            throw Exception("Primary API failed")
+        }
+    }
+}
+
 class DeepSpyInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -400,11 +457,13 @@ object NetworkClient {
     val cookieJar = UniversalCookieJar()
     val interceptor = WindowsInterceptor()
     val deepSpy = DeepSpyInterceptor()
+    val fallbackInterceptor = ApiFallbackInterceptor()
     
-    val api: OshSuApi = Retrofit.Builder().baseUrl("https://api.myedu.oshsu.kg/public/")
+    val api: OshSuApi = Retrofit.Builder().baseUrl("https://api3.myedu.oshsu.kg/")
         .client(OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .addInterceptor(interceptor)
+            .addInterceptor(fallbackInterceptor)
             .addInterceptor(deepSpy)
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
