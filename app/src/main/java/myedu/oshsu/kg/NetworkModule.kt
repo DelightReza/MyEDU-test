@@ -384,7 +384,7 @@ class ApiFallbackInterceptor : Interceptor {
     private fun attemptFallback(chain: Interceptor.Chain, originalRequest: Request, originalUrl: String): Response {
         // Only attempt fallback if the URL starts with the primary base URL
         if (!originalUrl.startsWith(primaryBaseUrl)) {
-            throw Exception("API request failed and URL does not match primary base URL")
+            throw IllegalStateException("Cannot fallback: URL '$originalUrl' does not start with primary base URL '$primaryBaseUrl'")
         }
         
         // Replace only the base URL prefix (not any occurrences in the path)
