@@ -401,7 +401,7 @@ object NetworkClient {
     val interceptor = WindowsInterceptor()
     val deepSpy = DeepSpyInterceptor()
     
-    val api: OshSuApi = Retrofit.Builder().baseUrl("https://api.myedu.oshsu.kg/")
+    val api: OshSuApi = Retrofit.Builder().baseUrl("https://api.myedu.oshsu.kg/public/")
         .client(OkHttpClient.Builder()
             .cookieJar(cookieJar)
             .addInterceptor(interceptor)
