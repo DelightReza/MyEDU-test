@@ -61,7 +61,9 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
                 onOptionSelected = { vm.setTheme(it) },
                 themeMode = vm.themeMode
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            InfoSection(stringResource(R.string.visual_effects), vm.themeMode)
             SettingsDropdown(
                 label = stringResource(R.string.glassmorphism_label),
                 options = listOf(

@@ -35,18 +35,6 @@ import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import myedu.oshsu.kg.R
 
-/**
- * Applies glassmorphism effect to a Modifier
- * Creates a frosted glass appearance with blur and transparency
- */
-fun Modifier.glassmorphism(
-    backgroundColor: Color,
-    alpha: Float = 0.7f,
-    blurRadius: Int = 25
-): Modifier = this
-    .blur(blurRadius.dp)
-    .background(backgroundColor.copy(alpha = alpha))
-
 @Composable
 fun OshSuLogo(modifier: Modifier = Modifier, themeMode: String = "SYSTEM") {
     val context = LocalContext.current
