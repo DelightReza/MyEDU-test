@@ -100,32 +100,32 @@ fun ThemedCard(
     materialColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val shape = RoundedCornerShape(20.dp) // More rounded corners
     
     if (onClick != null) {
         ElevatedCard(
             onClick = onClick,
             modifier = modifier,
             shape = shape,
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp), // Increased elevation
             colors = CardDefaults.elevatedCardColors(
                 containerColor = materialColor,
                 contentColor = MaterialTheme.colorScheme.onSurface
             )
         ) {
-            Column(Modifier.padding(16.dp), content = content)
+            Column(Modifier.padding(20.dp), content = content) // Increased padding
         }
     } else {
         ElevatedCard(
             modifier = modifier,
             shape = shape,
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp), // Increased elevation
             colors = CardDefaults.elevatedCardColors(
                 containerColor = materialColor,
                 contentColor = MaterialTheme.colorScheme.onSurface
             )
         ) {
-            Column(Modifier.padding(16.dp), content = content)
+            Column(Modifier.padding(20.dp), content = content) // Increased padding
         }
     }
 }
@@ -141,13 +141,14 @@ fun BeautifulDocButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.defaultMinSize(minHeight = 56.dp),
+        modifier = modifier.defaultMinSize(minHeight = 60.dp), // Increased height
         enabled = !isLoading,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp), // More rounded
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-        )
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp) // Added elevation
     ) {
         if (isLoading) {
             CircularProgressIndicator(
@@ -165,13 +166,13 @@ fun BeautifulDocButton(
                     icon,
                     null,
                     tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(22.dp) // Slightly larger icon
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(12.dp)) // More spacing
                 Text(
                     text,
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold, // Bolder text
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     textAlign = TextAlign.Center
                 )
@@ -186,7 +187,8 @@ fun InfoSection(title: String, themeMode: String = "SYSTEM") {
         title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp, start = 4.dp)
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp, start = 4.dp)
     )
 }
 
@@ -202,25 +204,36 @@ fun DetailCard(icon: ImageVector, title: String, value: String?, themeMode: Stri
         cleaned == "Белгисиз"
     ) return
 
-    ThemedCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), materialColor = MaterialTheme.colorScheme.surfaceContainerLow) { 
+    ThemedCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), materialColor = MaterialTheme.colorScheme.surfaceContainerLow) { 
         Row(verticalAlignment = Alignment.CenterVertically) { 
-            Icon(
-                icon,
-                null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    icon,
+                    null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
             Spacer(Modifier.width(16.dp)) 
             Column { 
                 Text(
                     title,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
+                Spacer(Modifier.height(4.dp))
                 Text(
                     cleaned,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold
                 ) 
             } 
         } 
@@ -276,21 +289,22 @@ fun SettingsDropdown(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { expanded = true },
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(16.dp), // More rounded
                 color = containerColor,
-                border = BorderStroke(1.dp, borderColor)
+                border = BorderStroke(1.5.dp, borderColor) // Thicker border
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                        .padding(horizontal = 20.dp, vertical = 18.dp), // More padding
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = displayValue,
                         color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
                     )
                     Icon(
                         imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,

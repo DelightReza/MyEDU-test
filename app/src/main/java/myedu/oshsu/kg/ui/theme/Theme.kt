@@ -21,10 +21,16 @@ private val LightColorScheme = lightColorScheme(
     onSecondary = OnSecondaryBlue,
     secondaryContainer = SecondaryContainer,
     onSecondaryContainer = OnSecondaryContainer,
-    background = Color(0xFFFDFBFF),
+    tertiary = TertiaryCyan,
+    onTertiary = OnTertiaryCyan,
+    tertiaryContainer = TertiaryContainer,
+    onTertiaryContainer = OnTertiaryContainer,
+    background = Color(0xFFFAFBFF), // Slightly blue-tinted background
     onBackground = Color(0xFF1A1C1E),
-    surface = Color(0xFFFDFBFF),
+    surface = Color(0xFFFFFFFF),
     onSurface = Color(0xFF1A1C1E),
+    surfaceVariant = Color(0xFFE1E2EC),
+    onSurfaceVariant = Color(0xFF44464F)
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -36,10 +42,16 @@ private val DarkColorScheme = darkColorScheme(
     onSecondary = OnSecondaryBlueDark,
     secondaryContainer = SecondaryContainerDark,
     onSecondaryContainer = OnSecondaryContainerDark,
+    tertiary = Color(0xFF80DEEA),
+    onTertiary = Color(0xFF00363D),
+    tertiaryContainer = Color(0xFF004F58),
+    onTertiaryContainer = Color(0xFFB2EBF2),
     background = Color(0xFF1A1C1E),
     onBackground = Color(0xFFE3E2E6),
     surface = Color(0xFF1A1C1E),
     onSurface = Color(0xFFE3E2E6),
+    surfaceVariant = Color(0xFF44464F),
+    onSurfaceVariant = Color(0xFFC4C6D0)
 )
 
 @Composable

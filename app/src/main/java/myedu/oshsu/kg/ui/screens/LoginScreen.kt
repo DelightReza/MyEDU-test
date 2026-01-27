@@ -50,26 +50,27 @@ fun LoginScreen(vm: MainViewModel) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(modifier = Modifier.fillMaxSize().widthIn(max = 600.dp).padding(24.dp).systemBarsPadding(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                 OshSuLogo(modifier = Modifier.width(260.dp).height(100.dp), themeMode = vm.themeMode); Spacer(Modifier.height(48.dp))
-                OutlinedTextField(value = vm.loginEmail, onValueChange = { vm.loginEmail = it }, label = { Text(stringResource(R.string.email)) }, modifier = Modifier.fillMaxWidth(), singleLine = true, colors = inputColors, shape = RoundedCornerShape(16.dp)); Spacer(Modifier.height(16.dp))
-                OutlinedTextField(value = vm.loginPass, onValueChange = { vm.loginPass = it }, label = { Text(stringResource(R.string.password)) }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = PasswordVisualTransformation(), colors = inputColors, shape = RoundedCornerShape(16.dp)); Spacer(Modifier.height(12.dp))
+                OutlinedTextField(value = vm.loginEmail, onValueChange = { vm.loginEmail = it }, label = { Text(stringResource(R.string.email)) }, modifier = Modifier.fillMaxWidth(), singleLine = true, colors = inputColors, shape = RoundedCornerShape(20.dp)); Spacer(Modifier.height(16.dp))
+                OutlinedTextField(value = vm.loginPass, onValueChange = { vm.loginPass = it }, label = { Text(stringResource(R.string.password)) }, modifier = Modifier.fillMaxWidth(), singleLine = true, visualTransformation = PasswordVisualTransformation(), colors = inputColors, shape = RoundedCornerShape(20.dp)); Spacer(Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(checked = vm.rememberMe, onCheckedChange = { vm.rememberMe = it }); Spacer(Modifier.width(4.dp))
                     Text(text = stringResource(R.string.remember_me), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium)
                 }
-                if (vm.errorMsg != null) { Spacer(Modifier.height(16.dp)); Text(vm.errorMsg!!, color = MaterialTheme.colorScheme.error) }
+                if (vm.errorMsg != null) { Spacer(Modifier.height(16.dp)); Text(vm.errorMsg!!, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Medium) }
                 Spacer(Modifier.height(32.dp))
                 
                 Button(
                     onClick = { vm.login(vm.loginEmail, vm.loginPass) }, 
-                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp), 
+                    modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 64.dp), 
                     enabled = !vm.isLoading, 
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) { 
                     if (vm.isLoading) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary)
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(28.dp))
                     } else {
-                        Text(stringResource(R.string.sign_in), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center) 
+                        Text(stringResource(R.string.sign_in), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, style = MaterialTheme.typography.titleMedium) 
                     }
                 }
             }

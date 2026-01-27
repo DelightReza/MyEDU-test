@@ -100,13 +100,46 @@ fun HomeScreen(vm: MainViewModel) {
 
 @Composable
 fun StatCard(icon: ImageVector, label: String, value: String, secondaryText: String? = null, modifier: Modifier = Modifier) {
-    ThemedCard(modifier = modifier) { 
+    ThemedCard(modifier = modifier, materialColor = MaterialTheme.colorScheme.primaryContainer) { // Use primary container for more color
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) { 
-                Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp)); Spacer(Modifier.height(8.dp))
-                Text(text = label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center); Spacer(Modifier.height(4.dp))
-                Text(text = value, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
-                if (secondaryText != null) { Spacer(Modifier.height(4.dp)); Text(text = secondaryText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center) }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally, 
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(8.dp) // Extra padding
+            ) { 
+                Icon(
+                    icon, 
+                    null, 
+                    tint = MaterialTheme.colorScheme.primary, 
+                    modifier = Modifier.size(32.dp) // Larger icon
+                )
+                Spacer(Modifier.height(12.dp)) // More spacing
+                Text(
+                    text = label, 
+                    style = MaterialTheme.typography.labelLarge, // Larger label
+                    color = MaterialTheme.colorScheme.onPrimaryContainer, 
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = value, 
+                    style = MaterialTheme.typography.headlineLarge, 
+                    fontWeight = FontWeight.ExtraBold, // Extra bold for emphasis
+                    color = MaterialTheme.colorScheme.primary, // Use primary color for value
+                    textAlign = TextAlign.Center
+                )
+                if (secondaryText != null) { 
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = secondaryText, 
+                        style = MaterialTheme.typography.bodyMedium, 
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f), 
+                        maxLines = 1, 
+                        overflow = TextOverflow.Ellipsis, 
+                        textAlign = TextAlign.Center
+                    ) 
+                }
             }
         }
     }
