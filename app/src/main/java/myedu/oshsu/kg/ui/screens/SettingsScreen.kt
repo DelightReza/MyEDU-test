@@ -63,6 +63,17 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(24.dp))
             SettingsDropdown(
+                label = stringResource(R.string.glassmorphism_label),
+                options = listOf(
+                    stringResource(R.string.glassmorphism_disabled) to "false",
+                    stringResource(R.string.glassmorphism_enabled) to "true"
+                ),
+                currentValue = vm.glassmorphismEnabled.toString(),
+                onOptionSelected = { vm.setGlassmorphism(it == "true") },
+                themeMode = vm.themeMode
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            SettingsDropdown(
                 label = stringResource(R.string.docs_download),
                 options = listOf(
                     stringResource(R.string.in_app_pdf) to "IN_APP", 
@@ -86,7 +97,8 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
             InfoSection(stringResource(R.string.dict_tools_section), vm.themeMode)
             ThemedCard(
                 modifier = Modifier.fillMaxWidth(), 
-                onClick = { vm.showDictionaryScreen = true } 
+                onClick = { vm.showDictionaryScreen = true },
+                glassmorphismEnabled = vm.glassmorphismEnabled
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Translate, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -100,7 +112,7 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
 
             Spacer(modifier = Modifier.height(32.dp))
             InfoSection(stringResource(R.string.about), vm.themeMode)
-            ThemedCard(modifier = Modifier.fillMaxWidth()) {
+            ThemedCard(modifier = Modifier.fillMaxWidth(), glassmorphismEnabled = vm.glassmorphismEnabled) {
                 Column {
                     Text(stringResource(R.string.app_name_display), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     Text(text = "${stringResource(R.string.version_prefix)} $appVersion", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

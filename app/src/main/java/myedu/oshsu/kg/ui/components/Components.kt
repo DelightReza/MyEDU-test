@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -33,6 +34,18 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import myedu.oshsu.kg.R
+
+/**
+ * Applies glassmorphism effect to a Modifier
+ * Creates a frosted glass appearance with blur and transparency
+ */
+fun Modifier.glassmorphism(
+    backgroundColor: Color,
+    alpha: Float = 0.7f,
+    blurRadius: Int = 25
+): Modifier = this
+    .blur(blurRadius.dp)
+    .background(backgroundColor.copy(alpha = alpha))
 
 @Composable
 fun OshSuLogo(modifier: Modifier = Modifier, themeMode: String = "SYSTEM") {
@@ -98,18 +111,34 @@ fun ThemedCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     materialColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    glassmorphismEnabled: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val shape = RoundedCornerShape(20.dp) // More rounded corners
     
+    // For glassmorphism, we use a semi-transparent color with blur
+    val cardColor = if (glassmorphismEnabled) {
+        materialColor.copy(alpha = 0.7f)
+    } else {
+        materialColor
+    }
+    
+    val cardModifier = if (glassmorphismEnabled) {
+        modifier.then(Modifier.blur(20.dp))
+    } else {
+        modifier
+    }
+    
     if (onClick != null) {
         ElevatedCard(
             onClick = onClick,
-            modifier = modifier,
+            modifier = cardModifier,
             shape = shape,
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp), // Increased elevation
+            elevation = CardDefaults.elevatedCardElevation(
+                defaultElevation = if (glassmorphismEnabled) 0.dp else 4.dp
+            ),
             colors = CardDefaults.elevatedCardColors(
-                containerColor = materialColor,
+                containerColor = cardColor,
                 contentColor = MaterialTheme.colorScheme.onSurface
             )
         ) {
@@ -117,11 +146,13 @@ fun ThemedCard(
         }
     } else {
         ElevatedCard(
-            modifier = modifier,
+            modifier = cardModifier,
             shape = shape,
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp), // Increased elevation
+            elevation = CardDefaults.elevatedCardElevation(
+                defaultElevation = if (glassmorphismEnabled) 0.dp else 4.dp
+            ),
             colors = CardDefaults.elevatedCardColors(
-                containerColor = materialColor,
+                containerColor = cardColor,
                 contentColor = MaterialTheme.colorScheme.onSurface
             )
         ) {

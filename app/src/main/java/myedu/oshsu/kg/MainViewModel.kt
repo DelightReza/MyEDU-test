@@ -56,6 +56,7 @@ class MainViewModel : ViewModel() {
 
     // --- THEME ---
     var themeMode by mutableStateOf("SYSTEM")
+    var glassmorphismEnabled by mutableStateOf(false)
 
     // --- SETTINGS ---
     var downloadMode by mutableStateOf("IN_APP") 
@@ -144,6 +145,9 @@ class MainViewModel : ViewModel() {
         val token = prefs?.getToken()
         val savedTheme = prefs?.loadData("theme_mode_pref", String::class.java)
         if (savedTheme != null) themeMode = savedTheme
+        
+        val savedGlassmorphism = prefs?.loadData("glassmorphism_enabled", Boolean::class.java)
+        if (savedGlassmorphism != null) glassmorphismEnabled = savedGlassmorphism
         
         val savedDocMode = prefs?.loadData("doc_download_mode", String::class.java)
         if (savedDocMode != null) downloadMode = savedDocMode
@@ -450,6 +454,11 @@ class MainViewModel : ViewModel() {
     fun setTheme(mode: String) {
         themeMode = mode
         prefs?.saveData("theme_mode_pref", mode)
+    }
+    
+    fun setGlassmorphism(enabled: Boolean) {
+        glassmorphismEnabled = enabled
+        prefs?.saveData("glassmorphism_enabled", enabled)
     }
 
     fun setDocMode(mode: String) {

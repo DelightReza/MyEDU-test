@@ -104,6 +104,10 @@
     <string name="follow_system">Системная</string>
     <string name="light_mode">Светлая</string>
     <string name="dark_mode">Темная</string>
+    <string name="visual_effects">Визуальные эффекты</string>
+    <string name="glassmorphism_label">Глассморфизм</string>
+    <string name="glassmorphism_enabled">Включен (Матовое стекло)</string>
+    <string name="glassmorphism_disabled">Выключен (Стандартный)</string>
     <string name="language">Язык</string>
     <string name="docs_download">Скачивание документов</string>
     <string name="in_app_pdf">В приложении (PDF)</string>

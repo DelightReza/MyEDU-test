@@ -74,14 +74,14 @@ fun HomeScreen(vm: MainViewModel) {
             val groupSecondaryText = if (rawGroupNum != null && rawAvnName != null && rawAvnName != rawGroupNum.toString() && rawAvnName != "0") rawAvnName else null
 
             Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(12.dp)) { 
-                StatCard(icon = Icons.Outlined.CalendarToday, label = stringResource(R.string.semester), value = activeSemesterNum, secondaryText = streamText, modifier = Modifier.weight(1f).fillMaxHeight())
-                StatCard(icon = Icons.Outlined.Groups, label = stringResource(R.string.group), value = displayGroupValue, secondaryText = groupSecondaryText, modifier = Modifier.weight(1f).fillMaxHeight()) 
+                StatCard(icon = Icons.Outlined.CalendarToday, label = stringResource(R.string.semester), value = activeSemesterNum, secondaryText = streamText, modifier = Modifier.weight(1f).fillMaxHeight(), glassmorphismEnabled = vm.glassmorphismEnabled)
+                StatCard(icon = Icons.Outlined.Groups, label = stringResource(R.string.group), value = displayGroupValue, secondaryText = groupSecondaryText, modifier = Modifier.weight(1f).fillMaxHeight(), glassmorphismEnabled = vm.glassmorphismEnabled) 
             }
             Spacer(Modifier.height(32.dp))
             Text("${vm.todayDayName}: ${stringResource(R.string.todays_classes)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(16.dp))
             if (vm.todayClasses.isEmpty()) {
-                ThemedCard(modifier = Modifier.fillMaxWidth()) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Weekend, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(16.dp)); Text(stringResource(R.string.no_classes_today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface) } } 
+                ThemedCard(modifier = Modifier.fillMaxWidth(), glassmorphismEnabled = vm.glassmorphismEnabled) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Weekend, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(16.dp)); Text(stringResource(R.string.no_classes_today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface) } } 
             } else {
                 vm.todayClasses.forEach { item -> ClassItem(item, vm.getTimeString(item.id_lesson), vm) { vm.selectedClass = item } } 
             }
@@ -92,15 +92,15 @@ fun HomeScreen(vm: MainViewModel) {
         ModalBottomSheet(onDismissRequest = { showNewsSheet = false }, containerColor = BottomSheetDefaults.ContainerColor) { 
             Column(Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) { 
                 Text(stringResource(R.string.announcements), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                LazyColumn { items(vm.newsList) { news -> ThemedCard(Modifier.padding(top=8.dp).fillMaxWidth(), materialColor = MaterialTheme.colorScheme.surfaceVariant) { Column { Text(news.title?:"", fontWeight=FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface); Text(news.message?:"", color = MaterialTheme.colorScheme.onSurfaceVariant) } } } } 
+                LazyColumn { items(vm.newsList) { news -> ThemedCard(Modifier.padding(top=8.dp).fillMaxWidth(), materialColor = MaterialTheme.colorScheme.surfaceVariant, glassmorphismEnabled = vm.glassmorphismEnabled) { Column { Text(news.title?:"", fontWeight=FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface); Text(news.message?:"", color = MaterialTheme.colorScheme.onSurfaceVariant) } } } } 
             } 
         } 
     }
 }
 
 @Composable
-fun StatCard(icon: ImageVector, label: String, value: String, secondaryText: String? = null, modifier: Modifier = Modifier) {
-    ThemedCard(modifier = modifier, materialColor = MaterialTheme.colorScheme.primaryContainer) { // Use primary container for more color
+fun StatCard(icon: ImageVector, label: String, value: String, secondaryText: String? = null, modifier: Modifier = Modifier, glassmorphismEnabled: Boolean = false) {
+    ThemedCard(modifier = modifier, materialColor = MaterialTheme.colorScheme.primaryContainer, glassmorphismEnabled = glassmorphismEnabled) { // Use primary container for more color
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally, 
