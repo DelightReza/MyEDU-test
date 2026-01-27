@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -71,7 +72,7 @@ fun ThemedBackground(themeMode: String = "SYSTEM", glassmorphismEnabled: Boolean
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
-                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                            brush = Brush.verticalGradient(
                                 colors = listOf(
                                     MaterialTheme.colorScheme.primary.copy(alpha = 0.03f),
                                     MaterialTheme.colorScheme.tertiary.copy(alpha = 0.02f),
