@@ -58,12 +58,34 @@ fun OshSuLogo(modifier: Modifier = Modifier, themeMode: String = "SYSTEM") {
 }
 
 @Composable
-fun ThemedBackground(themeMode: String = "SYSTEM", content: @Composable BoxScope.() -> Unit) {
-    Surface(
-        color = MaterialTheme.colorScheme.background,
-        modifier = Modifier.fillMaxSize(),
-        content = { Box(Modifier.fillMaxSize(), content = content) }
-    )
+fun ThemedBackground(themeMode: String = "SYSTEM", glassmorphismEnabled: Boolean = false, content: @Composable BoxScope.() -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background surface
+        Surface(
+            color = MaterialTheme.colorScheme.background,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Add subtle gradient overlay for Glass mode
+            if (glassmorphismEnabled) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.03f),
+                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.02f),
+                                    MaterialTheme.colorScheme.background
+                                )
+                            )
+                        )
+                )
+            }
+        }
+        
+        // Content
+        Box(Modifier.fillMaxSize(), content = content)
+    }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -104,23 +126,23 @@ fun ThemedCard(
 ) {
     val shape = RoundedCornerShape(20.dp) // More rounded corners
     
-    // For glassmorphism, we use a semi-transparent color with blur
+    // For glassmorphism: higher transparency, subtle border, no blur on content
     val cardColor = if (glassmorphismEnabled) {
-        materialColor.copy(alpha = 0.7f)
+        materialColor.copy(alpha = 0.3f) // More transparent for glass effect
     } else {
         materialColor
     }
     
-    val cardModifier = if (glassmorphismEnabled) {
-        modifier.then(Modifier.blur(20.dp))
+    val border = if (glassmorphismEnabled) {
+        BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
     } else {
-        modifier
+        null
     }
     
     if (onClick != null) {
         ElevatedCard(
             onClick = onClick,
-            modifier = cardModifier,
+            modifier = modifier,
             shape = shape,
             elevation = CardDefaults.elevatedCardElevation(
                 defaultElevation = if (glassmorphismEnabled) 0.dp else 4.dp
@@ -128,13 +150,14 @@ fun ThemedCard(
             colors = CardDefaults.elevatedCardColors(
                 containerColor = cardColor,
                 contentColor = MaterialTheme.colorScheme.onSurface
-            )
+            ),
+            border = border
         ) {
             Column(Modifier.padding(20.dp), content = content) // Increased padding
         }
     } else {
         ElevatedCard(
-            modifier = cardModifier,
+            modifier = modifier,
             shape = shape,
             elevation = CardDefaults.elevatedCardElevation(
                 defaultElevation = if (glassmorphismEnabled) 0.dp else 4.dp
@@ -142,7 +165,8 @@ fun ThemedCard(
             colors = CardDefaults.elevatedCardColors(
                 containerColor = cardColor,
                 contentColor = MaterialTheme.colorScheme.onSurface
-            )
+            ),
+            border = border
         ) {
             Column(Modifier.padding(20.dp), content = content) // Increased padding
         }

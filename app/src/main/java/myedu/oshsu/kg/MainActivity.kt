@@ -136,7 +136,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(vm.fullSchedule, vm.timeMap, vm.language) { 
                 if (vm.fullSchedule.isNotEmpty() && vm.timeMap.isNotEmpty()) { ScheduleAlarmManager(context).scheduleNotifications(vm.fullSchedule, vm.timeMap, vm.language) } 
             }
-            MyEduTheme(themeMode = vm.themeMode) { ThemedBackground { AppContent(vm) } } 
+            MyEduTheme(themeMode = vm.themeMode) { ThemedBackground(themeMode = vm.themeMode, glassmorphismEnabled = vm.glassmorphismEnabled) { AppContent(vm) } } 
         }
     }
 
@@ -233,12 +233,12 @@ fun MainAppStructure(vm: MainViewModel) {
             val showNav = vm.selectedClass == null && !vm.showTranscriptScreen && !vm.showReferenceScreen && !vm.showSettingsScreen && vm.webDocumentUrl == null && !vm.showDictionaryScreen && !vm.showPersonalInfoScreen && !vm.showEditProfileScreen
             AnimatedVisibility(visible = showNav, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut(), modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp, start = 16.dp, end = 16.dp).windowInsetsPadding(WindowInsets.navigationBars)) { FloatingNavBar(vm) }
             
-            AnimatedVisibility(visible = vm.showTranscriptScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground { TranscriptView(vm) { vm.showTranscriptScreen = false; vm.clearPdfState() } } }
-            AnimatedVisibility(visible = vm.showReferenceScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground { ReferenceView(vm) { vm.showReferenceScreen = false; vm.clearPdfState() } } }
-            AnimatedVisibility(visible = vm.showSettingsScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground { SettingsScreen(vm) { vm.showSettingsScreen = false } } }
-            AnimatedVisibility(visible = vm.showDictionaryScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground { DictionaryScreen(vm) { vm.showDictionaryScreen = false } } }
-            AnimatedVisibility(visible = vm.showPersonalInfoScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground { PersonalInfoScreen(vm, { vm.showPersonalInfoScreen = false }) } }
-            AnimatedVisibility(visible = vm.showEditProfileScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground { EditProfileScreen(vm, { vm.showEditProfileScreen = false }) } }
+            AnimatedVisibility(visible = vm.showTranscriptScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { TranscriptView(vm) { vm.showTranscriptScreen = false; vm.clearPdfState() } } }
+            AnimatedVisibility(visible = vm.showReferenceScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { ReferenceView(vm) { vm.showReferenceScreen = false; vm.clearPdfState() } } }
+            AnimatedVisibility(visible = vm.showSettingsScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { SettingsScreen(vm) { vm.showSettingsScreen = false } } }
+            AnimatedVisibility(visible = vm.showDictionaryScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { DictionaryScreen(vm) { vm.showDictionaryScreen = false } } }
+            AnimatedVisibility(visible = vm.showPersonalInfoScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { PersonalInfoScreen(vm, { vm.showPersonalInfoScreen = false }) } }
+            AnimatedVisibility(visible = vm.showEditProfileScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { EditProfileScreen(vm, { vm.showEditProfileScreen = false }) } }
 
             if (vm.webDocumentUrl != null) {
                 val isTranscript = vm.webDocumentUrl!!.contains("Transcript", true)
