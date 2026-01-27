@@ -104,10 +104,7 @@
     <string name="follow_system">Системалык</string>
     <string name="light_mode">Жарык</string>
     <string name="dark_mode">Күңүрт</string>
-    <string name="visual_effects">Визуалдык эффекттер</string>
-    <string name="glassmorphism_label">Глассморфизм</string>
-    <string name="glassmorphism_enabled">Күйгүзүлгөн (Айнек)</string>
-    <string name="glassmorphism_disabled">Өчүрүлгөн (Стандарттык)</string>
+    <string name="glass_mode">Айнек</string>
     <string name="language">Тил</string>
     <string name="docs_download">Документ жүктөө</string>
     <string name="in_app_pdf">Тиркеме ичинде (PDF)</string>

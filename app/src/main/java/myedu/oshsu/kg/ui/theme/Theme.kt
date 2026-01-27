@@ -125,6 +125,7 @@ private val DarkColorScheme = darkColorScheme(
 @Composable
 fun MyEduTheme(
     themeMode: String = "SYSTEM",
+    glassmorphismEnabled: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -133,13 +134,14 @@ fun MyEduTheme(
     val isDark = when(themeMode) {
         "LIGHT" -> false
         "DARK" -> true
+        "GLASS" -> false  // Glass theme uses light base
         else -> systemDark
     }
 
     val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     val colorScheme = when {
-        dynamicColor -> {
+        dynamicColor && themeMode != "GLASS" -> {
             if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         isDark -> DarkColorScheme
@@ -162,7 +164,7 @@ fun MyEduTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = AppTypography,
-        shapes = AppShapes, // Add Material Design 3 shapes
+        shapes = AppShapes,
         content = content
     )
 }

@@ -136,7 +136,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(vm.fullSchedule, vm.timeMap, vm.language) { 
                 if (vm.fullSchedule.isNotEmpty() && vm.timeMap.isNotEmpty()) { ScheduleAlarmManager(context).scheduleNotifications(vm.fullSchedule, vm.timeMap, vm.language) } 
             }
-            MyEduTheme(themeMode = vm.themeMode) { ThemedBackground { AppContent(vm) } } 
+            MyEduTheme(themeMode = vm.themeMode, glassmorphismEnabled = vm.glassmorphismEnabled) { ThemedBackground { AppContent(vm) } } 
         }
     }
 

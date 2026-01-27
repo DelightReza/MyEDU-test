@@ -55,21 +55,11 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
                 options = listOf(
                     stringResource(R.string.follow_system) to "SYSTEM", 
                     stringResource(R.string.light_mode) to "LIGHT", 
-                    stringResource(R.string.dark_mode) to "DARK"
+                    stringResource(R.string.dark_mode) to "DARK",
+                    stringResource(R.string.glass_mode) to "GLASS"
                 ),
                 currentValue = vm.themeMode, 
                 onOptionSelected = { vm.setTheme(it) },
-                themeMode = vm.themeMode
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            SettingsDropdown(
-                label = stringResource(R.string.glassmorphism_label),
-                options = listOf(
-                    stringResource(R.string.glassmorphism_disabled) to "false",
-                    stringResource(R.string.glassmorphism_enabled) to "true"
-                ),
-                currentValue = vm.glassmorphismEnabled.toString(),
-                onOptionSelected = { vm.setGlassmorphism(it == "true") },
                 themeMode = vm.themeMode
             )
             
