@@ -291,7 +291,7 @@ fun SettingsDropdown(
                     .clickable { expanded = true },
                 shape = RoundedCornerShape(16.dp), // More rounded
                 color = containerColor,
-                border = BorderStroke(1.5.dp, borderColor) // Thicker border
+                border = BorderStroke(2.dp, borderColor) // Thicker border for better visibility
             ) {
                 Row(
                     modifier = Modifier

@@ -70,7 +70,7 @@ fun LoginScreen(vm: MainViewModel) {
                     if (vm.isLoading) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(28.dp))
                     } else {
-                        Text(stringResource(R.string.sign_in), fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, style = MaterialTheme.typography.titleMedium) 
+                        Text(stringResource(R.string.sign_in), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), textAlign = TextAlign.Center) 
                     }
                 }
             }
