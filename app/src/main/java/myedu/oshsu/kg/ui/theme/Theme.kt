@@ -125,7 +125,6 @@ private val DarkColorScheme = darkColorScheme(
 @Composable
 fun MyEduTheme(
     themeMode: String = "SYSTEM",
-    glassmorphismEnabled: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
