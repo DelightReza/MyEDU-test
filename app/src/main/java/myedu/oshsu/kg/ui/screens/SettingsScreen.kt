@@ -61,9 +61,7 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
                 onOptionSelected = { vm.setTheme(it) },
                 themeMode = vm.themeMode
             )
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            InfoSection(stringResource(R.string.visual_effects), vm.themeMode)
+            Spacer(modifier = Modifier.height(16.dp))
             SettingsDropdown(
                 label = stringResource(R.string.glassmorphism_label),
                 options = listOf(
@@ -74,6 +72,7 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
                 onOptionSelected = { vm.setGlassmorphism(it == "true") },
                 themeMode = vm.themeMode
             )
+            
             Spacer(modifier = Modifier.height(24.dp))
             SettingsDropdown(
                 label = stringResource(R.string.docs_download),
