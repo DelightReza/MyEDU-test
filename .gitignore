@@ -1,0 +1,20 @@
+# Gradle files
+.gradle/
+build/
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+.DS_Store
+
+# Build outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Temporary files
+*.log
+*.tmp
