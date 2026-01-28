@@ -265,6 +265,7 @@
     <string name="light_mode">Light Mode</string>
     <string name="dark_mode">Dark Mode</string>
     <string name="glass_mode">Glass Mode</string>
+    <string name="glass_dark_mode">Glass Dark Mode</string>
     <string name="language">Language</string>
     <string name="docs_download">Document Download</string>
     <string name="in_app_pdf">In-App PDF Generation</string>

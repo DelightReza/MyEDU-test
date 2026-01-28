@@ -41,12 +41,14 @@ import myedu.oshsu.kg.R
 fun OshSuLogo(modifier: Modifier = Modifier, themeMode: String = "SYSTEM") {
     val context = LocalContext.current
     // In Glass mode, use dark logo without tint for better visibility on light/colorful background
+    // In Glass Dark mode, use white logo for visibility on dark background
     val url = "file:///android_asset/logo-dark4.svg"
     val imageLoader = remember { ImageLoader.Builder(context).components { add(SvgDecoder.Factory()) }.build() }
     
     val isDark = when(themeMode) {
         "DARK" -> true
         "GLASS" -> false  // Use dark logo (no tint) in Glass mode
+        "GLASS_DARK" -> true  // Use white logo in Glass Dark mode
         "LIGHT" -> false
         else -> isSystemInDarkTheme()
     }

@@ -57,9 +57,9 @@ class MainViewModel : ViewModel() {
     // --- THEME ---
     var themeMode by mutableStateOf("SYSTEM")
     
-    // Computed property: glassmorphism is enabled when theme is GLASS
+    // Computed property: glassmorphism is enabled when theme is GLASS or GLASS_DARK
     val glassmorphismEnabled: Boolean
-        get() = themeMode == "GLASS"
+        get() = themeMode == "GLASS" || themeMode == "GLASS_DARK"
 
     // --- SETTINGS ---
     var downloadMode by mutableStateOf("IN_APP") 

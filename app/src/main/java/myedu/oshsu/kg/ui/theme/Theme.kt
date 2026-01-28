@@ -134,13 +134,14 @@ fun MyEduTheme(
         "LIGHT" -> false
         "DARK" -> true
         "GLASS" -> false  // Glass theme uses light base
+        "GLASS_DARK" -> true  // Glass Dark theme uses dark base
         else -> systemDark
     }
 
     val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     val colorScheme = when {
-        dynamicColor && themeMode != "GLASS" -> {
+        dynamicColor && themeMode != "GLASS" && themeMode != "GLASS_DARK" -> {
             if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         isDark -> DarkColorScheme

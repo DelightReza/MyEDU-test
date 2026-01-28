@@ -56,7 +56,8 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
                     stringResource(R.string.follow_system) to "SYSTEM", 
                     stringResource(R.string.light_mode) to "LIGHT", 
                     stringResource(R.string.dark_mode) to "DARK",
-                    stringResource(R.string.glass_mode) to "GLASS"
+                    stringResource(R.string.glass_mode) to "GLASS",
+                    stringResource(R.string.glass_dark_mode) to "GLASS_DARK"
                 ),
                 currentValue = vm.themeMode, 
                 onOptionSelected = { vm.setTheme(it) },
