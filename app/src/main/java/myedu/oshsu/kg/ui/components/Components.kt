@@ -67,7 +67,7 @@ fun ThemedBackground(themeMode: String = "SYSTEM", glassmorphismEnabled: Boolean
             color = MaterialTheme.colorScheme.background,
             modifier = Modifier.fillMaxSize()
         ) {
-            // Add subtle gradient overlay for Glass mode
+            // Add darker gradient overlay for Glass mode
             if (glassmorphismEnabled) {
                 Box(
                     modifier = Modifier
@@ -75,9 +75,9 @@ fun ThemedBackground(themeMode: String = "SYSTEM", glassmorphismEnabled: Boolean
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.03f),
-                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.02f),
-                                    MaterialTheme.colorScheme.background
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.08f),
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
                                 )
                             )
                         )
@@ -180,18 +180,34 @@ fun BeautifulDocButton(
     themeMode: String = "SYSTEM",
     modifier: Modifier = Modifier,
     isLoading: Boolean = false,
+    glassmorphismEnabled: Boolean = false,
     onClick: () -> Unit
 ) {
+    val containerColor = if (glassmorphismEnabled) {
+        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
+    }
+    val elevation = if (glassmorphismEnabled) 0.dp else 4.dp
+    
     Button(
         onClick = onClick,
-        modifier = modifier.defaultMinSize(minHeight = 60.dp), // Increased height
+        modifier = modifier
+            .defaultMinSize(minHeight = 60.dp)
+            .then(
+                if (glassmorphismEnabled) {
+                    Modifier.border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
+                } else {
+                    Modifier
+                }
+            ),
         enabled = !isLoading,
-        shape = RoundedCornerShape(20.dp), // More rounded
+        shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            containerColor = containerColor,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp) // Added elevation
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = elevation)
     ) {
         if (isLoading) {
             CircularProgressIndicator(
@@ -236,7 +252,7 @@ fun InfoSection(title: String, themeMode: String = "SYSTEM") {
 }
 
 @Composable
-fun DetailCard(icon: ImageVector, title: String, value: String?, themeMode: String = "SYSTEM") {
+fun DetailCard(icon: ImageVector, title: String, value: String?, themeMode: String = "SYSTEM", glassmorphismEnabled: Boolean = false) {
     val cleaned = value?.trim()
     if (cleaned.isNullOrEmpty() || 
         cleaned.equals("null", true) || 
@@ -247,7 +263,11 @@ fun DetailCard(icon: ImageVector, title: String, value: String?, themeMode: Stri
         cleaned == "Белгисиз"
     ) return
 
-    ThemedCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), materialColor = MaterialTheme.colorScheme.surfaceContainerLow) { 
+    ThemedCard(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+        materialColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        glassmorphismEnabled = glassmorphismEnabled
+    ) { 
         Row(verticalAlignment = Alignment.CenterVertically) { 
             Box(
                 modifier = Modifier
