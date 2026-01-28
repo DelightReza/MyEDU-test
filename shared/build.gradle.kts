@@ -20,6 +20,8 @@ kotlin {
         it.binaries.framework {
             baseName = "shared"
             isStatic = true
+            // Export coroutines for iOS
+            export("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
         }
     }
 
@@ -27,6 +29,9 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                // Note: For cross-platform networking, consider using Ktor client
+                // instead of Retrofit (Android-only). Example:
+                // implementation("io.ktor:ktor-client-core:2.3.5")
             }
         }
         val commonTest by getting {
@@ -36,6 +41,8 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
+                // Android-specific networking (Retrofit)
+                // For true cross-platform support, migrate to Ktor client
                 implementation("com.squareup.retrofit2:retrofit:2.9.0")
                 implementation("com.squareup.retrofit2:converter-gson:2.9.0")
             }
@@ -50,6 +57,7 @@ kotlin {
             iosSimulatorArm64Main.dependsOn(this)
             dependencies {
                 // iOS-specific dependencies can go here
+                // For networking, consider Ktor client for iOS
             }
         }
     }

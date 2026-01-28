@@ -275,7 +275,7 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/../shared/build/xcodegen/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",
+					"$(SRCROOT)/../shared/build/bin/ios$(CONFIGURATION)Framework",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -314,7 +314,7 @@
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"$(SRCROOT)/../shared/build/xcodegen/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)",
+					"$(SRCROOT)/../shared/build/bin/ios$(CONFIGURATION)Framework",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

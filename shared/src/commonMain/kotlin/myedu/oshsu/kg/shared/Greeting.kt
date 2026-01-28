@@ -4,7 +4,7 @@ package myedu.oshsu.kg.shared
  * Greeting class that demonstrates shared code across platforms
  */
 class Greeting {
-    private val platform: Platform = getPlatform()
+    private val platform: Platform by lazy { getPlatform() }
 
     fun greet(): String {
         return "Hello from ${platform.name}!"

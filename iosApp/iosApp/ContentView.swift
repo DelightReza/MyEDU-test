@@ -2,8 +2,7 @@ import SwiftUI
 import shared
 
 struct ContentView: View {
-    let greeting = Greeting().greet()
-    let platformInfo = Greeting().getPlatformInfo()
+    private let greeting = Greeting()
     
     var body: some View {
         NavigationView {
@@ -17,12 +16,12 @@ struct ContentView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 
-                Text(greeting)
+                Text(greeting.greet())
                     .font(.title3)
                     .foregroundColor(.secondary)
                     .padding(.top, 10)
                 
-                Text(platformInfo)
+                Text(greeting.getPlatformInfo())
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
