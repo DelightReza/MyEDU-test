@@ -67,7 +67,7 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
 
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.fillMaxWidth().widthIn(max = 840.dp).verticalScroll(rememberScrollState()).padding(16.dp)) {
-            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) { 
+            ThemedCard(Modifier.fillMaxWidth(), materialColor = MaterialTheme.colorScheme.primaryContainer, glassmorphismEnabled = vm.glassmorphismEnabled) { 
                  Column(Modifier.padding(24.dp)) { 
                     Text(item.subject?.get(lang) ?: subjectDefaultStr, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
                     Spacer(Modifier.height(8.dp))
@@ -86,7 +86,7 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.current_performance), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.height(8.dp))
-            ThemedCard(modifier = Modifier.fillMaxWidth()) {
+            ThemedCard(modifier = Modifier.fillMaxWidth(), glassmorphismEnabled = vm.glassmorphismEnabled) {
                 if (subjectGrades != null) {
                     Column { 
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { 
@@ -110,7 +110,7 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
                 Spacer(Modifier.height(16.dp))
                 Text(stringResource(R.string.teacher), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.height(8.dp))
-                ThemedCard(modifier = Modifier.fillMaxWidth()) { 
+                ThemedCard(modifier = Modifier.fillMaxWidth(), glassmorphismEnabled = vm.glassmorphismEnabled) { 
                     Row(verticalAlignment = Alignment.CenterVertically) { 
                         Icon(Icons.Outlined.Person, null, tint = MaterialTheme.colorScheme.secondary); Spacer(Modifier.width(16.dp))
                         Text(teacherName!!, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.onSurface)
@@ -127,7 +127,7 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
                 Spacer(Modifier.height(16.dp))
                 Text(stringResource(R.string.location), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.height(8.dp))
-                ThemedCard(modifier = Modifier.fillMaxWidth()) { 
+                ThemedCard(modifier = Modifier.fillMaxWidth(), glassmorphismEnabled = vm.glassmorphismEnabled) { 
                     Column { 
                         if (isValid(roomName)) {
                             Row(verticalAlignment = Alignment.CenterVertically) { 

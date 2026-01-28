@@ -83,7 +83,7 @@ fun HomeScreen(vm: MainViewModel) {
             if (vm.todayClasses.isEmpty()) {
                 ThemedCard(modifier = Modifier.fillMaxWidth(), glassmorphismEnabled = vm.glassmorphismEnabled) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Outlined.Weekend, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(16.dp)); Text(stringResource(R.string.no_classes_today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface) } } 
             } else {
-                vm.todayClasses.forEach { item -> ClassItem(item, vm.getTimeString(item.id_lesson), vm) { vm.selectedClass = item } } 
+                vm.todayClasses.forEach { item -> ClassItem(item, vm.getTimeString(item.id_lesson), vm, glassmorphismEnabled = vm.glassmorphismEnabled) { vm.selectedClass = item } } 
             }
             Spacer(Modifier.height(80.dp))
         }
