@@ -271,10 +271,23 @@ fun MainAppStructure(vm: MainViewModel) {
 
 @Composable
 fun FloatingNavBar(vm: MainViewModel) {
-    val containerColor = MaterialTheme.colorScheme.surface
-    val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-    val elevation = 4.dp
-    Surface(modifier = Modifier.height(72.dp).widthIn(max = 400.dp).fillMaxWidth(), shape = RoundedCornerShape(36.dp), color = containerColor, border = border, shadowElevation = elevation) {
+    val glassmorphismEnabled = vm.glassmorphismEnabled
+    val containerColor = if (glassmorphismEnabled) MaterialTheme.colorScheme.surface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = if (glassmorphismEnabled) 0.2f else 0.2f)
+    val border = BorderStroke(if (glassmorphismEnabled) 0.5.dp else 1.dp, borderColor)
+    val elevation = if (glassmorphismEnabled) 0.dp else 4.dp
+    
+    Surface(
+        modifier = Modifier
+            .height(72.dp)
+            .widthIn(max = 400.dp)
+            .fillMaxWidth()
+            .then(if (glassmorphismEnabled) Modifier.border(border, RoundedCornerShape(36.dp)) else Modifier), 
+        shape = RoundedCornerShape(36.dp), 
+        color = containerColor, 
+        border = if (!glassmorphismEnabled) border else null, 
+        shadowElevation = elevation
+    ) {
         Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
             FloatingNavItem(vm, 0, Icons.Default.Home, stringResource(R.string.nav_home))
             FloatingNavItem(vm, 1, Icons.Default.DateRange, stringResource(R.string.nav_schedule))

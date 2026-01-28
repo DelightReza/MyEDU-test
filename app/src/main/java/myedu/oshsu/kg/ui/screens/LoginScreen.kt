@@ -76,13 +76,19 @@ fun LoginScreen(vm: MainViewModel) {
             }
         }
         if (showSettingsSheet) {
-            ModalBottomSheet(onDismissRequest = { showSettingsSheet = false }, containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface) {
+            val glassmorphismEnabled = vm.glassmorphismEnabled
+            val sheetColor = if (glassmorphismEnabled) MaterialTheme.colorScheme.surface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+            ModalBottomSheet(
+                onDismissRequest = { showSettingsSheet = false }, 
+                containerColor = sheetColor, 
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ) {
                 Column(modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 48.dp)) {
                     Text(stringResource(R.string.settings), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp), color = MaterialTheme.colorScheme.onSurface)
                     // Using Shared Component
-                    SettingsDropdown(label = stringResource(R.string.appearance), options = listOf(stringResource(R.string.follow_system) to "SYSTEM", stringResource(R.string.light_mode) to "LIGHT", stringResource(R.string.dark_mode) to "DARK"), currentValue = vm.themeMode, onOptionSelected = { vm.setTheme(it) }, themeMode = vm.themeMode)
+                    SettingsDropdown(label = stringResource(R.string.appearance), options = listOf(stringResource(R.string.follow_system) to "SYSTEM", stringResource(R.string.light_mode) to "LIGHT", stringResource(R.string.dark_mode) to "DARK", stringResource(R.string.glass_mode) to "GLASS"), currentValue = vm.themeMode, onOptionSelected = { vm.setTheme(it) }, themeMode = vm.themeMode, glassmorphismEnabled = glassmorphismEnabled)
                     Spacer(modifier = Modifier.height(24.dp))
-                    SettingsDropdown(label = stringResource(R.string.language), options = listOf("English" to "en", "Русский" to "ru", "Кыргызча" to "ky"), currentValue = vm.language, onOptionSelected = { selectedLang -> if (vm.language != selectedLang) { vm.setAppLanguage(selectedLang); (context as? MainActivity)?.restartApp() } }, themeMode = vm.themeMode)
+                    SettingsDropdown(label = stringResource(R.string.language), options = listOf("English" to "en", "Русский" to "ru", "Кыргызча" to "ky"), currentValue = vm.language, onOptionSelected = { selectedLang -> if (vm.language != selectedLang) { vm.setAppLanguage(selectedLang); (context as? MainActivity)?.restartApp() } }, themeMode = vm.themeMode, glassmorphismEnabled = glassmorphismEnabled)
                 }
             }
         }
