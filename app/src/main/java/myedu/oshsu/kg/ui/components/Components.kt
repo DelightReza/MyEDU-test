@@ -2,6 +2,7 @@ package myedu.oshsu.kg.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -134,16 +135,16 @@ fun ThemedCard(
         materialColor
     }
     
-    val border = if (glassmorphismEnabled) {
-        BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+    val cardModifier = if (glassmorphismEnabled) {
+        modifier.then(Modifier.border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), shape))
     } else {
-        null
+        modifier
     }
     
     if (onClick != null) {
         ElevatedCard(
             onClick = onClick,
-            modifier = modifier,
+            modifier = cardModifier,
             shape = shape,
             elevation = CardDefaults.elevatedCardElevation(
                 defaultElevation = if (glassmorphismEnabled) 0.dp else 4.dp
@@ -151,14 +152,13 @@ fun ThemedCard(
             colors = CardDefaults.elevatedCardColors(
                 containerColor = cardColor,
                 contentColor = MaterialTheme.colorScheme.onSurface
-            ),
-            border = border
+            )
         ) {
             Column(Modifier.padding(20.dp), content = content) // Increased padding
         }
     } else {
         ElevatedCard(
-            modifier = modifier,
+            modifier = cardModifier,
             shape = shape,
             elevation = CardDefaults.elevatedCardElevation(
                 defaultElevation = if (glassmorphismEnabled) 0.dp else 4.dp
@@ -166,8 +166,7 @@ fun ThemedCard(
             colors = CardDefaults.elevatedCardColors(
                 containerColor = cardColor,
                 contentColor = MaterialTheme.colorScheme.onSurface
-            ),
-            border = border
+            )
         ) {
             Column(Modifier.padding(20.dp), content = content) // Increased padding
         }
