@@ -74,8 +74,8 @@ fun HomeScreen(vm: MainViewModel) {
             val groupSecondaryText = if (rawGroupNum != null && rawAvnName != null && rawAvnName != rawGroupNum.toString() && rawAvnName != "0") rawAvnName else null
 
             Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(12.dp)) { 
-                StatCard(icon = Icons.Outlined.CalendarToday, label = stringResource(R.string.semester), value = activeSemesterNum, secondaryText = streamText, modifier = Modifier.weight(1f).fillMaxHeight(), glassmorphismEnabled = vm.glassmorphismEnabled)
-                StatCard(icon = Icons.Outlined.Groups, label = stringResource(R.string.group), value = displayGroupValue, secondaryText = groupSecondaryText, modifier = Modifier.weight(1f).fillMaxHeight(), glassmorphismEnabled = vm.glassmorphismEnabled) 
+                StatCard(icon = Icons.Outlined.CalendarToday, label = stringResource(R.string.semester), value = activeSemesterNum, secondaryText = streamText, modifier = Modifier.weight(1f).fillMaxHeight(), glassmorphismEnabled = vm.glassmorphismEnabled, themeMode = vm.themeMode)
+                StatCard(icon = Icons.Outlined.Groups, label = stringResource(R.string.group), value = displayGroupValue, secondaryText = groupSecondaryText, modifier = Modifier.weight(1f).fillMaxHeight(), glassmorphismEnabled = vm.glassmorphismEnabled, themeMode = vm.themeMode) 
             }
             Spacer(Modifier.height(32.dp))
             Text("${vm.todayDayName}: ${stringResource(R.string.todays_classes)}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
@@ -99,8 +99,12 @@ fun HomeScreen(vm: MainViewModel) {
 }
 
 @Composable
-fun StatCard(icon: ImageVector, label: String, value: String, secondaryText: String? = null, modifier: Modifier = Modifier, glassmorphismEnabled: Boolean = false) {
-    ThemedCard(modifier = modifier, materialColor = MaterialTheme.colorScheme.primaryContainer, glassmorphismEnabled = glassmorphismEnabled) { // Use primary container for more color
+fun StatCard(icon: ImageVector, label: String, value: String, secondaryText: String? = null, modifier: Modifier = Modifier, glassmorphismEnabled: Boolean = false, themeMode: String = "SYSTEM") {
+    // Remove colored background in dark themes - use surface container instead
+    val isDarkTheme = themeMode == "DARK" || themeMode == "GLASS_DARK"
+    val cardColor = if (isDarkTheme) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.primaryContainer
+    
+    ThemedCard(modifier = modifier, materialColor = cardColor, glassmorphismEnabled = glassmorphismEnabled) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally, 
