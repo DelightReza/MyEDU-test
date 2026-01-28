@@ -60,7 +60,8 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
                 ),
                 currentValue = vm.themeMode, 
                 onOptionSelected = { vm.setTheme(it) },
-                themeMode = vm.themeMode
+                themeMode = vm.themeMode,
+                glassmorphismEnabled = vm.glassmorphismEnabled
             )
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -72,7 +73,8 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
                 ),
                 currentValue = vm.downloadMode, 
                 onOptionSelected = { vm.setDocMode(it) },
-                themeMode = vm.themeMode
+                themeMode = vm.themeMode,
+                glassmorphismEnabled = vm.glassmorphismEnabled
             )
             Spacer(modifier = Modifier.height(24.dp))
             SettingsDropdown(
@@ -80,7 +82,8 @@ fun SettingsScreen(vm: MainViewModel, onClose: () -> Unit) {
                 options = listOf("English" to "en", "Русский" to "ru", "Кыргызча" to "ky"),
                 currentValue = vm.language,
                 onOptionSelected = { selectedLang -> if (vm.language != selectedLang) { vm.setAppLanguage(selectedLang); (context as? MainActivity)?.restartApp() } },
-                themeMode = vm.themeMode
+                themeMode = vm.themeMode,
+                glassmorphismEnabled = vm.glassmorphismEnabled
             )
             
             Spacer(modifier = Modifier.height(32.dp))

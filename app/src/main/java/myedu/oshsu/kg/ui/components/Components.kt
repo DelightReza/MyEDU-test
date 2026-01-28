@@ -309,16 +309,29 @@ fun SettingsDropdown(
     options: List<Pair<String, String>>, 
     currentValue: String, 
     onOptionSelected: (String) -> Unit,
-    themeMode: String = "SYSTEM"
+    themeMode: String = "SYSTEM",
+    glassmorphismEnabled: Boolean = false
 ) {
     var expanded by remember { mutableStateOf(false) }
     var dropdownWidth by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val displayValue = options.find { it.second == currentValue }?.first ?: options.first().first
     
-    val containerColor = MaterialTheme.colorScheme.surface
-    val menuColor = MaterialTheme.colorScheme.surfaceContainer
-    val borderColor = MaterialTheme.colorScheme.outline
+    val containerColor = if (glassmorphismEnabled) {
+        MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val menuColor = if (glassmorphismEnabled) {
+        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.3f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
+    val borderColor = if (glassmorphismEnabled) {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+    } else {
+        MaterialTheme.colorScheme.outline
+    }
 
     Column {
         InfoSection(label, themeMode)
@@ -331,10 +344,18 @@ fun SettingsDropdown(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .then(
+                        if (glassmorphismEnabled) {
+                            Modifier.border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                        } else {
+                            Modifier
+                        }
+                    )
                     .clickable { expanded = true },
                 shape = RoundedCornerShape(16.dp), // More rounded
                 color = containerColor,
-                border = BorderStroke(2.dp, borderColor) // Thicker border for better visibility
+                border = if (!glassmorphismEnabled) BorderStroke(2.dp, borderColor) else null,
+                shadowElevation = if (glassmorphismEnabled) 0.dp else 2.dp
             ) {
                 Row(
                     modifier = Modifier
