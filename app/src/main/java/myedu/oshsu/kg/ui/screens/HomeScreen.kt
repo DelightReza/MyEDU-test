@@ -102,7 +102,8 @@ fun HomeScreen(vm: MainViewModel) {
 fun StatCard(icon: ImageVector, label: String, value: String, secondaryText: String? = null, modifier: Modifier = Modifier, glassmorphismEnabled: Boolean = false, themeMode: String = "SYSTEM") {
     // Remove colored background in dark themes - use surface container instead
     val isDarkTheme = themeMode == "DARK" || themeMode == "GLASS_DARK"
-    val cardColor = if (isDarkTheme) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.primaryContainer
+    // Use neutral surface color for all themes for better consistency
+    val cardColor = MaterialTheme.colorScheme.surfaceContainer
     
     ThemedCard(modifier = modifier, materialColor = cardColor, glassmorphismEnabled = glassmorphismEnabled) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
