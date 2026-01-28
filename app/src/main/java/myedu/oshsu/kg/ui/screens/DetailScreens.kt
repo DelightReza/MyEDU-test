@@ -294,7 +294,7 @@ fun ReferenceView(vm: MainViewModel, onClose: () -> Unit) {
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
             Column(modifier = Modifier.widthIn(max = 840.dp).align(Alignment.TopCenter).verticalScroll(rememberScrollState()).padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                ThemedCard(Modifier.fillMaxWidth()) {
+                ThemedCard(Modifier.fillMaxWidth(), glassmorphismEnabled = vm.glassmorphismEnabled) {
                     Column(Modifier.padding(8.dp)) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) { OshSuLogo(modifier = Modifier.width(180.dp).height(60.dp), themeMode = vm.themeMode); Spacer(Modifier.height(16.dp)); Text(stringResource(R.string.cert_header), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface) }
                         Spacer(Modifier.height(24.dp)); HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant); Spacer(Modifier.height(24.dp))
@@ -336,7 +336,7 @@ fun TranscriptView(vm: MainViewModel, onClose: () -> Unit) {
                             item { Spacer(Modifier.height(12.dp)); Text(sem.semesterName ?: stringResource(R.string.semester), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Spacer(Modifier.height(8.dp)) }
                             items(sem.subjects ?: emptyList()) { sub ->
                                 // Fixed: Removed themeMode
-                                ThemedCard(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                                ThemedCard(Modifier.fillMaxWidth().padding(bottom = 8.dp), glassmorphismEnabled = vm.glassmorphismEnabled) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Column(Modifier.weight(1f)) { 
                                             Text(sub.subjectName ?: stringResource(R.string.subject_default), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
