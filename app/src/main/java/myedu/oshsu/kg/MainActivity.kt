@@ -273,16 +273,23 @@ fun MainAppStructure(vm: MainViewModel) {
 fun FloatingNavBar(vm: MainViewModel) {
     val glassmorphismEnabled = vm.glassmorphismEnabled
     val containerColor = if (glassmorphismEnabled) MaterialTheme.colorScheme.surface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
-    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-    val borderWidth = 0.5.dp
     val elevation = if (glassmorphismEnabled) 0.dp else 4.dp
     
-    Surface(
-        modifier = Modifier
+    val modifier = if (glassmorphismEnabled) {
+        Modifier
             .height(72.dp)
             .widthIn(max = 400.dp)
             .fillMaxWidth()
-            .border(borderWidth, borderColor, RoundedCornerShape(36.dp)), 
+            .border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(36.dp))
+    } else {
+        Modifier
+            .height(72.dp)
+            .widthIn(max = 400.dp)
+            .fillMaxWidth()
+    }
+    
+    Surface(
+        modifier = modifier, 
         shape = RoundedCornerShape(36.dp), 
         color = containerColor, 
         shadowElevation = elevation
