@@ -277,7 +277,7 @@ fun DetailCard(icon: ImageVector, title: String, value: String?, themeMode: Stri
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(MaterialTheme.colorScheme.surfaceContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

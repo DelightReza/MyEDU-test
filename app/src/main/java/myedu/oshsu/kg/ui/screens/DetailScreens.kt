@@ -68,9 +68,9 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
 
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.fillMaxWidth().widthIn(max = 840.dp).verticalScroll(rememberScrollState()).padding(16.dp)) {
-            ThemedCard(Modifier.fillMaxWidth(), materialColor = MaterialTheme.colorScheme.primaryContainer, glassmorphismEnabled = vm.glassmorphismEnabled) { 
+            ThemedCard(Modifier.fillMaxWidth(), materialColor = MaterialTheme.colorScheme.surfaceContainer, glassmorphismEnabled = vm.glassmorphismEnabled) { 
                  Column(Modifier.padding(24.dp)) { 
-                    Text(item.subject?.get(lang) ?: subjectDefaultStr, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    Text(item.subject?.get(lang) ?: subjectDefaultStr, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(imageVector = Icons.Default.AccessTime, contentDescription = descTimeStr, tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
