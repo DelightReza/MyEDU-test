@@ -166,16 +166,25 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
 fun FloatingPdfBar(vm: MainViewModel, onGenerateRu: () -> Unit, onGenerateEn: () -> Unit) {
     if (vm.downloadMode == "WEBSITE") return
     val context = LocalContext.current
-    val containerColor = MaterialTheme.colorScheme.surface
-    val elevation = 12.dp
+    val glassmorphismEnabled = vm.glassmorphismEnabled
+    val containerColor = if (glassmorphismEnabled) MaterialTheme.colorScheme.surface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+    val elevation = if (glassmorphismEnabled) 0.dp else 12.dp
+    val shape = RoundedCornerShape(36.dp)
 
     Surface(
         modifier = Modifier
             .padding(bottom = 24.dp, start = 16.dp, end = 16.dp)
             .defaultMinSize(minHeight = 72.dp)
             .widthIn(max = 400.dp)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(36.dp),
+            .fillMaxWidth()
+            .then(
+                if (glassmorphismEnabled) {
+                    Modifier.border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), shape)
+                } else {
+                    Modifier
+                }
+            ),
+        shape = shape,
         color = containerColor,
         shadowElevation = elevation
     ) {
