@@ -1,0 +1,220 @@
+# Building MyEDU for iPhone/iOS
+
+This guide explains how to build and run the MyEDU app on iPhone devices and simulators.
+
+## Overview
+
+MyEDU has been migrated to use **Kotlin Multiplatform Mobile (KMM)**, which allows the app to run on both Android and iOS platforms while sharing business logic code.
+
+## Architecture
+
+The project is now structured as follows:
+
+```
+MyEDU/
+├── shared/          # Kotlin Multiplatform shared code
+│   ├── commonMain/  # Platform-independent code
+│   ├── androidMain/ # Android-specific implementations
+│   └── iosMain/     # iOS-specific implementations
+├── app/             # Android application (Jetpack Compose)
+└── iosApp/          # iOS application (SwiftUI)
+```
+
+## Prerequisites
+
+To build the iOS version, you need:
+
+1. **macOS** with Xcode 14.0 or later
+2. **Xcode Command Line Tools**: Install with `xcode-select --install`
+3. **Java Development Kit (JDK)** 11 or later
+4. **Android Studio** (optional, for development): [Download here](https://developer.android.com/studio)
+5. **Kotlin Multiplatform Mobile Plugin** (optional, for development)
+
+## Building for iOS
+
+### Step 1: Build the Shared Framework
+
+The shared framework contains the business logic that is used by both Android and iOS apps.
+
+```bash
+# Navigate to project root
+cd /path/to/MyEDU-test
+
+# Build the shared framework
+./gradlew :shared:build
+```
+
+This will generate a framework that can be used by the iOS app.
+
+### Step 2: Open the iOS Project
+
+```bash
+# Open the Xcode project
+open iosApp/iosApp.xcodeproj
+```
+
+Alternatively, you can double-click the `iosApp.xcodeproj` file in Finder.
+
+### Step 3: Configure Code Signing
+
+1. In Xcode, select the **iosApp** project in the navigator
+2. Select the **iosApp** target
+3. Go to **Signing & Capabilities**
+4. Select your **Team** (you may need to add your Apple ID first)
+5. Xcode will automatically manage the provisioning profile
+
+### Step 4: Select a Target Device
+
+In the Xcode toolbar, click the device selector and choose:
+- An iPhone simulator (e.g., "iPhone 14 Pro")
+- A connected iPhone (requires developer account)
+
+### Step 5: Build and Run
+
+Click the **Run** button (▶️) in Xcode, or press `Cmd+R`.
+
+The app will:
+1. Build the Kotlin shared framework (if needed)
+2. Compile the Swift code
+3. Launch on your selected device
+
+## iOS App Features
+
+The iOS app currently includes:
+
+- **Home Screen**: Main dashboard with platform information
+- **Navigation**: Home, Schedule, Grades, and Profile sections
+- **Shared Business Logic**: Platform detection and greeting functionality
+- **Native iOS UI**: Built with SwiftUI for optimal performance
+
+## Development Workflow
+
+### Making Changes to Shared Code
+
+When you modify code in the `shared` module:
+
+1. Rebuild the shared framework:
+   ```bash
+   ./gradlew :shared:build
+   ```
+
+2. The changes will automatically be picked up by the iOS app on the next build
+
+### Making Changes to iOS-Specific Code
+
+Edit the Swift files in `iosApp/iosApp/`:
+- `iOSApp.swift`: App entry point
+- `ContentView.swift`: Main UI
+
+Changes to Swift code are immediately available - just rebuild in Xcode.
+
+## Troubleshooting
+
+### Build Errors
+
+**Problem**: "shared framework not found"
+**Solution**: Run `./gradlew :shared:build` before opening Xcode
+
+**Problem**: "No signing certificate found"
+**Solution**: Add your Apple ID in Xcode Preferences → Accounts
+
+**Problem**: "Unable to run on device"
+**Solution**: Make sure your device is registered in your Apple Developer account
+
+### Runtime Issues
+
+**Problem**: App crashes on launch
+**Solution**: Check the Xcode console for error messages. Most issues are related to the shared framework not being properly linked.
+
+## Testing on Physical Devices
+
+To test on a physical iPhone:
+
+1. Connect your iPhone via USB
+2. Trust the computer on your iPhone if prompted
+3. In Xcode, select your iPhone from the device list
+4. Click Run
+
+**Note**: Free Apple Developer accounts have limitations:
+- Apps expire after 7 days
+- Limited to 3 devices
+- No TestFlight distribution
+
+For production apps, you need a paid Apple Developer Program membership ($99/year).
+
+## App Store Distribution
+
+To distribute the app via the App Store:
+
+1. Enroll in the Apple Developer Program
+2. Create an App ID in the Apple Developer Portal
+3. Configure the app in App Store Connect
+4. Archive the app in Xcode (Product → Archive)
+5. Upload to App Store Connect
+6. Submit for review
+
+## Continuous Integration
+
+For CI/CD pipelines, you can build the iOS app from the command line:
+
+```bash
+# Build for simulator
+xcodebuild -project iosApp/iosApp.xcodeproj \
+           -scheme iosApp \
+           -configuration Debug \
+           -destination 'platform=iOS Simulator,name=iPhone 14 Pro' \
+           build
+
+# Create an archive for distribution
+xcodebuild -project iosApp/iosApp.xcodeproj \
+           -scheme iosApp \
+           -configuration Release \
+           -archivePath ./build/iosApp.xcarchive \
+           archive
+```
+
+## Platform Capabilities
+
+### Current Implementation
+
+- ✅ Shared business logic (Kotlin Multiplatform)
+- ✅ Platform detection
+- ✅ Basic UI framework (SwiftUI)
+- ✅ Navigation structure
+
+### To Be Implemented
+
+The following features from the Android app need iOS implementations:
+
+- ⏳ Network API calls
+- ⏳ Local data persistence
+- ⏳ Push notifications
+- ⏳ Background synchronization
+- ⏳ Authentication flow
+- ⏳ Schedule display
+- ⏳ Grades view
+- ⏳ Profile management
+- ⏳ PDF viewing
+- ⏳ WebView integration
+
+These can be implemented using the **expect/actual** pattern in Kotlin Multiplatform:
+1. Define `expect` declarations in `commonMain`
+2. Provide `actual` implementations in `androidMain` and `iosMain`
+
+## Resources
+
+- [Kotlin Multiplatform Documentation](https://kotlinlang.org/docs/multiplatform.html)
+- [KMM Getting Started](https://kotlinlang.org/docs/multiplatform-mobile-getting-started.html)
+- [SwiftUI Documentation](https://developer.apple.com/documentation/swiftui)
+- [Xcode Documentation](https://developer.apple.com/documentation/xcode)
+
+## Support
+
+For issues specific to the iOS build:
+- Check the console output in Xcode
+- Review the build logs
+- Ensure all dependencies are up to date
+
+For general app issues:
+- Create an issue in the repository
+- Include device information and steps to reproduce
