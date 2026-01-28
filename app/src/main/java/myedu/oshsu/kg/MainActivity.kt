@@ -273,7 +273,7 @@ fun MainAppStructure(vm: MainViewModel) {
 fun FloatingNavBar(vm: MainViewModel) {
     val glassmorphismEnabled = vm.glassmorphismEnabled
     val containerColor = if (glassmorphismEnabled) MaterialTheme.colorScheme.surface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
-    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = if (glassmorphismEnabled) 0.2f else 0.2f)
+    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
     val border = BorderStroke(if (glassmorphismEnabled) 0.5.dp else 1.dp, borderColor)
     val elevation = if (glassmorphismEnabled) 0.dp else 4.dp
     
