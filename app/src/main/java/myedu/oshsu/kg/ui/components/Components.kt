@@ -327,11 +327,8 @@ fun SettingsDropdown(
     } else {
         MaterialTheme.colorScheme.surfaceContainer
     }
-    val borderColor = if (glassmorphismEnabled) {
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-    } else {
-        MaterialTheme.colorScheme.outline
-    }
+    val borderColor = MaterialTheme.colorScheme.outline.copy(alpha = if (glassmorphismEnabled) 0.2f else 1f)
+    val shape = RoundedCornerShape(16.dp)
 
     Column {
         InfoSection(label, themeMode)
@@ -346,13 +343,13 @@ fun SettingsDropdown(
                     .fillMaxWidth()
                     .then(
                         if (glassmorphismEnabled) {
-                            Modifier.border(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                            Modifier.border(0.5.dp, borderColor, shape)
                         } else {
                             Modifier
                         }
                     )
                     .clickable { expanded = true },
-                shape = RoundedCornerShape(16.dp), // More rounded
+                shape = shape,
                 color = containerColor,
                 border = if (!glassmorphismEnabled) BorderStroke(2.dp, borderColor) else null,
                 shadowElevation = if (glassmorphismEnabled) 0.dp else 2.dp
