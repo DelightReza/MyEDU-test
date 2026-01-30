@@ -21,6 +21,9 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
@@ -703,9 +706,19 @@ class MainViewModel : ViewModel() {
                 val transcriptRaw = withContext(Dispatchers.IO) { NetworkClient.api.getTranscriptDataRaw(studentId, movId).string() }
                 val keyRaw = withContext(Dispatchers.IO) { NetworkClient.api.getTranscriptLink(DocIdRequest(studentId)).string() }
                 val keyObj = JSONObject(keyRaw)
+                val rawUrl = keyObj.optString("url")
+                val cleanUrl = rawUrl.replace("https::/", "https://")
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
-                val bytes = WebPdfGenerator(context).generatePdf(infoJson.toString(), transcriptRaw, keyObj.optLong("id"), keyObj.optString("url"), resources!!, lang, dictionaryMap) { }
+                val bytes = WebPdfGenerator(context).generatePdf(infoJson.toString(), transcriptRaw, keyObj.optLong("id"), cleanUrl, resources!!, lang, dictionaryMap) { }
+                
+                pdfStatusMessage = "context.getString(R.string.uploading_pdf)"
+                try {
+                    uploadPdfOnly(keyObj.optLong("id"), studentId, bytes, getFormattedFileName("Transcript", lang), true)
+                } catch (e: Exception) {
+                    DebugLogger.log("PDF_UPLOAD", "Failed to upload transcript: ${e.message}")
+                }
+                
                 saveToDownloads(context, bytes, getFormattedFileName("Transcript", lang))
                 pdfStatusMessage = null
             } catch (e: CancellationException) {
@@ -748,9 +761,19 @@ class MainViewModel : ViewModel() {
                 val univRaw = withContext(Dispatchers.IO) { NetworkClient.api.getUniversityInfo().string() }
                 val linkRaw = withContext(Dispatchers.IO) { NetworkClient.api.getReferenceLink(DocIdRequest(studentId)).string() }
                 val linkObj = JSONObject(linkRaw)
+                val rawUrl = linkObj.optString("url")
+                val cleanUrl = rawUrl.replace("https::/", "https://")
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
-                val bytes = ReferencePdfGenerator(context).generatePdf(infoJson.toString(), licenseRaw, univRaw, linkObj.optLong("id"), linkObj.optString("url"), resources!!, prefs?.getToken() ?: "", lang, dictionaryMap) { }
+                val bytes = ReferencePdfGenerator(context).generatePdf(infoJson.toString(), licenseRaw, univRaw, linkObj.optLong("id"), cleanUrl, resources!!, prefs?.getToken() ?: "", lang, dictionaryMap) { }
+                
+                pdfStatusMessage = "context.getString(R.string.uploading_pdf)"
+                try {
+                    uploadPdfOnly(linkObj.optLong("id"), studentId, bytes, getFormattedFileName("Reference", lang), false)
+                } catch (e: Exception) {
+                    DebugLogger.log("PDF_UPLOAD", "Failed to upload reference: ${e.message}")
+                }
+                
                 saveToDownloads(context, bytes, getFormattedFileName("Reference", lang))
                 pdfStatusMessage = null
             } catch (e: CancellationException) {
@@ -761,6 +784,19 @@ class MainViewModel : ViewModel() {
             } finally { 
                 isPdfGenerating = false 
             }
+        }
+    }
+
+    private suspend fun uploadPdfOnly(linkId: Long, studentId: Long, bytes: ByteArray, filename: String, isTranscript: Boolean) {
+        val plain = "text/plain".toMediaTypeOrNull()
+        val pdfType = "application/pdf".toMediaTypeOrNull()
+        val bodyId = linkId.toString().toRequestBody(plain)
+        val bodyStudent = studentId.toString().toRequestBody(plain)
+        val filePart = MultipartBody.Part.createFormData("pdf", filename, bytes.toRequestBody(pdfType))
+        
+        withContext(Dispatchers.IO) { 
+            if (isTranscript) NetworkClient.api.uploadPdf(bodyId, bodyStudent, filePart).string() 
+            else NetworkClient.api.uploadReferencePdf(bodyId, bodyStudent, filePart).string() 
         }
     }
 
