@@ -42,9 +42,7 @@ data class DictionaryItem(
     val name_ru: String?,
     val name_en: String?,
     val name_kg: String?,
-    // Country uses this:
     @SerializedName("id_integration_citizenship") val idIntegrationCitizenship: Int? = null,
-    // Nationality/Region uses this:
     @SerializedName("id_integration") val idIntegration: Int? = null
 ) {
     fun getName(lang: String): String {
@@ -303,10 +301,13 @@ interface OshSuApi {
     @GET("api/studenttranscript") suspend fun getTranscriptDataRaw(@Query("id_student") sId: Long, @Query("id_movement") mId: Long): ResponseBody
     @GET("api/control/structure/specialitylicense") suspend fun getSpecialityLicense(@Query("id_speciality") sId: Int, @Query("id_edu_form") eId: Int): ResponseBody
     @GET("api/control/structure/university") suspend fun getUniversityInfo(): ResponseBody
+    
+    // --- UPLOAD ENDPOINTS (Used for PDF Uploads) ---
     @POST("api/student/doc/form13link") suspend fun getTranscriptLink(@Body req: DocIdRequest): ResponseBody
     @Multipart @POST("api/student/doc/form13") suspend fun uploadPdf(@Part("id") id: RequestBody, @Part("id_student") idStudent: RequestBody, @Part pdf: MultipartBody.Part): ResponseBody
     @POST("api/student/doc/form8link") suspend fun getReferenceLink(@Body req: DocIdRequest): ResponseBody
     @Multipart @POST("api/student/doc/form8") suspend fun uploadReferencePdf(@Part("id") id: RequestBody, @Part("id_student") idStudent: RequestBody, @Part pdf: MultipartBody.Part): ResponseBody
+    
     @POST("api/open/doc/showlink") suspend fun resolveDocLink(@Body req: DocKeyRequest): ResponseBody
 
     // --- DICTIONARIES ---
@@ -353,6 +354,12 @@ class DeepSpyInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val url = request.url.toString()
+        
+        // Skip logging for PDF upload/download endpoints to avoid OOM
+        if (url.contains("/doc/") || url.contains("form13") || url.contains("form8")) {
+            return chain.proceed(request)
+        }
+
         var reqLog = "REQ: ${request.method} $url"
         val reqBody = request.body
         if (reqBody != null) {
@@ -431,7 +438,7 @@ class FailoverInterceptor : Interceptor {
             newBuilder.host(backupHost)
             val segments = oldUrl.pathSegments
             if (segments.isEmpty() || segments[0] != "public") {
-                newBuilder.encodedPath("/") // FIX: Ensure path starts with /
+                newBuilder.encodedPath("/") 
                 newBuilder.addPathSegment("public")
                 segments.forEach { newBuilder.addPathSegment(it) }
             }
@@ -439,7 +446,7 @@ class FailoverInterceptor : Interceptor {
             newBuilder.host(primaryHost)
             val segments = oldUrl.pathSegments
             if (segments.isNotEmpty() && segments[0] == "public") {
-                newBuilder.encodedPath("/") // FIX: Ensure path starts with /
+                newBuilder.encodedPath("/")
                 for (i in 1 until segments.size) { newBuilder.addPathSegment(segments[i]) }
             }
         }
