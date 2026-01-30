@@ -563,16 +563,21 @@ class MainViewModel : ViewModel() {
                 val docId = keyObj.optLong("id")
                 val qrUrl = keyObj.optString("url")
                 
+                if (docId == 0L) throw Exception("Failed to reserve Document ID from server.")
+
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
                 
                 // 4. Generate PDF (returns ByteArray)
                 val bytes = WebPdfGenerator(context).generatePdf(infoJson.toString(), transcriptRaw, docId, qrUrl, resources!!, lang, dictionaryMap) { }
                 
-                // 5. UPLOAD TO SERVER (CRITICAL FIX)
+                if (bytes.isEmpty()) throw Exception("PDF Generation produced empty file.")
+
+                // 5. UPLOAD TO SERVER (FIXED for 422: Using null MediaType for text fields)
                 pdfStatusMessage = "Uploading..."
                 
-                val idPart = docId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-                val studentIdPart = studentId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                // IMPORTANT: Using `null` for MediaType lets Retrofit handle it as standard form data
+                val idPart = docId.toString().toRequestBody(null)
+                val studentIdPart = studentId.toString().toRequestBody(null)
                 val requestFile = bytes.toRequestBody("application/pdf".toMediaTypeOrNull())
                 val body = MultipartBody.Part.createFormData("file", "transcript.pdf", requestFile)
 
@@ -632,16 +637,20 @@ class MainViewModel : ViewModel() {
                 val docId = linkObj.optLong("id")
                 val qrUrl = linkObj.optString("url")
                 
+                if (docId == 0L) throw Exception("Failed to reserve Document ID from server.")
+
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
                 
                 // 4. Generate PDF
                 val bytes = ReferencePdfGenerator(context).generatePdf(infoJson.toString(), licenseRaw, univRaw, docId, qrUrl, resources!!, prefs?.getToken() ?: "", lang, dictionaryMap) { }
                 
-                // 5. UPLOAD TO SERVER (CRITICAL FIX)
+                if (bytes.isEmpty()) throw Exception("PDF Generation produced empty file.")
+
+                // 5. UPLOAD TO SERVER (FIXED for 422)
                 pdfStatusMessage = "Uploading..."
 
-                val idPart = docId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-                val studentIdPart = studentId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                val idPart = docId.toString().toRequestBody(null)
+                val studentIdPart = studentId.toString().toRequestBody(null)
                 val requestFile = bytes.toRequestBody("application/pdf".toMediaTypeOrNull())
                 val body = MultipartBody.Part.createFormData("file", "reference.pdf", requestFile)
 
