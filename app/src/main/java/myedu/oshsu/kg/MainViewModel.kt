@@ -699,22 +699,26 @@ class MainViewModel : ViewModel() {
 
                 ensureActive()
 
-                val infoRaw = withContext(Dispatchers.IO) { NetworkClient.api.getStudentInfoRaw(studentId).string() }
-                val infoJson = JSONObject(infoRaw)
-                infoJson.put("fullName", "${infoJson.optString("last_name")} ${infoJson.optString("name")} ${infoJson.optString("father_name")}".replace("null", "").trim())
-                val movId = profileData?.studentMovement?.id ?: 0L
-                val transcriptRaw = withContext(Dispatchers.IO) { NetworkClient.api.getTranscriptDataRaw(studentId, movId).string() }
-                val keyRaw = withContext(Dispatchers.IO) { NetworkClient.api.getTranscriptLink(DocIdRequest(studentId)).string() }
-                val keyObj = JSONObject(keyRaw)
-                val rawUrl = keyObj.optString("url")
-                val cleanUrl = rawUrl.replace("https::/", "https://")
+                val (infoJsonString, transcriptRaw, linkId, rawUrl) = withContext(Dispatchers.IO) {
+                    val infoRaw = NetworkClient.api.getStudentInfoRaw(studentId).string()
+                    val infoJson = JSONObject(infoRaw)
+                    infoJson.put("fullName", "${infoJson.optString("last_name")} ${infoJson.optString("name")} ${infoJson.optString("father_name")}".replace("null", "").trim())
+                    val movId = profileData?.studentMovement?.id ?: 0L
+                    val transcriptRaw = NetworkClient.api.getTranscriptDataRaw(studentId, movId).string()
+                    val keyRaw = NetworkClient.api.getTranscriptLink(DocIdRequest(studentId)).string()
+                    val keyObj = JSONObject(keyRaw)
+                    
+                    Quadruple(infoJson.toString(), transcriptRaw, keyObj.optLong("id"), keyObj.optString("url"))
+                }
+                
+                val qrUrl = rawUrl.replace("https::/", "https://")
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
-                val bytes = WebPdfGenerator(context).generatePdf(infoJson.toString(), transcriptRaw, keyObj.optLong("id"), cleanUrl, resources!!, lang, dictionaryMap) { }
+                val bytes = WebPdfGenerator(context).generatePdf(infoJsonString, transcriptRaw, linkId, qrUrl, resources!!, lang, dictionaryMap) { }
                 
-                pdfStatusMessage = "context.getString(R.string.uploading_pdf)"
+                pdfStatusMessage = context.getString(R.string.uploading_pdf)
                 try {
-                    uploadPdfOnly(keyObj.optLong("id"), studentId, bytes, getFormattedFileName("Transcript", lang), true)
+                    uploadPdfOnly(linkId, studentId, bytes, getFormattedFileName("Transcript", lang), true)
                 } catch (e: Exception) {
                     DebugLogger.log("PDF_UPLOAD", "Failed to upload transcript: ${e.message}")
                 }
@@ -752,24 +756,28 @@ class MainViewModel : ViewModel() {
 
                 ensureActive()
 
-                val infoRaw = withContext(Dispatchers.IO) { NetworkClient.api.getStudentInfoRaw(studentId).string() }
-                val infoJson = JSONObject(infoRaw)
-                infoJson.put("fullName", "${infoJson.optString("last_name")} ${infoJson.optString("name")} ${infoJson.optString("father_name")}".replace("null", "").trim())
-                var specId = infoJson.optJSONObject("speciality")?.optInt("id") ?: infoJson.optJSONObject("lastStudentMovement")?.optJSONObject("speciality")?.optInt("id") ?: 0
-                var eduFormId = infoJson.optJSONObject("lastStudentMovement")?.optJSONObject("edu_form")?.optInt("id") ?: infoJson.optJSONObject("edu_form")?.optInt("id") ?: 0
-                val licenseRaw = withContext(Dispatchers.IO) { NetworkClient.api.getSpecialityLicense(specId, eduFormId).string() }
-                val univRaw = withContext(Dispatchers.IO) { NetworkClient.api.getUniversityInfo().string() }
-                val linkRaw = withContext(Dispatchers.IO) { NetworkClient.api.getReferenceLink(DocIdRequest(studentId)).string() }
-                val linkObj = JSONObject(linkRaw)
-                val rawUrl = linkObj.optString("url")
-                val cleanUrl = rawUrl.replace("https::/", "https://")
+                val (infoJsonString, licenseRaw, univRaw, linkId, rawUrl) = withContext(Dispatchers.IO) {
+                    val infoRaw = NetworkClient.api.getStudentInfoRaw(studentId).string()
+                    val infoJson = JSONObject(infoRaw)
+                    infoJson.put("fullName", "${infoJson.optString("last_name")} ${infoJson.optString("name")} ${infoJson.optString("father_name")}".replace("null", "").trim())
+                    var specId = infoJson.optJSONObject("speciality")?.optInt("id") ?: infoJson.optJSONObject("lastStudentMovement")?.optJSONObject("speciality")?.optInt("id") ?: 0
+                    var eduFormId = infoJson.optJSONObject("lastStudentMovement")?.optJSONObject("edu_form")?.optInt("id") ?: infoJson.optJSONObject("edu_form")?.optInt("id") ?: 0
+                    val licenseRaw = NetworkClient.api.getSpecialityLicense(specId, eduFormId).string()
+                    val univRaw = NetworkClient.api.getUniversityInfo().string()
+                    val linkRaw = NetworkClient.api.getReferenceLink(DocIdRequest(studentId)).string()
+                    val linkObj = JSONObject(linkRaw)
+                    
+                    Quintuple(infoJson.toString(), licenseRaw, univRaw, linkObj.optLong("id"), linkObj.optString("url"))
+                }
+                
+                val qrUrl = rawUrl.replace("https::/", "https://")
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
-                val bytes = ReferencePdfGenerator(context).generatePdf(infoJson.toString(), licenseRaw, univRaw, linkObj.optLong("id"), cleanUrl, resources!!, prefs?.getToken() ?: "", lang, dictionaryMap) { }
+                val bytes = ReferencePdfGenerator(context).generatePdf(infoJsonString, licenseRaw, univRaw, linkId, qrUrl, resources!!, prefs?.getToken() ?: "", lang, dictionaryMap) { }
                 
-                pdfStatusMessage = "context.getString(R.string.uploading_pdf)"
+                pdfStatusMessage = context.getString(R.string.uploading_pdf)
                 try {
-                    uploadPdfOnly(linkObj.optLong("id"), studentId, bytes, getFormattedFileName("Reference", lang), false)
+                    uploadPdfOnly(linkId, studentId, bytes, getFormattedFileName("Reference", lang), false)
                 } catch (e: Exception) {
                     DebugLogger.log("PDF_UPLOAD", "Failed to upload reference: ${e.message}")
                 }
@@ -822,4 +830,8 @@ class MainViewModel : ViewModel() {
             }
         } catch (e: Exception) { pdfStatusMessage = context.getString(R.string.status_save_failed, e.message); delay(2000) }
     }
+    
+    // Helpers
+    data class Quadruple(val info: String, val transcript: String, val linkId: Long, val url: String)
+    data class Quintuple(val info: String, val license: String, val univ: String, val linkId: Long, val url: String)
 }
