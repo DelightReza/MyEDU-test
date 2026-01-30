@@ -706,12 +706,13 @@ class MainViewModel : ViewModel() {
                 val transcriptRaw = withContext(Dispatchers.IO) { NetworkClient.api.getTranscriptDataRaw(studentId, movId).string() }
                 val keyRaw = withContext(Dispatchers.IO) { NetworkClient.api.getTranscriptLink(DocIdRequest(studentId)).string() }
                 val keyObj = JSONObject(keyRaw)
+                val rawUrl = keyObj.optString("url")
+                val cleanUrl = rawUrl.replace("https::/", "https://")
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
-                val bytes = WebPdfGenerator(context).generatePdf(infoJson.toString(), transcriptRaw, keyObj.optLong("id"), keyObj.optString("url"), resources!!, lang, dictionaryMap) { }
+                val bytes = WebPdfGenerator(context).generatePdf(infoJson.toString(), transcriptRaw, keyObj.optLong("id"), cleanUrl, resources!!, lang, dictionaryMap) { }
                 
-                // --- FIX: Upload PDF to sync QR link ---
-                pdfStatusMessage = "Syncing..."
+                pdfStatusMessage = "context.getString(R.string.uploading_pdf)"
                 try {
                     uploadPdfOnly(keyObj.optLong("id"), studentId, bytes, getFormattedFileName("Transcript", lang), true)
                 } catch (e: Exception) {
@@ -760,12 +761,13 @@ class MainViewModel : ViewModel() {
                 val univRaw = withContext(Dispatchers.IO) { NetworkClient.api.getUniversityInfo().string() }
                 val linkRaw = withContext(Dispatchers.IO) { NetworkClient.api.getReferenceLink(DocIdRequest(studentId)).string() }
                 val linkObj = JSONObject(linkRaw)
+                val rawUrl = linkObj.optString("url")
+                val cleanUrl = rawUrl.replace("https::/", "https://")
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
-                val bytes = ReferencePdfGenerator(context).generatePdf(infoJson.toString(), licenseRaw, univRaw, linkObj.optLong("id"), linkObj.optString("url"), resources!!, prefs?.getToken() ?: "", lang, dictionaryMap) { }
+                val bytes = ReferencePdfGenerator(context).generatePdf(infoJson.toString(), licenseRaw, univRaw, linkObj.optLong("id"), cleanUrl, resources!!, prefs?.getToken() ?: "", lang, dictionaryMap) { }
                 
-                // --- FIX: Upload PDF to sync QR link ---
-                pdfStatusMessage = "Syncing..."
+                pdfStatusMessage = "context.getString(R.string.uploading_pdf)"
                 try {
                     uploadPdfOnly(linkObj.optLong("id"), studentId, bytes, getFormattedFileName("Reference", lang), false)
                 } catch (e: Exception) {
