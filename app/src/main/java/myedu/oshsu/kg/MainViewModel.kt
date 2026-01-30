@@ -514,7 +514,7 @@ class MainViewModel : ViewModel() {
         return "${cleanName}_${docType}${suffix}.pdf"
     }
 
-    // --- PDF GENERATION LOGIC ---
+    // --- PDF GENERATION & UPLOAD LOGIC ---
 
     fun cancelPdfGeneration() {
         pdfGenerationJob?.cancel()
@@ -557,7 +557,7 @@ class MainViewModel : ViewModel() {
                 val movId = profileData?.studentMovement?.id ?: 0L
                 val transcriptRaw = withContext(Dispatchers.IO) { NetworkClient.api.getTranscriptDataRaw(studentId, movId).string() }
                 
-                // 3. Get ID and Link
+                // 3. Get ID and Link from Server
                 val keyRaw = withContext(Dispatchers.IO) { NetworkClient.api.getTranscriptLink(DocIdRequest(studentId)).string() }
                 val keyObj = JSONObject(keyRaw)
                 val docId = keyObj.optLong("id")
@@ -565,11 +565,12 @@ class MainViewModel : ViewModel() {
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
                 
-                // 4. Generate
+                // 4. Generate PDF (returns ByteArray)
                 val bytes = WebPdfGenerator(context).generatePdf(infoJson.toString(), transcriptRaw, docId, qrUrl, resources!!, lang, dictionaryMap) { }
                 
-                // 5. UPLOAD (CRITICAL FIX FOR 404)
+                // 5. UPLOAD TO SERVER (CRITICAL FIX)
                 pdfStatusMessage = "Uploading..."
+                
                 val idPart = docId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
                 val studentIdPart = studentId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
                 val requestFile = bytes.toRequestBody("application/pdf".toMediaTypeOrNull())
@@ -579,8 +580,10 @@ class MainViewModel : ViewModel() {
                     NetworkClient.api.uploadPdf(idPart, studentIdPart, body)
                 }
 
+                // 6. Save Local Copy
                 saveToDownloads(context, bytes, getFormattedFileName("Transcript", lang))
                 pdfStatusMessage = null
+
             } catch (e: CancellationException) {
                 pdfStatusMessage = null
             } catch (e: Exception) {
@@ -619,10 +622,11 @@ class MainViewModel : ViewModel() {
                 infoJson.put("fullName", "${infoJson.optString("last_name")} ${infoJson.optString("name")} ${infoJson.optString("father_name")}".replace("null", "").trim())
                 var specId = infoJson.optJSONObject("speciality")?.optInt("id") ?: infoJson.optJSONObject("lastStudentMovement")?.optJSONObject("speciality")?.optInt("id") ?: 0
                 var eduFormId = infoJson.optJSONObject("lastStudentMovement")?.optJSONObject("edu_form")?.optInt("id") ?: infoJson.optJSONObject("edu_form")?.optInt("id") ?: 0
+                
                 val licenseRaw = withContext(Dispatchers.IO) { NetworkClient.api.getSpecialityLicense(specId, eduFormId).string() }
                 val univRaw = withContext(Dispatchers.IO) { NetworkClient.api.getUniversityInfo().string() }
                 
-                // 3. Get ID and Link
+                // 3. Get ID and Link from Server
                 val linkRaw = withContext(Dispatchers.IO) { NetworkClient.api.getReferenceLink(DocIdRequest(studentId)).string() }
                 val linkObj = JSONObject(linkRaw)
                 val docId = linkObj.optLong("id")
@@ -630,11 +634,12 @@ class MainViewModel : ViewModel() {
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
                 
-                // 4. Generate
+                // 4. Generate PDF
                 val bytes = ReferencePdfGenerator(context).generatePdf(infoJson.toString(), licenseRaw, univRaw, docId, qrUrl, resources!!, prefs?.getToken() ?: "", lang, dictionaryMap) { }
                 
-                // 5. UPLOAD (CRITICAL FIX FOR 404)
+                // 5. UPLOAD TO SERVER (CRITICAL FIX)
                 pdfStatusMessage = "Uploading..."
+
                 val idPart = docId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
                 val studentIdPart = studentId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
                 val requestFile = bytes.toRequestBody("application/pdf".toMediaTypeOrNull())
@@ -644,8 +649,10 @@ class MainViewModel : ViewModel() {
                     NetworkClient.api.uploadReferencePdf(idPart, studentIdPart, body)
                 }
 
+                // 6. Save Local Copy
                 saveToDownloads(context, bytes, getFormattedFileName("Reference", lang))
                 pdfStatusMessage = null
+
             } catch (e: CancellationException) {
                 pdfStatusMessage = null
             } catch (e: Exception) {
