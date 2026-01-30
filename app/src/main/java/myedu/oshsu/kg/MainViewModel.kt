@@ -23,7 +23,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
@@ -714,14 +713,7 @@ class MainViewModel : ViewModel() {
                 // --- FIX: Upload PDF to sync QR link ---
                 pdfStatusMessage = "Syncing..."
                 try {
-                    val reqFile = bytes.toRequestBody("application/pdf".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("file", "transcript.pdf", reqFile)
-                    val idVal = keyObj.optLong("id").toString().toRequestBody("text/plain".toMediaTypeOrNull())
-                    val stVal = studentId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-                    
-                    withContext(Dispatchers.IO) {
-                        NetworkClient.api.uploadPdf(idVal, stVal, body)
-                    }
+                    uploadPdfOnly(keyObj.optLong("id"), studentId, bytes, getFormattedFileName("Transcript", lang), true)
                 } catch (e: Exception) {
                     DebugLogger.log("PDF_UPLOAD", "Failed to upload transcript: ${e.message}")
                 }
@@ -775,14 +767,7 @@ class MainViewModel : ViewModel() {
                 // --- FIX: Upload PDF to sync QR link ---
                 pdfStatusMessage = "Syncing..."
                 try {
-                    val reqFile = bytes.toRequestBody("application/pdf".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("file", "reference.pdf", reqFile)
-                    val idVal = linkObj.optLong("id").toString().toRequestBody("text/plain".toMediaTypeOrNull())
-                    val stVal = studentId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-                    
-                    withContext(Dispatchers.IO) {
-                        NetworkClient.api.uploadReferencePdf(idVal, stVal, body)
-                    }
+                    uploadPdfOnly(linkObj.optLong("id"), studentId, bytes, getFormattedFileName("Reference", lang), false)
                 } catch (e: Exception) {
                     DebugLogger.log("PDF_UPLOAD", "Failed to upload reference: ${e.message}")
                 }
@@ -797,6 +782,21 @@ class MainViewModel : ViewModel() {
             } finally { 
                 isPdfGenerating = false 
             }
+        }
+    }
+
+    private suspend fun uploadPdfOnly(linkId: Long, studentId: Long, bytes: ByteArray, filename: String, isTranscript: Boolean) {
+        val plain = "text/plain".toMediaTypeOrNull()
+        val pdfType = "application/pdf".toMediaTypeOrNull()
+        val bodyId = linkId.toString().toRequestBody(plain)
+        val bodyStudent = studentId.toString().toRequestBody(plain)
+        
+        // FIXED: Using "file" instead of "pdf" as the form part name (this was the root cause of the 404 issue)
+        val filePart = MultipartBody.Part.createFormData("file", filename, bytes.toRequestBody(pdfType))
+        
+        withContext(Dispatchers.IO) { 
+            if (isTranscript) NetworkClient.api.uploadPdf(bodyId, bodyStudent, filePart).string() 
+            else NetworkClient.api.uploadReferencePdf(bodyId, bodyStudent, filePart).string() 
         }
     }
 
