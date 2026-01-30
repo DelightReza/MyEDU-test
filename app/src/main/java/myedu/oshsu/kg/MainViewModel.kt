@@ -21,6 +21,10 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
@@ -706,6 +710,22 @@ class MainViewModel : ViewModel() {
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
                 val bytes = WebPdfGenerator(context).generatePdf(infoJson.toString(), transcriptRaw, keyObj.optLong("id"), keyObj.optString("url"), resources!!, lang, dictionaryMap) { }
+                
+                // --- FIX: Upload PDF to sync QR link ---
+                pdfStatusMessage = "Syncing..."
+                try {
+                    val reqFile = bytes.toRequestBody("application/pdf".toMediaTypeOrNull())
+                    val body = MultipartBody.Part.createFormData("file", "transcript.pdf", reqFile)
+                    val idVal = keyObj.optLong("id").toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                    val stVal = studentId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                    
+                    withContext(Dispatchers.IO) {
+                        NetworkClient.api.uploadPdf(idVal, stVal, body)
+                    }
+                } catch (e: Exception) {
+                    DebugLogger.log("PDF_UPLOAD", "Failed to upload transcript: ${e.message}")
+                }
+                
                 saveToDownloads(context, bytes, getFormattedFileName("Transcript", lang))
                 pdfStatusMessage = null
             } catch (e: CancellationException) {
@@ -751,6 +771,22 @@ class MainViewModel : ViewModel() {
                 
                 pdfStatusMessage = context.getString(R.string.generating_pdf)
                 val bytes = ReferencePdfGenerator(context).generatePdf(infoJson.toString(), licenseRaw, univRaw, linkObj.optLong("id"), linkObj.optString("url"), resources!!, prefs?.getToken() ?: "", lang, dictionaryMap) { }
+                
+                // --- FIX: Upload PDF to sync QR link ---
+                pdfStatusMessage = "Syncing..."
+                try {
+                    val reqFile = bytes.toRequestBody("application/pdf".toMediaTypeOrNull())
+                    val body = MultipartBody.Part.createFormData("file", "reference.pdf", reqFile)
+                    val idVal = linkObj.optLong("id").toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                    val stVal = studentId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                    
+                    withContext(Dispatchers.IO) {
+                        NetworkClient.api.uploadReferencePdf(idVal, stVal, body)
+                    }
+                } catch (e: Exception) {
+                    DebugLogger.log("PDF_UPLOAD", "Failed to upload reference: ${e.message}")
+                }
+                
                 saveToDownloads(context, bytes, getFormattedFileName("Reference", lang))
                 pdfStatusMessage = null
             } catch (e: CancellationException) {
