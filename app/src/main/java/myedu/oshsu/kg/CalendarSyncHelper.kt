@@ -125,7 +125,7 @@ class CalendarSyncHelper(private val context: Context) {
         
         val title = subjectName
         val location = if (buildingName.isNotBlank()) "$buildingName, Room $roomName" else "Room $roomName"
-        val description = buildingString("Teacher: $teacherName", 
+        val description = buildString("Teacher: $teacherName", 
             "Type: ${item.subject_type?.get(language) ?: ""}")
         
         val values = ContentValues().apply {

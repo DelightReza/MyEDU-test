@@ -74,7 +74,7 @@ class ScheduleWidget : GlanceAppWidget() {
                 style = TextStyle(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ColorProvider(GlanceTheme.colors.primary)
+                    color = GlanceTheme.colors.primary
                 )
             )
             
@@ -85,7 +85,7 @@ class ScheduleWidget : GlanceAppWidget() {
                     text = context.getString(R.string.no_classes),
                     style = TextStyle(
                         fontSize = 12.sp,
-                        color = ColorProvider(GlanceTheme.colors.onBackground)
+                        color = GlanceTheme.colors.onBackground
                     )
                 )
             } else {
@@ -121,7 +121,7 @@ class ScheduleWidget : GlanceAppWidget() {
                 style = TextStyle(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
-                    color = ColorProvider(GlanceTheme.colors.primary)
+                    color = GlanceTheme.colors.primary
                 )
             )
             
@@ -133,7 +133,7 @@ class ScheduleWidget : GlanceAppWidget() {
                 style = TextStyle(
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ColorProvider(GlanceTheme.colors.onBackground)
+                    color = GlanceTheme.colors.onBackground
                 )
             )
             
@@ -147,7 +147,7 @@ class ScheduleWidget : GlanceAppWidget() {
                 text = location,
                 style = TextStyle(
                     fontSize = 10.sp,
-                    color = ColorProvider(GlanceTheme.colors.onBackground)
+                    color = GlanceTheme.colors.onBackground
                 )
             )
         }
