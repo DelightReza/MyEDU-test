@@ -136,6 +136,27 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(vm.fullSchedule, vm.timeMap, vm.language) { 
                 if (vm.fullSchedule.isNotEmpty() && vm.timeMap.isNotEmpty()) { ScheduleAlarmManager(context).scheduleNotifications(vm.fullSchedule, vm.timeMap, vm.language) } 
             }
+            
+            // Handle widget add request
+            LaunchedEffect(vm.addWidgetRequestPending) {
+                if (vm.addWidgetRequestPending && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val appWidgetManager = android.appwidget.AppWidgetManager.getInstance(context)
+                    val myProvider = android.content.ComponentName(context, myedu.oshsu.kg.widget.ScheduleWidgetReceiver::class.java)
+                    
+                    if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                        val pinnedWidgetCallbackIntent = Intent(context, MainActivity::class.java)
+                        val successCallback = android.app.PendingIntent.getActivity(
+                            context, 0, pinnedWidgetCallbackIntent,
+                            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                        )
+                        appWidgetManager.requestPinAppWidget(myProvider, null, successCallback)
+                    } else {
+                        Toast.makeText(context, "Widget pinning not supported on this device", Toast.LENGTH_SHORT).show()
+                    }
+                    vm.addWidgetRequestPending = false
+                }
+            }
+            
             MyEduTheme(themeMode = vm.themeMode) { ThemedBackground(themeMode = vm.themeMode, glassmorphismEnabled = vm.glassmorphismEnabled) { AppContent(vm) } } 
         }
     }

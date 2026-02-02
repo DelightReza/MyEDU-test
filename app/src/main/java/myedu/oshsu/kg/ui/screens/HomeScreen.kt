@@ -103,6 +103,15 @@ fun HomeScreen(vm: MainViewModel) {
                     }
                     Spacer(Modifier.height(32.dp))
                 }
+                
+                // --- WIDGET PROMOTION CARD ---
+                item {
+                    WidgetPromotionCard(
+                        glassmorphismEnabled = vm.glassmorphismEnabled,
+                        onAddWidget = { vm.requestAddWidget() }
+                    )
+                    Spacer(Modifier.height(32.dp))
+                }
 
                 // --- TITLE ---
                 item {
@@ -218,6 +227,65 @@ fun StatCard(
                         textAlign = TextAlign.Center
                     ) 
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun WidgetPromotionCard(
+    glassmorphismEnabled: Boolean = false,
+    onAddWidget: () -> Unit
+) {
+    ThemedCard(
+        modifier = Modifier.fillMaxWidth(),
+        materialColor = MaterialTheme.colorScheme.primaryContainer,
+        glassmorphismEnabled = glassmorphismEnabled
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.Widgets,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.add_widget_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.add_widget_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+            }
+            Spacer(Modifier.width(16.dp))
+            Button(
+                onClick = onAddWidget,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    Icons.Outlined.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(stringResource(R.string.add_widget_button))
             }
         }
     }

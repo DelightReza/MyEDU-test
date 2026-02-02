@@ -52,6 +52,7 @@ class MainViewModel : ViewModel() {
     var showDictionaryScreen by mutableStateOf(false)
     var selectedClass by mutableStateOf<ScheduleItem?>(null)
     var webDocumentUrl by mutableStateOf<String?>(null)
+    var addWidgetRequestPending by mutableStateOf(false)
 
     // --- REFRESH LOGIC ---
     private var lastRefreshTime: Long = 0
@@ -834,4 +835,9 @@ class MainViewModel : ViewModel() {
     // Helpers
     data class Quadruple(val info: String, val transcript: String, val linkId: Long, val url: String)
     data class Quintuple(val info: String, val license: String, val univ: String, val linkId: Long, val url: String)
+    
+    // Widget management
+    fun requestAddWidget() {
+        addWidgetRequestPending = true
+    }
 }

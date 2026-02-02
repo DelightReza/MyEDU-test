@@ -57,6 +57,9 @@
     <string name="calendar_sync_success">Synced %d classes to calendar</string>
     <string name="calendar_sync_error">Calendar sync failed</string>
     <string name="calendar_permission_needed">Calendar permission needed to sync</string>
+    <string name="add_widget_title">Home Screen Widget</string>
+    <string name="add_widget_desc">See your next class at a glance</string>
+    <string name="add_widget_button">Add</string>
 
     <!-- Details -->
     <string name="desc_time">Time</string>
