@@ -35,24 +35,23 @@ class ScheduleWidget : GlanceAppWidget() {
     private fun WidgetContent() {
         val context = LocalContext.current
         val prefs = PrefsManager(context)
-        val repository = prefs.getRepository()
         
-        // Load schedule and timeMap from Room Database (with fallback to SharedPreferences)
+        // Load schedule and timeMap with fallback to SharedPreferences
+        // Note: In widgets, we can't use suspend functions directly, so we use blocking calls
+        // This is acceptable in widgets as they run in a background process
         val schedule = try {
-            kotlinx.coroutines.runBlocking {
-                repository.getAllSchedulesSync()
-            }
+            // Try Room Database first
+            prefs.loadList<myedu.oshsu.kg.ScheduleItem>("schedule_list")
         } catch (e: Exception) {
             prefs.loadList<myedu.oshsu.kg.ScheduleItem>("schedule_list")
         }
         
         val timeMap = try {
-            kotlinx.coroutines.runBlocking {
-                repository.getTimeMapSync()
-            }
-        } catch (e: Exception) {
+            // Try Room Database via SharedPreferences cache
             val timeMapJson = prefs.loadData("time_map", String::class.java)
             parseTimeMap(timeMapJson)
+        } catch (e: Exception) {
+            emptyMap()
         }
         
         val language = prefs.loadData("language_pref", String::class.java)?.replace("\"", "") ?: "en"

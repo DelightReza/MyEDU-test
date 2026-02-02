@@ -41,21 +41,18 @@ class CalendarSyncHelper(private val context: Context) {
             // Clear existing MyEDU events
             clearMyEduEvents(calendarId)
             
-            // Add new events
+            // Add new recurring events (once per class, RRULE handles repetition)
             var addedCount = 0
             val currentWeek = Calendar.getInstance()
             
-            // Sync events for the next 4 weeks
-            for (weekOffset in 0..3) {
-                for (item in schedule) {
-                    val timeString = timeMap[item.id_lesson] ?: continue
-                    val times = parseTimeString(timeString) ?: continue
-                    
-                    val eventCalendar = getCalendarForScheduleItem(item, times, currentWeek, weekOffset)
-                    if (eventCalendar != null) {
-                        insertEvent(calendarId, item, eventCalendar, language)
-                        addedCount++
-                    }
+            for (item in schedule) {
+                val timeString = timeMap[item.id_lesson] ?: continue
+                val times = parseTimeString(timeString) ?: continue
+                
+                val eventCalendar = getCalendarForScheduleItem(item, times, currentWeek, 0)
+                if (eventCalendar != null) {
+                    insertEvent(calendarId, item, eventCalendar, language)
+                    addedCount++
                 }
             }
             
