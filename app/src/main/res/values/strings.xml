@@ -53,6 +53,10 @@
     <string name="type_lecture">Lecture</string>
     <string name="type_practice">Practice</string>
     <string name="type_lab">Lab</string>
+    <string name="sync_to_calendar">Sync to Calendar</string>
+    <string name="calendar_sync_success">Synced %d classes to calendar</string>
+    <string name="calendar_sync_error">Calendar sync failed</string>
+    <string name="calendar_permission_needed">Calendar permission needed to sync</string>
 
     <!-- Details -->
     <string name="desc_time">Time</string>
