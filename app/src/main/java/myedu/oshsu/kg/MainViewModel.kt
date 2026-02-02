@@ -604,12 +604,19 @@ class MainViewModel : ViewModel() {
             
         val cal = Calendar.getInstance()
         val loc = Locale(language) 
+        val currentHour = cal.get(Calendar.HOUR_OF_DAY)
+        
+        // After 8 PM, show next day's name
+        if (currentHour >= 20) {
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        
         var dayName = cal.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, loc) ?: appContext?.getString(R.string.today) ?: "Today"
         if (dayName.isNotEmpty()) dayName = dayName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(loc) else it.toString() }
         todayDayName = dayName
 
-        val apiDay = if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) 6 else cal.get(Calendar.DAY_OF_WEEK) - 2
-        todayClasses = fullSchedule.filter { it.day == apiDay }
+        // Use WidgetHelper to get classes with 8 PM logic
+        todayClasses = myedu.oshsu.kg.widget.WidgetHelper.getTodayClasses(fullSchedule)
     }
     
     fun getSubjectTypeResId(item: ScheduleItem): Int? {

@@ -137,8 +137,8 @@ class CalendarSyncHelper(private val context: Context) {
             put(CalendarContract.Events.CALENDAR_ID, calendarId)
             put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
             
-            // Set recurring rule for weekly events
-            put(CalendarContract.Events.RRULE, "FREQ=WEEKLY;COUNT=12") // Repeat for 12 weeks
+            // Set recurring rule for weekly events (1 week only)
+            put(CalendarContract.Events.RRULE, "FREQ=WEEKLY;COUNT=1")
         }
         
         context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)

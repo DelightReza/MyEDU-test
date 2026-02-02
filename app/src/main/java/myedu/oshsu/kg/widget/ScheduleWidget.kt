@@ -56,72 +56,100 @@ class ScheduleWidget : GlanceAppWidget() {
         
         val language = prefs.loadData("language_pref", String::class.java)?.replace("\"", "") ?: "en"
         
-        val nextClassInfo = WidgetHelper.findNextClass(schedule, timeMap)
+        // Get all classes for today (with 8 PM logic)
+        val todayClasses = WidgetHelper.getTodayClasses(schedule)
         
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.background)
-                .padding(16.dp)
+                .padding(12.dp)
                 .clickable(actionStartActivity<MainActivity>()),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalAlignment = Alignment.Top,
+            horizontalAlignment = Alignment.Start
         ) {
-            if (nextClassInfo != null) {
-                val (nextClass, timeString) = nextClassInfo
-                
-                Text(
-                    text = context.getString(R.string.next_class),
-                    style = TextStyle(
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ColorProvider(GlanceTheme.colors.onBackground)
-                    )
+            // Header
+            Text(
+                text = context.getString(R.string.todays_classes),
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ColorProvider(GlanceTheme.colors.primary)
                 )
-                
-                Spacer(modifier = GlanceModifier.height(8.dp))
-                
+            )
+            
+            Spacer(modifier = GlanceModifier.height(8.dp))
+            
+            if (todayClasses.isEmpty()) {
                 Text(
-                    text = nextClass.subject?.get(language) ?: "Unknown",
-                    style = TextStyle(
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ColorProvider(GlanceTheme.colors.primary)
-                    )
-                )
-                
-                Spacer(modifier = GlanceModifier.height(4.dp))
-                
-                Text(
-                    text = timeString,
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        color = ColorProvider(GlanceTheme.colors.onBackground)
-                    )
-                )
-                
-                Spacer(modifier = GlanceModifier.height(4.dp))
-                
-                val roomName = nextClass.room?.name_en ?: "?"
-                val buildingName = nextClass.classroom?.building?.getName(language) ?: ""
-                val location = if (buildingName.isNotBlank()) "$buildingName, $roomName" else roomName
-                
-                Text(
-                    text = location,
+                    text = context.getString(R.string.no_classes),
                     style = TextStyle(
                         fontSize = 12.sp,
                         color = ColorProvider(GlanceTheme.colors.onBackground)
                     )
                 )
             } else {
-                Text(
-                    text = context.getString(R.string.no_classes),
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        color = ColorProvider(GlanceTheme.colors.onBackground)
-                    )
-                )
+                // Show all classes
+                todayClasses.forEachIndexed { index, classItem ->
+                    if (index > 0) {
+                        Spacer(modifier = GlanceModifier.height(8.dp))
+                    }
+                    
+                    ClassRow(classItem, timeMap, language, context)
+                }
             }
+        }
+    }
+    
+    @Composable
+    private fun ClassRow(
+        classItem: myedu.oshsu.kg.ScheduleItem,
+        timeMap: Map<Int, String>,
+        language: String,
+        context: Context
+    ) {
+        val timeString = timeMap[classItem.id_lesson] ?: "N/A"
+        val subjectName = classItem.subject?.get(language) ?: "Unknown"
+        val roomName = classItem.room?.name_en ?: "?"
+        
+        Column(
+            modifier = GlanceModifier.fillMaxWidth()
+        ) {
+            // Time
+            Text(
+                text = timeString,
+                style = TextStyle(
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = ColorProvider(GlanceTheme.colors.primary)
+                )
+            )
+            
+            Spacer(modifier = GlanceModifier.height(2.dp))
+            
+            // Subject
+            Text(
+                text = subjectName,
+                style = TextStyle(
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ColorProvider(GlanceTheme.colors.onBackground)
+                )
+            )
+            
+            Spacer(modifier = GlanceModifier.height(2.dp))
+            
+            // Location
+            val buildingName = classItem.classroom?.building?.getName(language) ?: ""
+            val location = if (buildingName.isNotBlank()) "$buildingName, $roomName" else "Room $roomName"
+            
+            Text(
+                text = location,
+                style = TextStyle(
+                    fontSize = 10.sp,
+                    color = ColorProvider(GlanceTheme.colors.onBackground)
+                )
+            )
         }
     }
     
