@@ -495,9 +495,9 @@ class MainViewModel : ViewModel() {
                             }
                             
                             // For grades, we need to convert SessionResponse to the lists
-                            if (roomGrades.sessions.isNotEmpty()) {
-                                sessionData = roomGrades.sessions
-                                transcriptData = roomGrades.sessions.flatMap { it.subjects ?: emptyList() }
+                            if (roomGrades.subjects?.isNotEmpty() == true) {
+                                sessionData = listOf(roomGrades)
+                                transcriptData = roomGrades.subjects ?: emptyList()
                             } else {
                                 sessionData = prefs?.loadList("session_list") ?: emptyList()
                                 transcriptData = prefs?.loadList("transcript_list") ?: emptyList()
