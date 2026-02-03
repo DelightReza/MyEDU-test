@@ -143,7 +143,7 @@ class ScheduleWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(ColorProvider(day = androidx.compose.ui.graphics.Color.White, night = androidx.compose.ui.graphics.Color(0xFF1C1C1E)))
+                .background(androidx.compose.ui.graphics.Color.White)
                 .padding(12.dp)
                 .clickable(actionStartActivity<MainActivity>()),
             verticalAlignment = Alignment.CenterVertically,
@@ -164,7 +164,7 @@ class ScheduleWidget : GlanceAppWidget() {
                     style = TextStyle(
                         fontSize = headerSize,
                         fontWeight = FontWeight.Bold,
-                        color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF1976D2), night = androidx.compose.ui.graphics.Color(0xFF64B5F6))
+                        color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF1976D2))
                     )
                 )
                 if (!isSmall && todayClasses.isNotEmpty()) {
@@ -173,7 +173,7 @@ class ScheduleWidget : GlanceAppWidget() {
                         text = "(${todayClasses.size})",
                         style = TextStyle(
                             fontSize = (headerSize.value * 0.8).sp,
-                            color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF757575), night = androidx.compose.ui.graphics.Color(0xFFBDBDBD))
+                            color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF757575))
                         )
                     )
                 }
@@ -186,7 +186,7 @@ class ScheduleWidget : GlanceAppWidget() {
                     text = context.getString(R.string.no_classes),
                     style = TextStyle(
                         fontSize = noClassSize,
-                        color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF424242), night = androidx.compose.ui.graphics.Color(0xFFE0E0E0))
+                        color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF424242))
                     )
                 )
             } else {
@@ -206,7 +206,7 @@ class ScheduleWidget : GlanceAppWidget() {
                         text = context.getString(R.string.and_more, todayClasses.size - maxClassesToShow),
                         style = TextStyle(
                             fontSize = (locationSize.value * 0.9).sp,
-                            color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF757575), night = androidx.compose.ui.graphics.Color(0xFFBDBDBD))
+                            color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF757575))
                         )
                     )
                 }
@@ -241,7 +241,7 @@ class ScheduleWidget : GlanceAppWidget() {
                     style = TextStyle(
                         fontSize = timeSize,
                         fontWeight = FontWeight.Bold,
-                        color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF1976D2), night = androidx.compose.ui.graphics.Color(0xFF64B5F6))
+                        color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF1976D2))
                     )
                 )
                 Spacer(modifier = GlanceModifier.width(6.dp))
@@ -251,7 +251,7 @@ class ScheduleWidget : GlanceAppWidget() {
                         style = TextStyle(
                             fontSize = subjectSize,
                             fontWeight = FontWeight.Medium,
-                            color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF212121), night = androidx.compose.ui.graphics.Color(0xFFFFFFFF))
+                            color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF212121))
                         ),
                         maxLines = 1
                     )
@@ -259,7 +259,7 @@ class ScheduleWidget : GlanceAppWidget() {
                         text = roomName,
                         style = TextStyle(
                             fontSize = (locationSize.value * 0.9).sp,
-                            color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF757575), night = androidx.compose.ui.graphics.Color(0xFFBDBDBD))
+                            color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF757575))
                         ),
                         maxLines = 1
                     )
@@ -277,7 +277,7 @@ class ScheduleWidget : GlanceAppWidget() {
                     style = TextStyle(
                         fontSize = timeSize,
                         fontWeight = FontWeight.Medium,
-                        color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF1976D2), night = androidx.compose.ui.graphics.Color(0xFF64B5F6))
+                        color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF1976D2))
                     )
                 )
                 
@@ -289,7 +289,7 @@ class ScheduleWidget : GlanceAppWidget() {
                     style = TextStyle(
                         fontSize = subjectSize,
                         fontWeight = FontWeight.Bold,
-                        color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF212121), night = androidx.compose.ui.graphics.Color(0xFFFFFFFF))
+                        color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF212121))
                     )
                 )
                 
@@ -303,7 +303,7 @@ class ScheduleWidget : GlanceAppWidget() {
                     text = location,
                     style = TextStyle(
                         fontSize = locationSize,
-                        color = ColorProvider(day = androidx.compose.ui.graphics.Color(0xFF757575), night = androidx.compose.ui.graphics.Color(0xFFBDBDBD))
+                        color = ColorProvider(androidx.compose.ui.graphics.Color(0xFF757575))
                     )
                 )
             }
