@@ -134,6 +134,10 @@ class MainViewModel : ViewModel() {
     private var refFetcher: ReferenceJsFetcher? = null
     private val dictUtils = DictionaryUtils()
     
+    // Public methods to access widget promotion preference
+    fun loadShowWidgetPromotion(): Boolean = prefs?.loadData("show_widget_promotion", Boolean::class.java) ?: true
+    fun saveShowWidgetPromotion(value: Boolean) { prefs?.saveData("show_widget_promotion", value) }
+    
     private var cachedResourcesRu: PdfResources? = null
     private var cachedResourcesEn: PdfResources? = null
     private var cachedRefResourcesRu: ReferenceResources? = null

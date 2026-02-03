@@ -106,7 +106,7 @@ fun HomeScreen(vm: MainViewModel) {
                 
                 // --- WIDGET PROMOTION CARD ---
                 item {
-                    var showWidgetPromotion by remember { mutableStateOf(vm.prefs?.loadData("show_widget_promotion", Boolean::class.java) ?: true) }
+                    var showWidgetPromotion by remember { mutableStateOf(vm.loadShowWidgetPromotion()) }
                     
                     if (showWidgetPromotion) {
                         WidgetPromotionCard(
@@ -114,7 +114,7 @@ fun HomeScreen(vm: MainViewModel) {
                             onAddWidget = { vm.requestAddWidget() },
                             onDismiss = {
                                 showWidgetPromotion = false
-                                vm.prefs?.saveData("show_widget_promotion", false)
+                                vm.saveShowWidgetPromotion(false)
                             }
                         )
                         Spacer(Modifier.height(32.dp))
