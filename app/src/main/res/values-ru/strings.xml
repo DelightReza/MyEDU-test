@@ -366,7 +366,6 @@
     <string name="fmt_name_id">%1$s (ID: %2$s)</string>
     
     <!-- Widget and Calendar Sync -->
-    <string name="todays_classes">Сегодняшние занятия</string>
     <string name="sync_to_calendar">Синхронизировать с календарем</string>
     <string name="calendar_sync_success">Синхронизировано %d занятий</string>
     <string name="calendar_sync_error">Ошибка синхронизации календаря</string>
