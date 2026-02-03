@@ -370,5 +370,6 @@
     <string name="add_widget_desc">Видите следующее занятие одним взглядом</string>
     <string name="add_widget_button">Добавить</string>
     <string name="ok">ОК</string>
+    <string name="close">Закрыть</string>
     <string name="loading">Загрузка...</string>
 </resources>

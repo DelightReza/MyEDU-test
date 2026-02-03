@@ -57,6 +57,7 @@
     <string name="add_widget_desc">See your next class at a glance</string>
     <string name="add_widget_button">Add</string>
     <string name="ok">OK</string>
+    <string name="close">Close</string>
     <string name="loading">Loading...</string>
 
     <!-- Details -->

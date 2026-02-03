@@ -370,5 +370,6 @@
     <string name="add_widget_desc">Кийинки сабакты бир карашта көрүңүз</string>
     <string name="add_widget_button">Кошуу</string>
     <string name="ok">Макул</string>
+    <string name="close">Жабуу</string>
     <string name="loading">Жүктөлүүдө...</string>
 </resources>
