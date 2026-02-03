@@ -296,15 +296,19 @@ fun WidgetPromotionCard(
                     Text(stringResource(R.string.add_widget_button))
                 }
             }
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier.size(24.dp).offset(x = 8.dp, y = (-8).dp)
+            // Just × icon, clickable
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .offset(x = 8.dp, y = (-8).dp)
+                    .clickable { onDismiss() },
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Outlined.Close,
-                    contentDescription = stringResource(R.string.close),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
-                    modifier = Modifier.size(20.dp)
+                Text(
+                    text = "×",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.Light
                 )
             }
         }
