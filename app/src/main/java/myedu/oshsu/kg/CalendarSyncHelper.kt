@@ -131,15 +131,18 @@ class CalendarSyncHelper(private val context: Context) {
         val endCalendar = eventCalendar.clone() as Calendar
         endCalendar.add(Calendar.MINUTE, 90) // Assume 90 minute class duration
         
-        val subjectName = item.subject?.get(language) ?: "Class"
+        val subjectName = item.subject?.get(language) ?: context.getString(R.string.calendar_class)
         val teacherName = item.teacher?.get() ?: ""
         val roomName = item.room?.name_en ?: ""
         val buildingName = item.classroom?.building?.getName(language) ?: ""
         
         val title = subjectName
-        val location = if (buildingName.isNotBlank()) "$buildingName, Room $roomName" else "Room $roomName"
-        val description = buildString("Teacher: $teacherName", 
-            "Type: ${item.subject_type?.get(language) ?: ""}")
+        val roomLabel = context.getString(R.string.calendar_room)
+        val location = if (buildingName.isNotBlank()) "$buildingName, $roomLabel $roomName" else "$roomLabel $roomName"
+        val teacherLabel = context.getString(R.string.calendar_teacher)
+        val typeLabel = context.getString(R.string.calendar_type)
+        val description = buildString("$teacherLabel $teacherName", 
+            "$typeLabel ${item.subject_type?.get(language) ?: ""}")
         
         val values = ContentValues().apply {
             put(CalendarContract.Events.DTSTART, eventCalendar.timeInMillis)

@@ -60,6 +60,12 @@
     <string name="add_widget_title">Home Screen Widget</string>
     <string name="add_widget_desc">See your next class at a glance</string>
     <string name="add_widget_button">Add</string>
+    <string name="ok">OK</string>
+    <string name="loading">Loading...</string>
+    <string name="calendar_class">Class</string>
+    <string name="calendar_room">Room</string>
+    <string name="calendar_teacher">Teacher:</string>
+    <string name="calendar_type">Type:</string>
 
     <!-- Details -->
     <string name="desc_time">Time</string>

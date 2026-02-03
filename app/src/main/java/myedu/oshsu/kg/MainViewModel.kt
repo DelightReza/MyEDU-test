@@ -586,6 +586,7 @@ class MainViewModel : ViewModel() {
                 timeMap = times.associate { it.id_lesson to "${it.begin_time ?: ""} - ${it.end_time ?: ""}" }
                 fullSchedule = wrappers.flatMap { it.schedule_items ?: emptyList() }.sortedBy { it.id_lesson }
                 prefs?.saveList("schedule_list", fullSchedule)
+                prefs?.saveData("time_map", timeMap)
                 processScheduleLocally()
             }
         } catch (_: Exception) {}
@@ -608,6 +609,11 @@ class MainViewModel : ViewModel() {
         
         // After 8 PM, show next day's name
         if (currentHour >= 20) {
+            cal.add(Calendar.DAY_OF_YEAR, 1)
+        }
+        
+        // If next day is Sunday, skip to Monday to match the class list
+        if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
             cal.add(Calendar.DAY_OF_YEAR, 1)
         }
         

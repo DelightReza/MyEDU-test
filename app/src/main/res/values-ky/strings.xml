@@ -364,4 +364,20 @@
     <string name="desc_revert">Кайтаруу</string>
     <string name="fmt_id_val">ID: %s</string>
     <string name="fmt_name_id">%1$s (ID: %2$s)</string>
+    
+    <!-- Widget and Calendar Sync -->
+    <string name="todays_classes">Бүгүнкү сабактар</string>
+    <string name="sync_to_calendar">Календарга синхрондоштуруу</string>
+    <string name="calendar_sync_success">%d сабак синхрондоштурулду</string>
+    <string name="calendar_sync_error">Календарды синхрондоштуруу катасы</string>
+    <string name="calendar_permission_needed">Календар уруксатынын керек</string>
+    <string name="add_widget_title">Башкы экрандагы виджет</string>
+    <string name="add_widget_desc">Кийинки сабакты бир карашта көрүңүз</string>
+    <string name="add_widget_button">Кошуу</string>
+    <string name="ok">Макул</string>
+    <string name="loading">Жүктөлүүдө...</string>
+    <string name="calendar_class">Сабак</string>
+    <string name="calendar_room">Аудитория</string>
+    <string name="calendar_teacher">Мугалим:</string>
+    <string name="calendar_type">Түрү:</string>
 </resources>

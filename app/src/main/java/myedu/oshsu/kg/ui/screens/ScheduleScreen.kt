@@ -142,7 +142,7 @@ fun ScheduleScreen(vm: MainViewModel) {
             text = { Text(syncMessage) },
             confirmButton = {
                 TextButton(onClick = { showSyncDialog = false }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             }
         )

@@ -67,7 +67,7 @@ object WidgetHelper {
             val classMinute = parts[1].toIntOrNull() ?: continue
             val classTime = classHour * 60 + classMinute
             
-            // If class hasn't started yet (with 10 min buffer)
+            // If class is upcoming or started within the last 10 minutes
             if (classTime > currentTime - 10) {
                 return Pair(classItem, timeString)
             }
