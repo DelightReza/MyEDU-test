@@ -441,6 +441,20 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    private fun loadFromSharedPreferences() {
+        prefs?.let { p ->
+            userData = p.loadData("user_data", UserData::class.java)
+            profileData = p.loadData("profile_data", StudentInfoResponse::class.java)
+            payStatus = p.loadData("pay_status", PayStatusResponse::class.java)
+            verify2FAStatus = p.loadData("verify_2fa_status", Verify2FAResponse::class.java)
+            newsList = p.loadList("news_list")
+            fullSchedule = p.loadList("schedule_list")
+            sessionData = p.loadList("session_list")
+            transcriptData = p.loadList("transcript_list")
+            processScheduleLocally()
+        }
+    }
+
     private fun loadOfflineData() {
         viewModelScope.launch {
             try {
@@ -494,32 +508,12 @@ class MainViewModel : ViewModel() {
                     }
                 } else {
                     // Fallback to SharedPreferences only
-                    prefs?.let { p ->
-                        userData = p.loadData("user_data", UserData::class.java)
-                        profileData = p.loadData("profile_data", StudentInfoResponse::class.java)
-                        payStatus = p.loadData("pay_status", PayStatusResponse::class.java)
-                        verify2FAStatus = p.loadData("verify_2fa_status", Verify2FAResponse::class.java)
-                        newsList = p.loadList("news_list")
-                        fullSchedule = p.loadList("schedule_list")
-                        sessionData = p.loadList("session_list")
-                        transcriptData = p.loadList("transcript_list")
-                        processScheduleLocally()
-                    }
+                    loadFromSharedPreferences()
                 }
             } catch (e: Exception) {
                 DebugLogger.log("DATA", "Error loading from Room, falling back to SharedPreferences: ${e.message}")
                 // Fallback to SharedPreferences on error
-                prefs?.let { p ->
-                    userData = p.loadData("user_data", UserData::class.java)
-                    profileData = p.loadData("profile_data", StudentInfoResponse::class.java)
-                    payStatus = p.loadData("pay_status", PayStatusResponse::class.java)
-                    verify2FAStatus = p.loadData("verify_2fa_status", Verify2FAResponse::class.java)
-                    newsList = p.loadList("news_list")
-                    fullSchedule = p.loadList("schedule_list")
-                    sessionData = p.loadList("session_list")
-                    transcriptData = p.loadList("transcript_list")
-                    processScheduleLocally()
-                }
+                loadFromSharedPreferences()
             }
         }
     }
