@@ -16,7 +16,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Weekend
 import androidx.compose.material3.*
@@ -31,7 +30,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import myedu.oshsu.kg.CalendarSyncHelper
 import myedu.oshsu.kg.MainViewModel
 import myedu.oshsu.kg.R
 import myedu.oshsu.kg.ScheduleItem
@@ -51,40 +49,10 @@ fun ScheduleScreen(vm: MainViewModel) {
     LaunchedEffect(pagerState.currentPage) { vm.selectedScheduleDay = pagerState.currentPage }
     
     val context = LocalContext.current
-    var showSyncDialog by remember { mutableStateOf(false) }
-    var syncMessage by remember { mutableStateOf("") }
 
     Scaffold(
         containerColor = Color.Transparent,
-        topBar = { CenterAlignedTopAppBar(title = { OshSuLogo(modifier = Modifier.width(100.dp).height(40.dp), themeMode = vm.themeMode) }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)) },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val helper = CalendarSyncHelper(context)
-                    if (helper.hasCalendarPermission()) {
-                        scope.launch {
-                            val result = helper.syncScheduleToCalendar(
-                                vm.fullSchedule,
-                                vm.timeMap,
-                                vm.language
-                            )
-                            syncMessage = if (result > 0) {
-                                context.getString(R.string.calendar_sync_success, result)
-                            } else {
-                                context.getString(R.string.calendar_sync_error)
-                            }
-                            showSyncDialog = true
-                        }
-                    } else {
-                        syncMessage = context.getString(R.string.calendar_permission_needed)
-                        showSyncDialog = true
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.DateRange, contentDescription = stringResource(R.string.sync_to_calendar))
-            }
-        }
+        topBar = { CenterAlignedTopAppBar(title = { OshSuLogo(modifier = Modifier.width(100.dp).height(40.dp), themeMode = vm.themeMode) }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)) }
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             
@@ -132,20 +100,6 @@ fun ScheduleScreen(vm: MainViewModel) {
                 }
             }
         }
-    }
-    
-    // Sync result dialog
-    if (showSyncDialog) {
-        AlertDialog(
-            onDismissRequest = { showSyncDialog = false },
-            title = { Text(stringResource(R.string.sync_to_calendar)) },
-            text = { Text(syncMessage) },
-            confirmButton = {
-                TextButton(onClick = { showSyncDialog = false }) {
-                    Text(stringResource(R.string.ok))
-                }
-            }
-        )
     }
 }
 
