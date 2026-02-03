@@ -371,5 +371,6 @@
     <string name="add_widget_button">Кошуу</string>
     <string name="ok">Макул</string>
     <string name="close">Жабуу</string>
+    <string name="and_more">жана дагы %d…</string>
     <string name="loading">Жүктөлүүдө...</string>
 </resources>

@@ -371,5 +371,6 @@
     <string name="add_widget_button">Добавить</string>
     <string name="ok">ОК</string>
     <string name="close">Закрыть</string>
+    <string name="and_more">и еще %d…</string>
     <string name="loading">Загрузка...</string>
 </resources>

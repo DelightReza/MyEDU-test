@@ -8,9 +8,11 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.LocalContext
+import androidx.glance.LocalSize
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.layout.*
@@ -23,6 +25,21 @@ import myedu.oshsu.kg.PrefsManager
 import myedu.oshsu.kg.R
 
 class ScheduleWidget : GlanceAppWidget() {
+    
+    // Define different size modes for the widget
+    override val sizeMode: SizeMode = SizeMode.Responsive(
+        setOf(
+            // Small: 2x2 cells (compact view, 1-2 classes)
+            androidx.glance.appwidget.unit.DpSize(180.dp, 110.dp),
+            // Medium: 4x2 cells (normal view, 2-3 classes)
+            androidx.glance.appwidget.unit.DpSize(250.dp, 110.dp),
+            // Large: 4x3 cells (expanded view, more classes)
+            androidx.glance.appwidget.unit.DpSize(250.dp, 200.dp),
+            // Extra Large: 4x4+ cells (full view, all classes)
+            androidx.glance.appwidget.unit.DpSize(250.dp, 300.dp)
+        )
+    )
+    
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
             GlanceTheme {
@@ -34,18 +51,37 @@ class ScheduleWidget : GlanceAppWidget() {
     @Composable
     private fun WidgetContent() {
         val context = LocalContext.current
+        val size = LocalSize.current
         val prefs = PrefsManager(context)
         
-        // Get display metrics to adapt to screen size
+        // Determine widget size category
+        val widgetHeight = size.height.value
+        val widgetWidth = size.width.value
+        val isSmall = widgetHeight < 150 && widgetWidth < 220
+        val isMedium = widgetHeight < 180 && !isSmall
+        val isLarge = widgetHeight < 280 && !isSmall && !isMedium
+        // Extra large is anything bigger
+        
+        // Get display metrics to adapt to screen size (tablet vs phone)
         val displayMetrics = context.resources.displayMetrics
         val isTablet = displayMetrics.widthPixels >= 600 * displayMetrics.density
         
-        // Scale font sizes for tablets
-        val headerSize = if (isTablet) 18.sp else 14.sp
-        val timeSize = if (isTablet) 15.sp else 11.sp
-        val subjectSize = if (isTablet) 16.sp else 12.sp
-        val locationSize = if (isTablet) 14.sp else 10.sp
-        val noClassSize = if (isTablet) 16.sp else 12.sp
+        // Scale font sizes based on both widget size and device type
+        val scaleFactor = when {
+            isSmall -> 0.85f
+            isMedium -> 1.0f
+            isLarge -> 1.1f
+            else -> 1.2f
+        }
+        
+        val tabletMultiplier = if (isTablet) 1.3f else 1.0f
+        val totalScale = scaleFactor * tabletMultiplier
+        
+        val headerSize = (14 * totalScale).sp
+        val timeSize = (11 * totalScale).sp
+        val subjectSize = (12 * totalScale).sp
+        val locationSize = (10 * totalScale).sp
+        val noClassSize = (12 * totalScale).sp
         
         // Load schedule and timeMap with fallback to SharedPreferences
         // Note: In widgets, we can't use suspend functions directly, so we use blocking calls
@@ -75,6 +111,16 @@ class ScheduleWidget : GlanceAppWidget() {
         // Get all classes for today (with 8 PM logic)
         val todayClasses = WidgetHelper.getTodayClasses(schedule)
         
+        // Limit classes shown based on widget size
+        val maxClassesToShow = when {
+            isSmall -> 1  // Compact: show only next class
+            isMedium -> 2  // Normal: show 2 classes
+            isLarge -> 4   // Large: show up to 4 classes
+            else -> Int.MAX_VALUE  // Extra large: show all classes
+        }
+        val classesToDisplay = todayClasses.take(maxClassesToShow)
+        val hasMoreClasses = todayClasses.size > maxClassesToShow
+        
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
@@ -84,15 +130,31 @@ class ScheduleWidget : GlanceAppWidget() {
             verticalAlignment = Alignment.Top,
             horizontalAlignment = Alignment.Start
         ) {
-            // Header
-            Text(
-                text = context.getString(R.string.todays_classes),
-                style = TextStyle(
-                    fontSize = headerSize,
-                    fontWeight = FontWeight.Bold,
-                    color = GlanceTheme.colors.primary
+            // Header with count indicator
+            Row(
+                modifier = GlanceModifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = context.getString(R.string.todays_classes),
+                    style = TextStyle(
+                        fontSize = headerSize,
+                        fontWeight = FontWeight.Bold,
+                        color = GlanceTheme.colors.primary
+                    )
                 )
-            )
+                if (!isSmall && todayClasses.isNotEmpty()) {
+                    Spacer(modifier = GlanceModifier.width(4.dp))
+                    Text(
+                        text = "(${todayClasses.size})",
+                        style = TextStyle(
+                            fontSize = (headerSize.value * 0.8).sp,
+                            color = GlanceTheme.colors.secondary
+                        )
+                    )
+                }
+            }
             
             Spacer(modifier = GlanceModifier.height(8.dp))
             
@@ -105,13 +167,25 @@ class ScheduleWidget : GlanceAppWidget() {
                     )
                 )
             } else {
-                // Show all classes
-                todayClasses.forEachIndexed { index, classItem ->
+                // Show limited classes based on widget size
+                classesToDisplay.forEachIndexed { index, classItem ->
                     if (index > 0) {
                         Spacer(modifier = GlanceModifier.height(8.dp))
                     }
                     
-                    ClassRow(classItem, timeMap, language, context, timeSize, subjectSize, locationSize)
+                    ClassRow(classItem, timeMap, language, context, timeSize, subjectSize, locationSize, isSmall)
+                }
+                
+                // Show "and X more" indicator if there are hidden classes
+                if (hasMoreClasses && !isSmall) {
+                    Spacer(modifier = GlanceModifier.height(4.dp))
+                    Text(
+                        text = context.getString(R.string.and_more, todayClasses.size - maxClassesToShow),
+                        style = TextStyle(
+                            fontSize = (locationSize.value * 0.9).sp,
+                            color = GlanceTheme.colors.secondary
+                        )
+                    )
                 }
             }
         }
@@ -125,50 +199,89 @@ class ScheduleWidget : GlanceAppWidget() {
         context: Context,
         timeSize: androidx.compose.ui.unit.TextUnit,
         subjectSize: androidx.compose.ui.unit.TextUnit,
-        locationSize: androidx.compose.ui.unit.TextUnit
+        locationSize: androidx.compose.ui.unit.TextUnit,
+        isCompact: Boolean = false
     ) {
         val timeString = timeMap[classItem.id_lesson] ?: "N/A"
         val subjectName = classItem.subject?.get(language) ?: "Unknown"
         val roomName = classItem.room?.name_en ?: "?"
         
-        Column(
-            modifier = GlanceModifier.fillMaxWidth()
-        ) {
-            // Time
-            Text(
-                text = timeString,
-                style = TextStyle(
-                    fontSize = timeSize,
-                    fontWeight = FontWeight.Medium,
-                    color = GlanceTheme.colors.primary
+        if (isCompact) {
+            // Compact layout for small widgets - show all in one line
+            Row(
+                modifier = GlanceModifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = timeString,
+                    style = TextStyle(
+                        fontSize = timeSize,
+                        fontWeight = FontWeight.Bold,
+                        color = GlanceTheme.colors.primary
+                    )
                 )
-            )
-            
-            Spacer(modifier = GlanceModifier.height(2.dp))
-            
-            // Subject
-            Text(
-                text = subjectName,
-                style = TextStyle(
-                    fontSize = subjectSize,
-                    fontWeight = FontWeight.Bold,
-                    color = GlanceTheme.colors.onBackground
+                Spacer(modifier = GlanceModifier.width(6.dp))
+                Column(modifier = GlanceModifier.defaultWeight()) {
+                    Text(
+                        text = subjectName,
+                        style = TextStyle(
+                            fontSize = subjectSize,
+                            fontWeight = FontWeight.Medium,
+                            color = GlanceTheme.colors.onBackground
+                        ),
+                        maxLines = 1
+                    )
+                    Text(
+                        text = roomName,
+                        style = TextStyle(
+                            fontSize = (locationSize.value * 0.9).sp,
+                            color = GlanceTheme.colors.secondary
+                        ),
+                        maxLines = 1
+                    )
+                }
+            }
+        } else {
+            // Normal layout for larger widgets
+            Column(
+                modifier = GlanceModifier.fillMaxWidth()
+            ) {
+                // Time
+                Text(
+                    text = timeString,
+                    style = TextStyle(
+                        fontSize = timeSize,
+                        fontWeight = FontWeight.Medium,
+                        color = GlanceTheme.colors.primary
+                    )
                 )
-            )
-            
-            Spacer(modifier = GlanceModifier.height(2.dp))
-            
-            // Location
-            val buildingName = classItem.classroom?.building?.getName(language) ?: ""
-            val location = if (buildingName.isNotBlank()) "$buildingName, $roomName" else "Room $roomName"
-            
-            Text(
-                text = location,
-                style = TextStyle(
-                    fontSize = locationSize,
-                    color = GlanceTheme.colors.onBackground
+                
+                Spacer(modifier = GlanceModifier.height(2.dp))
+                
+                // Subject
+                Text(
+                    text = subjectName,
+                    style = TextStyle(
+                        fontSize = subjectSize,
+                        fontWeight = FontWeight.Bold,
+                        color = GlanceTheme.colors.onBackground
+                    )
                 )
-            )
+                
+                Spacer(modifier = GlanceModifier.height(2.dp))
+                
+                // Location
+                val buildingName = classItem.classroom?.building?.getName(language) ?: ""
+                val location = if (buildingName.isNotBlank()) "$buildingName, $roomName" else "Room $roomName"
+                
+                Text(
+                    text = location,
+                    style = TextStyle(
+                        fontSize = locationSize,
+                        color = GlanceTheme.colors.onBackground
+                    )
+                )
+            }
         }
     }
     
