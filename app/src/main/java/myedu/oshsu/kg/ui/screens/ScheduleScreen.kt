@@ -16,6 +16,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Weekend
 import androidx.compose.material3.*
@@ -25,16 +26,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
+import myedu.oshsu.kg.CalendarSyncHelper
 import myedu.oshsu.kg.MainViewModel
 import myedu.oshsu.kg.R
 import myedu.oshsu.kg.ScheduleItem
 import myedu.oshsu.kg.ui.components.MyEduPullToRefreshBox
 import myedu.oshsu.kg.ui.components.OshSuLogo
 import myedu.oshsu.kg.ui.components.ThemedCard
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
