@@ -33,6 +33,7 @@
     <string name="stream">Stream</string>
     <string name="group">Group</string>
     <string name="todays_classes">Today\'s Classes</string>
+    <string name="tomorrows_classes">Tomorrow\'s Classes</string>
     <string name="next_class">Next Class</string>
     <string name="no_classes_today">No classes today. Enjoy your rest!</string>
     <string name="announcements">Announcements</string>

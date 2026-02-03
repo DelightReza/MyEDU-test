@@ -124,4 +124,16 @@ object WidgetHelper {
         
         return schedule.filter { it.day == apiDay }.sortedBy { it.id_lesson }
     }
+    
+    /**
+     * Determines if we're showing tomorrow's classes (after 8 PM).
+     * 
+     * @param currentTimeMillis Current time in milliseconds (defaults to System.currentTimeMillis())
+     * @return true if after 8 PM, false otherwise
+     */
+    fun isShowingTomorrow(currentTimeMillis: Long = System.currentTimeMillis()): Boolean {
+        val now = Calendar.getInstance().apply { timeInMillis = currentTimeMillis }
+        val currentHour = now.get(Calendar.HOUR_OF_DAY)
+        return currentHour >= 20
+    }
 }

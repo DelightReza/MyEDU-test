@@ -30,6 +30,7 @@
     <string name="stream">Поток</string>
     <string name="group">Группа</string>
     <string name="todays_classes">Пары сегодня</string>
+    <string name="tomorrows_classes">Пары завтра</string>
     <string name="no_classes_today">Сегодня пар нет. Отдыхайте!</string>
     <string name="announcements">Объявления</string>
     <string name="no_classes">Нет занятий</string>

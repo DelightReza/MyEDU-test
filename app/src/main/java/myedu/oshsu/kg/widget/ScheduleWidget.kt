@@ -128,6 +128,7 @@ class ScheduleWidget : GlanceAppWidget() {
         
         // Get all classes for today (with 8 PM logic)
         val todayClasses = WidgetHelper.getTodayClasses(schedule)
+        val isShowingTomorrow = WidgetHelper.isShowingTomorrow()
         
         // Limit classes shown based on widget size
         val maxClassesToShow = when {
@@ -155,7 +156,11 @@ class ScheduleWidget : GlanceAppWidget() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = context.getString(R.string.todays_classes),
+                    text = if (isShowingTomorrow) {
+                        context.getString(R.string.tomorrows_classes)
+                    } else {
+                        context.getString(R.string.todays_classes)
+                    },
                     style = TextStyle(
                         fontSize = headerSize,
                         fontWeight = FontWeight.Bold,
