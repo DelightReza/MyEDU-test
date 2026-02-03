@@ -51,8 +51,13 @@ class CalendarSyncHelper(private val context: Context) {
                 
                 val eventCalendar = getCalendarForScheduleItem(item, times, currentWeek, 0)
                 if (eventCalendar != null) {
-                    insertEvent(calendarId, item, eventCalendar, language)
-                    addedCount++
+                    try {
+                        insertEvent(calendarId, item, eventCalendar, language)
+                        addedCount++
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        // Continue with other events even if one fails
+                    }
                 }
             }
             
@@ -95,9 +100,17 @@ class CalendarSyncHelper(private val context: Context) {
             put(CalendarContract.Calendars.OWNER_ACCOUNT, "MyEDU")
             put(CalendarContract.Calendars.CALENDAR_TIME_ZONE, TimeZone.getDefault().id)
             put(CalendarContract.Calendars.SYNC_EVENTS, 1)
+            put(CalendarContract.Calendars.VISIBLE, 1)
+            put(CalendarContract.Calendars.CAN_ORGANIZER_RESPOND, 0)
+            put(CalendarContract.Calendars.CAN_MODIFY_TIME_ZONE, 1)
         }
         
-        val uri = context.contentResolver.insert(CalendarContract.Calendars.CONTENT_URI, values)
+        val uri = try {
+            context.contentResolver.insert(CalendarContract.Calendars.CONTENT_URI, values)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
         return uri?.lastPathSegment?.toLongOrNull()
     }
     

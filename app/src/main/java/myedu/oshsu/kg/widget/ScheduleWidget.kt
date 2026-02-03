@@ -36,25 +36,41 @@ class ScheduleWidget : GlanceAppWidget() {
         val context = LocalContext.current
         val prefs = PrefsManager(context)
         
+        // Get display metrics to adapt to screen size
+        val displayMetrics = context.resources.displayMetrics
+        val isTablet = displayMetrics.widthPixels >= 600 * displayMetrics.density
+        
+        // Scale font sizes for tablets
+        val headerSize = if (isTablet) 18.sp else 14.sp
+        val timeSize = if (isTablet) 15.sp else 11.sp
+        val subjectSize = if (isTablet) 16.sp else 12.sp
+        val locationSize = if (isTablet) 14.sp else 10.sp
+        val noClassSize = if (isTablet) 16.sp else 12.sp
+        
         // Load schedule and timeMap with fallback to SharedPreferences
         // Note: In widgets, we can't use suspend functions directly, so we use blocking calls
         // This is acceptable in widgets as they run in a background process
         val schedule = try {
-            // Try Room Database first
             prefs.loadList<myedu.oshsu.kg.ScheduleItem>("schedule_list")
         } catch (e: Exception) {
-            prefs.loadList<myedu.oshsu.kg.ScheduleItem>("schedule_list")
+            emptyList()
         }
         
         val timeMap = try {
-            // Get raw JSON string from SharedPreferences
-            val timeMapJson = prefs.prefs.getString("time_map", null)
+            // Get raw JSON string from SharedPreferences - use application context to ensure consistency
+            val appPrefs = context.applicationContext.getSharedPreferences("myedu_offline_cache", Context.MODE_PRIVATE)
+            val timeMapJson = appPrefs.getString("time_map", null)
             parseTimeMap(timeMapJson)
         } catch (e: Exception) {
             emptyMap()
         }
         
-        val language = prefs.loadData("language_pref", String::class.java)?.replace("\"", "") ?: "en"
+        val language = try {
+            val appPrefs = context.applicationContext.getSharedPreferences("myedu_offline_cache", Context.MODE_PRIVATE)
+            appPrefs.getString("language_pref", "\"en\"")?.replace("\"", "") ?: "en"
+        } catch (e: Exception) {
+            "en"
+        }
         
         // Get all classes for today (with 8 PM logic)
         val todayClasses = WidgetHelper.getTodayClasses(schedule)
@@ -72,7 +88,7 @@ class ScheduleWidget : GlanceAppWidget() {
             Text(
                 text = context.getString(R.string.todays_classes),
                 style = TextStyle(
-                    fontSize = 14.sp,
+                    fontSize = headerSize,
                     fontWeight = FontWeight.Bold,
                     color = GlanceTheme.colors.primary
                 )
@@ -84,7 +100,7 @@ class ScheduleWidget : GlanceAppWidget() {
                 Text(
                     text = context.getString(R.string.no_classes),
                     style = TextStyle(
-                        fontSize = 12.sp,
+                        fontSize = noClassSize,
                         color = GlanceTheme.colors.onBackground
                     )
                 )
@@ -95,7 +111,7 @@ class ScheduleWidget : GlanceAppWidget() {
                         Spacer(modifier = GlanceModifier.height(8.dp))
                     }
                     
-                    ClassRow(classItem, timeMap, language, context)
+                    ClassRow(classItem, timeMap, language, context, timeSize, subjectSize, locationSize)
                 }
             }
         }
@@ -106,7 +122,10 @@ class ScheduleWidget : GlanceAppWidget() {
         classItem: myedu.oshsu.kg.ScheduleItem,
         timeMap: Map<Int, String>,
         language: String,
-        context: Context
+        context: Context,
+        timeSize: androidx.compose.ui.unit.TextUnit,
+        subjectSize: androidx.compose.ui.unit.TextUnit,
+        locationSize: androidx.compose.ui.unit.TextUnit
     ) {
         val timeString = timeMap[classItem.id_lesson] ?: "N/A"
         val subjectName = classItem.subject?.get(language) ?: "Unknown"
@@ -119,7 +138,7 @@ class ScheduleWidget : GlanceAppWidget() {
             Text(
                 text = timeString,
                 style = TextStyle(
-                    fontSize = 11.sp,
+                    fontSize = timeSize,
                     fontWeight = FontWeight.Medium,
                     color = GlanceTheme.colors.primary
                 )
@@ -131,7 +150,7 @@ class ScheduleWidget : GlanceAppWidget() {
             Text(
                 text = subjectName,
                 style = TextStyle(
-                    fontSize = 12.sp,
+                    fontSize = subjectSize,
                     fontWeight = FontWeight.Bold,
                     color = GlanceTheme.colors.onBackground
                 )
@@ -146,7 +165,7 @@ class ScheduleWidget : GlanceAppWidget() {
             Text(
                 text = location,
                 style = TextStyle(
-                    fontSize = 10.sp,
+                    fontSize = locationSize,
                     color = GlanceTheme.colors.onBackground
                 )
             )
