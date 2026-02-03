@@ -28,6 +28,14 @@ class PrefsManager(private val context: Context) {
 
     fun clearAll() {
         prefs.edit().clear().apply()
+        // Also clear Room Database
+        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                repository.clearAll()
+            } catch (e: Exception) {
+                // Ignore errors during cleanup
+            }
+        }
     }
 
     // --- DATA SAVING (GENERIC) ---

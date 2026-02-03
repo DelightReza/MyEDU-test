@@ -442,16 +442,85 @@ class MainViewModel : ViewModel() {
     }
 
     private fun loadOfflineData() {
-        prefs?.let { p ->
-            userData = p.loadData("user_data", UserData::class.java)
-            profileData = p.loadData("profile_data", StudentInfoResponse::class.java)
-            payStatus = p.loadData("pay_status", PayStatusResponse::class.java)
-            verify2FAStatus = p.loadData("verify_2fa_status", Verify2FAResponse::class.java)
-            newsList = p.loadList("news_list")
-            fullSchedule = p.loadList("schedule_list")
-            sessionData = p.loadList("session_list")
-            transcriptData = p.loadList("transcript_list")
-            processScheduleLocally()
+        viewModelScope.launch {
+            try {
+                // Try to load from Room Database first
+                val repository = prefs?.getRepository()
+                if (repository != null) {
+                    withContext(Dispatchers.IO) {
+                        // Load data from Room
+                        val roomUserData = repository.getUserDataSync()
+                        val roomProfileData = repository.getProfileDataSync()
+                        val roomPayStatus = repository.getPayStatusSync()
+                        val roomNews = repository.getAllNewsSync()
+                        val roomSchedule = repository.getAllSchedulesSync()
+                        val roomTimeMap = repository.getTimeMapSync()
+                        val roomGrades = repository.getAllGradesSync()
+                        
+                        withContext(Dispatchers.Main) {
+                            // Use Room data if available, otherwise fall back to SharedPreferences
+                            userData = roomUserData ?: prefs?.loadData("user_data", UserData::class.java)
+                            profileData = roomProfileData ?: prefs?.loadData("profile_data", StudentInfoResponse::class.java)
+                            payStatus = roomPayStatus ?: prefs?.loadData("pay_status", PayStatusResponse::class.java)
+                            verify2FAStatus = prefs?.loadData("verify_2fa_status", Verify2FAResponse::class.java)
+                            
+                            newsList = if (roomNews.isNotEmpty()) roomNews else prefs?.loadList("news_list") ?: emptyList()
+                            fullSchedule = if (roomSchedule.isNotEmpty()) roomSchedule else prefs?.loadList("schedule_list") ?: emptyList()
+                            timeMap = if (roomTimeMap.isNotEmpty()) roomTimeMap else {
+                                val json = prefs?.prefs?.getString("time_map", null)
+                                if (json != null) {
+                                    try {
+                                        val gson = com.google.gson.Gson()
+                                        gson.fromJson(json, object : com.google.gson.reflect.TypeToken<Map<Int, String>>() {}.type)
+                                    } catch (e: Exception) {
+                                        emptyMap()
+                                    }
+                                } else {
+                                    emptyMap()
+                                }
+                            }
+                            
+                            // For grades, we need to convert SessionResponse to the lists
+                            if (roomGrades.sessions.isNotEmpty()) {
+                                sessionData = roomGrades.sessions
+                                transcriptData = roomGrades.sessions.flatMap { it.subjects ?: emptyList() }
+                            } else {
+                                sessionData = prefs?.loadList("session_list") ?: emptyList()
+                                transcriptData = prefs?.loadList("transcript_list") ?: emptyList()
+                            }
+                            
+                            processScheduleLocally()
+                        }
+                    }
+                } else {
+                    // Fallback to SharedPreferences only
+                    prefs?.let { p ->
+                        userData = p.loadData("user_data", UserData::class.java)
+                        profileData = p.loadData("profile_data", StudentInfoResponse::class.java)
+                        payStatus = p.loadData("pay_status", PayStatusResponse::class.java)
+                        verify2FAStatus = p.loadData("verify_2fa_status", Verify2FAResponse::class.java)
+                        newsList = p.loadList("news_list")
+                        fullSchedule = p.loadList("schedule_list")
+                        sessionData = p.loadList("session_list")
+                        transcriptData = p.loadList("transcript_list")
+                        processScheduleLocally()
+                    }
+                }
+            } catch (e: Exception) {
+                DebugLogger.log("DATA", "Error loading from Room, falling back to SharedPreferences: ${e.message}")
+                // Fallback to SharedPreferences on error
+                prefs?.let { p ->
+                    userData = p.loadData("user_data", UserData::class.java)
+                    profileData = p.loadData("profile_data", StudentInfoResponse::class.java)
+                    payStatus = p.loadData("pay_status", PayStatusResponse::class.java)
+                    verify2FAStatus = p.loadData("verify_2fa_status", Verify2FAResponse::class.java)
+                    newsList = p.loadList("news_list")
+                    fullSchedule = p.loadList("schedule_list")
+                    sessionData = p.loadList("session_list")
+                    transcriptData = p.loadList("transcript_list")
+                    processScheduleLocally()
+                }
+            }
         }
     }
 

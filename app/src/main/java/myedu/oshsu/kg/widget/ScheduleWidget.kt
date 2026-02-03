@@ -20,6 +20,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import kotlinx.coroutines.runBlocking
 import myedu.oshsu.kg.MainActivity
 import myedu.oshsu.kg.PrefsManager
 import myedu.oshsu.kg.R
@@ -83,20 +84,37 @@ class ScheduleWidget : GlanceAppWidget() {
         val locationSize = (10 * totalScale).sp
         val noClassSize = (12 * totalScale).sp
         
-        // Load schedule and timeMap with fallback to SharedPreferences
-        // Note: In widgets, we can't use suspend functions directly, so we use blocking calls
-        // This is acceptable in widgets as they run in a background process
+        // Load schedule and timeMap from Room Database first, fallback to SharedPreferences
+        // Note: In widgets, we use blocking Room calls which is acceptable as widgets run in background
         val schedule = try {
-            prefs.loadList<myedu.oshsu.kg.ScheduleItem>("schedule_list")
+            val repository = prefs.getRepository()
+            val roomSchedule = runBlocking { repository.getAllSchedulesSync() }
+            if (roomSchedule.isNotEmpty()) {
+                roomSchedule
+            } else {
+                // Fallback to SharedPreferences
+                prefs.loadList<myedu.oshsu.kg.ScheduleItem>("schedule_list")
+            }
         } catch (e: Exception) {
-            emptyList()
+            // Final fallback to SharedPreferences on error
+            try {
+                prefs.loadList<myedu.oshsu.kg.ScheduleItem>("schedule_list")
+            } catch (e2: Exception) {
+                emptyList()
+            }
         }
         
         val timeMap = try {
-            // Get raw JSON string from SharedPreferences - use application context to ensure consistency
-            val appPrefs = context.applicationContext.getSharedPreferences("myedu_offline_cache", Context.MODE_PRIVATE)
-            val timeMapJson = appPrefs.getString("time_map", null)
-            parseTimeMap(timeMapJson)
+            val repository = prefs.getRepository()
+            val roomTimeMap = runBlocking { repository.getTimeMapSync() }
+            if (roomTimeMap.isNotEmpty()) {
+                roomTimeMap
+            } else {
+                // Fallback to SharedPreferences
+                val appPrefs = context.applicationContext.getSharedPreferences("myedu_offline_cache", Context.MODE_PRIVATE)
+                val timeMapJson = appPrefs.getString("time_map", null)
+                parseTimeMap(timeMapJson)
+            }
         } catch (e: Exception) {
             emptyMap()
         }
