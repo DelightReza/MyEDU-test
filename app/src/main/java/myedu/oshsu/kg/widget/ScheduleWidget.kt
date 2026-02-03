@@ -14,6 +14,7 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.unit.DpSize
 import androidx.glance.background
 import androidx.glance.layout.*
 import androidx.glance.text.FontWeight
@@ -31,13 +32,13 @@ class ScheduleWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Responsive(
         setOf(
             // Small: 2x2 cells (compact view, 1-2 classes)
-            androidx.glance.appwidget.unit.DpSize(180.dp, 110.dp),
+            DpSize(180.dp, 110.dp),
             // Medium: 4x2 cells (normal view, 2-3 classes)
-            androidx.glance.appwidget.unit.DpSize(250.dp, 110.dp),
+            DpSize(250.dp, 110.dp),
             // Large: 4x3 cells (expanded view, more classes)
-            androidx.glance.appwidget.unit.DpSize(250.dp, 200.dp),
+            DpSize(250.dp, 200.dp),
             // Extra Large: 4x4+ cells (full view, all classes)
-            androidx.glance.appwidget.unit.DpSize(250.dp, 300.dp)
+            DpSize(250.dp, 300.dp)
         )
     )
     

@@ -494,14 +494,17 @@ class MainViewModel : ViewModel() {
                                 }
                             }
                             
-                            // For grades, we need to convert SessionResponse to the lists
+                            // For grades, sessionData and transcriptData come from different sources
+                            // SessionData is from session_list, transcriptData is from transcript_list
                             if (roomGrades.subjects?.isNotEmpty() == true) {
+                                // roomGrades is a SessionResponse - use it for sessionData
                                 sessionData = listOf(roomGrades)
-                                transcriptData = roomGrades.subjects ?: emptyList()
                             } else {
                                 sessionData = prefs?.loadList("session_list") ?: emptyList()
-                                transcriptData = prefs?.loadList("transcript_list") ?: emptyList()
                             }
+                            
+                            // transcriptData is separate - load from SharedPreferences fallback
+                            transcriptData = prefs?.loadList("transcript_list") ?: emptyList()
                             
                             processScheduleLocally()
                         }
