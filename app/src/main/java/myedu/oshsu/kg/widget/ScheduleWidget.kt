@@ -47,8 +47,8 @@ class ScheduleWidget : GlanceAppWidget() {
         }
         
         val timeMap = try {
-            // Try Room Database via SharedPreferences cache
-            val timeMapJson = prefs.loadData("time_map", String::class.java)
+            // Get raw JSON string from SharedPreferences
+            val timeMapJson = prefs.prefs.getString("time_map", null)
             parseTimeMap(timeMapJson)
         } catch (e: Exception) {
             emptyMap()
