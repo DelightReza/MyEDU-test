@@ -90,7 +90,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                         prefs.getRepository().updateSchedules(fullSchedule)
                         
                         if (times.isNotEmpty()) {
-                            val timeMap = times.associate { (it.lesson?.num ?: 0) to "${it.begin_time ?: ""} - ${it.end_time ?: ""}" }
+                            val timeMap = times.associate { it.id_lesson to "${it.begin_time ?: ""} - ${it.end_time ?: ""}" }
                             prefs.saveData("time_map", timeMap)
                             prefs.getRepository().updateTimeMap(timeMap)
                             val localizedContext = NotificationHelper.getLocalizedContext(context, prefs)
