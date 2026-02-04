@@ -67,7 +67,7 @@ fun HomeScreen(vm: MainViewModel) {
                             Spacer(Modifier.width(8.dp))
                             Box(modifier = Modifier.size(40.dp).clickable { showNewsSheet = true }, contentAlignment = Alignment.Center) { 
                                 if (vm.newsList.isNotEmpty()) { 
-                                    BadgedBox(badge = { Badge { Text("${vm.newsList.size}") } }) { Icon(Icons.Outlined.Notifications, contentDescription = stringResource(R.string.desc_announcements), tint = MaterialTheme.colorScheme.primary) } 
+                                    BadgedBox(badge = { Badge { Text("${vm.newsList.size}", color = MaterialTheme.colorScheme.onError) } }) { Icon(Icons.Outlined.Notifications, contentDescription = stringResource(R.string.desc_announcements), tint = MaterialTheme.colorScheme.primary) } 
                                 } else { 
                                     Icon(Icons.Outlined.Notifications, contentDescription = stringResource(R.string.desc_announcements), tint = MaterialTheme.colorScheme.onSurfaceVariant) 
                                 } 
