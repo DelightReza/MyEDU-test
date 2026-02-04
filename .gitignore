@@ -1,0 +1,20 @@
+# Gradle
+.gradle/
+build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+
+# Android Studio
+*.iml
+.idea/
+.DS_Store
+local.properties
+captures/
+.externalNativeBuild
+.cxx
+*.apk
+output.json
+
+# NDK
+obj/
