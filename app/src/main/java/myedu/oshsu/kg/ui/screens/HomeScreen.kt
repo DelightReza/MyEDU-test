@@ -164,7 +164,7 @@ fun HomeScreen(vm: MainViewModel) {
     if (showNewsSheet) { 
         ModalBottomSheet(onDismissRequest = { showNewsSheet = false }) { 
             Column(Modifier.padding(horizontal = 24.dp, vertical = 16.dp)) { 
-                Text(stringResource(R.string.announcements), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.announcements), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 LazyColumn { 
                     items(vm.newsList) { news -> 
                         ThemedCard(
