@@ -282,8 +282,8 @@ data class JournalItem(
     val theme: String?,
     val mark: String?,
     val label: Boolean?,
-    val id_stream: Long?,
-    val teacher_name: String?
+    @SerializedName("id_stream") val idStream: Long?,
+    @SerializedName("teacher_name") val teacherName: String?
 )
 
 // --- DOCS ---

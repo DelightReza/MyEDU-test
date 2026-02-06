@@ -504,12 +504,10 @@ fun JournalRow(item: JournalItem) {
     val dateComponents = remember(item.date) {
         try {
             val date = item.date ?: return@remember Pair("?", "?")
-            val parts = date.split("-")
-            if (parts.size >= 3) {
-                val day = parts[2].take(2)
-                val monthNum = parts[1].toIntOrNull() ?: 1
-                val months = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-                val month = months.getOrNull(monthNum - 1) ?: "?"
+            val parsedDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(date)
+            if (parsedDate != null) {
+                val day = SimpleDateFormat("dd", Locale.getDefault()).format(parsedDate)
+                val month = SimpleDateFormat("MMM", Locale.getDefault()).format(parsedDate)
                 Pair(day, month)
             } else {
                 Pair("?", "?")
@@ -560,7 +558,7 @@ fun JournalRow(item: JournalItem) {
                 overflow = TextOverflow.Ellipsis
             )
             
-            if (item.teacher_name != null) {
+            if (item.teacherName != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(top = 4.dp)
@@ -573,7 +571,7 @@ fun JournalRow(item: JournalItem) {
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        text = item.teacher_name,
+                        text = item.teacherName,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -645,5 +643,3 @@ fun JournalRow(item: JournalItem) {
         }
     }
 }
-    SimpleDateFormat("dd MMM HH:mm", Locale.getDefault()).format(date)
-} catch (e: Exception) { d ?: "" }
