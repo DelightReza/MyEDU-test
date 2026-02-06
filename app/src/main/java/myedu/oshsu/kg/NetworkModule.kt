@@ -267,9 +267,13 @@ data class SessionSubjectWrapper(
     val subject: NameObj?, 
     val marklist: MarkList?, 
     @SerializedName("graphic") val graphic: GraphicInfo?,
-    @SerializedName("id_curricula") val idCurricula: Int?
-)
+    val curricula: CurriculaObj?
+) {
+    // Convenience property to get id_curricula from curricula object
+    val idCurricula: Int? get() = curricula?.id
+}
 data class GraphicInfo(val begin: String?, val end: String?)
+data class CurriculaObj(val id: Int?)
 
 data class MarkList(
     val id: Long?,

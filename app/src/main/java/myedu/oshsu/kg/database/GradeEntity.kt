@@ -41,7 +41,7 @@ fun List<GradeEntity>.toSessionResponse(): SessionResponse {
             subject = entity.subjectJson?.let { gson.fromJson(it, NameObj::class.java) },
             marklist = entity.marklistJson?.let { gson.fromJson(it, MarkList::class.java) },
             graphic = entity.graphicJson?.let { gson.fromJson(it, GraphicInfo::class.java) },
-            idCurricula = entity.idCurricula
+            curricula = entity.idCurricula?.let { CurriculaObj(it) }
         )
     }
     
