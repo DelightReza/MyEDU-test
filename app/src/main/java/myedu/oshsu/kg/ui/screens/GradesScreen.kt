@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -401,7 +402,7 @@ fun GradeItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Article,
+                    imageVector = Icons.Outlined.Description,
                     contentDescription = stringResource(R.string.journal),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(16.dp)
