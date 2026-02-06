@@ -105,6 +105,22 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
                     }
                 }
             }
+            
+            if (subjectGrades != null) {
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = { vm.openJournal(subjectGrades) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Icon(Icons.Outlined.Article, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.journal), style = MaterialTheme.typography.labelLarge)
+                }
+            }
 
             val teacherName = item.teacher?.get()
             if (isValid(teacherName)) {
