@@ -263,7 +263,12 @@ data class NewsItem(val id: Int, val title: String?, val message: String?, val c
 
 data class SessionResponse(val semester: SemesterObj?, val subjects: List<SessionSubjectWrapper>?)
 data class SemesterObj(val id: Int, val name_en: String?)
-data class SessionSubjectWrapper(val subject: NameObj?, val marklist: MarkList?, @SerializedName("graphic") val graphic: GraphicInfo?)
+data class SessionSubjectWrapper(
+    val subject: NameObj?, 
+    val marklist: MarkList?, 
+    @SerializedName("graphic") val graphic: GraphicInfo?,
+    @SerializedName("id_curricula") val idCurricula: Int?
+)
 data class GraphicInfo(val begin: String?, val end: String?)
 
 data class MarkList(

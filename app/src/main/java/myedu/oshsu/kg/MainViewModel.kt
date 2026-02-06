@@ -750,11 +750,11 @@ class MainViewModel : ViewModel() {
     
     fun fetchJournal() {
         val subject = selectedJournalSubject ?: return
-        // Try marklist.id first (curriculum ID), fallback to subject.id if null
-        val curriculaId = subject.marklist?.id?.toInt() ?: subject.subject?.id
+        // Use id_curricula field from API response, fallback to marklist.id, then subject.id
+        val curriculaId = subject.idCurricula ?: subject.marklist?.id?.toInt() ?: subject.subject?.id
         
         if (curriculaId == null) {
-            DebugLogger.log("JOURNAL", "Both marklist.id and subject.id are null, cannot fetch journal")
+            DebugLogger.log("JOURNAL", "All ID fields are null, cannot fetch journal")
             viewModelScope.launch(Dispatchers.Main) {
                 isJournalLoading = false
                 journalList = emptyList()
@@ -771,7 +771,7 @@ class MainViewModel : ViewModel() {
                 
                 DebugLogger.log("JOURNAL", "Fetching journal: curricula=$curriculaId, semester=$semesterId, type=$selectedJournalType, year=$eduYearId")
                 
-                // Note: API expects marklist.id as id_curricula parameter (fallback to subject.id if null)
+                // Note: API expects id_curricula from SessionSubjectWrapper (fallback to marklist.id, then subject.id)
                 val journal = NetworkClient.api.getJournal(
                     idCurricula = curriculaId,
                     idSemester = semesterId,
