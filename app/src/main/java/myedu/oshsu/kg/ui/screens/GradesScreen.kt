@@ -402,7 +402,7 @@ fun GradeItemCard(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Article,
-                    contentDescription = "Journal",
+                    contentDescription = stringResource(R.string.journal),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(16.dp)
                 )
@@ -647,7 +647,7 @@ fun JournalRow(item: JournalItem) {
                     // Green Check
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Present",
+                        contentDescription = stringResource(R.string.journal_present),
                         tint = Color(0xFF4CAF50),
                         modifier = Modifier.size(32.dp)
                     )
@@ -655,7 +655,7 @@ fun JournalRow(item: JournalItem) {
                     // Red Cross
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Absent",
+                        contentDescription = stringResource(R.string.journal_absent),
                         tint = Color(0xFFF44336),
                         modifier = Modifier.size(32.dp)
                     )
