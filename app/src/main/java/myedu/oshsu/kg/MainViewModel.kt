@@ -751,7 +751,16 @@ class MainViewModel : ViewModel() {
     fun fetchJournal() {
         val subject = selectedJournalSubject ?: return
         // Use marklist.id as id_curricula (curriculum ID) instead of subject.id
-        val curriculaId = subject.marklist?.id?.toInt() ?: return
+        val curriculaId = subject.marklist?.id?.toInt()
+        
+        if (curriculaId == null) {
+            DebugLogger.log("JOURNAL", "marklist.id is null, cannot fetch journal")
+            viewModelScope.launch(Dispatchers.Main) {
+                isJournalLoading = false
+                journalList = emptyList()
+            }
+            return
+        }
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -759,6 +768,8 @@ class MainViewModel : ViewModel() {
                 
                 val semesterId = selectedSemesterId ?: profileData?.active_semester ?: 1
                 val eduYearId = AcademicYearHelper.getDefaultActiveYearId()
+                
+                DebugLogger.log("JOURNAL", "Fetching journal: curricula=$curriculaId, semester=$semesterId, type=$selectedJournalType, year=$eduYearId")
                 
                 // Note: API expects marklist.id as id_curricula parameter
                 val journal = NetworkClient.api.getJournal(
@@ -768,11 +779,14 @@ class MainViewModel : ViewModel() {
                     idEduYear = eduYearId
                 )
                 
+                DebugLogger.log("JOURNAL", "Received ${journal.size} journal entries")
+                
                 withContext(Dispatchers.Main) { 
                     journalList = journal
                 }
             } catch (e: Exception) {
                 DebugLogger.log("JOURNAL", "Failed to fetch journal: ${e.message}")
+                DebugLogger.log("JOURNAL", "Exception: ${e.stackTraceToString()}")
             } finally {
                 withContext(Dispatchers.Main) { isJournalLoading = false }
             }
