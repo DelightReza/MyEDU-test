@@ -759,6 +759,7 @@ class MainViewModel : ViewModel() {
                 val semesterId = selectedSemesterId ?: profileData?.active_semester ?: 1
                 val eduYearId = AcademicYearHelper.getDefaultActiveYearId()
                 
+                // Note: API expects subject.id as id_curricula parameter
                 val journal = NetworkClient.api.getJournal(
                     idCurricula = subjectId,
                     idSemester = semesterId,

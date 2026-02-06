@@ -550,7 +550,7 @@ fun JournalRow(item: JournalItem) {
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = item.theme ?: stringResource(R.string.topic),
+                text = item.theme ?: "",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
