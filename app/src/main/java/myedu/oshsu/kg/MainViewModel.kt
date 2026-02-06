@@ -767,9 +767,18 @@ class MainViewModel : ViewModel() {
                 withContext(Dispatchers.Main) { isJournalLoading = true }
                 
                 val semesterId = selectedSemesterId ?: profileData?.active_semester ?: 1
-                val eduYearId = AcademicYearHelper.getDefaultActiveYearId()
+                val activeSemester = profileData?.active_semester ?: semesterId
                 
-                DebugLogger.log("JOURNAL", "Fetching journal: curricula=$curriculaId, semester=$semesterId, type=$selectedJournalType, year=$eduYearId")
+                // Calculate academic year based on semester
+                // Each academic year has 2 semesters (odd and even)
+                // If current active semester is 9-10, it's year 25
+                // If semester is 7-8, it's year 24, etc.
+                val currentActiveYear = AcademicYearHelper.getDefaultActiveYearId()
+                val semesterDiff = activeSemester - semesterId
+                val yearOffset = semesterDiff / 2  // 2 semesters per year
+                val eduYearId = currentActiveYear - yearOffset
+                
+                DebugLogger.log("JOURNAL", "Fetching journal: curricula=$curriculaId, semester=$semesterId, type=$selectedJournalType, year=$eduYearId (active=$activeSemester, offset=$yearOffset)")
                 
                 // Note: API expects id_curricula from SessionSubjectWrapper (fallback to marklist.id, then subject.id)
                 val journal = NetworkClient.api.getJournal(
