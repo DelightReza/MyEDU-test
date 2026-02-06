@@ -554,9 +554,7 @@ fun JournalRow(item: JournalItem) {
                 text = item.theme ?: "",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                color = MaterialTheme.colorScheme.onSurface
             )
             
             if (item.teacherName != null) {
