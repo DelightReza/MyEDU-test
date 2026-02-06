@@ -750,7 +750,8 @@ class MainViewModel : ViewModel() {
     
     fun fetchJournal() {
         val subject = selectedJournalSubject ?: return
-        val subjectId = subject.subject?.id ?: return
+        // Use marklist.id as id_curricula (curriculum ID) instead of subject.id
+        val curriculaId = subject.marklist?.id?.toInt() ?: return
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -759,9 +760,9 @@ class MainViewModel : ViewModel() {
                 val semesterId = selectedSemesterId ?: profileData?.active_semester ?: 1
                 val eduYearId = AcademicYearHelper.getDefaultActiveYearId()
                 
-                // Note: API expects subject.id as id_curricula parameter
+                // Note: API expects marklist.id as id_curricula parameter
                 val journal = NetworkClient.api.getJournal(
-                    idCurricula = subjectId,
+                    idCurricula = curriculaId,
                     idSemester = semesterId,
                     idSubjectType = selectedJournalType,
                     idEduYear = eduYearId
