@@ -276,6 +276,16 @@ data class MarkList(
     @SerializedName("updated_at") val updated_at: String?
 )
 
+// --- JOURNAL ---
+data class JournalItem(
+    val date: String?,
+    val theme: String?,
+    val mark: String?,
+    val label: Boolean?,
+    val id_stream: Long?,
+    val teacher_name: String?
+)
+
 // --- DOCS ---
 data class DocIdRequest(val id: Long); data class DocKeyRequest(val key: String)
 data class TranscriptYear(@SerializedName("edu_year") val eduYear: String?, @SerializedName("semesters") val semesters: List<TranscriptSemester>?)
@@ -298,6 +308,7 @@ interface OshSuApi {
     @GET("api/ep/schedule/schedulelessontime") suspend fun getLessonTimes(@Query("id_speciality") specId: Int, @Query("id_edu_form") formId: Int, @Query("id_edu_year") yearId: Int): List<LessonTimeResponse>
     @GET("api/studentscheduleitem") suspend fun getSchedule(@Query("id_speciality") specId: Int, @Query("id_edu_form") formId: Int, @Query("id_edu_year") yearId: Int, @Query("id_semester") semId: Int): List<ScheduleWrapper>
     @GET("api/studentsession") suspend fun getSession(@Query("id_semester") semesterId: Int): List<SessionResponse>
+    @GET("api/student/journal") suspend fun getJournal(@Query("id_curricula") idCurricula: Int, @Query("id_semester") idSemester: Int, @Query("id_subject_type") idSubjectType: Int, @Query("id_edu_year") idEduYear: Int): List<JournalItem>
     @GET("api/studenttranscript") suspend fun getTranscript(@Query("id_student") studentId: Long, @Query("id_movement") movementId: Long): List<TranscriptYear>
     @GET("api/searchstudentinfo") suspend fun getStudentInfoRaw(@Query("id_student") studentId: Long): ResponseBody
     @GET("api/studenttranscript") suspend fun getTranscriptDataRaw(@Query("id_student") sId: Long, @Query("id_movement") mId: Long): ResponseBody

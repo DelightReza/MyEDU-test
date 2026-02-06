@@ -107,6 +107,13 @@ class MainViewModel : ViewModel() {
     var gradesSortOption by mutableStateOf(SortOption.DEFAULT)
     var selectedSemesterId by mutableStateOf<Int?>(null)
     
+    // --- JOURNAL ---
+    var showJournalSheet by mutableStateOf(false)
+    var journalList by mutableStateOf<List<JournalItem>>(emptyList())
+    var isJournalLoading by mutableStateOf(false)
+    var selectedJournalSubject by mutableStateOf<SessionSubjectWrapper?>(null)
+    var selectedJournalType by mutableStateOf(1) // 1=Lecture, 2=Practice, 3=Lab
+    
     // --- DOCS UI ---
     var transcriptData by mutableStateOf<List<TranscriptYear>>(emptyList())
     var isTranscriptLoading by mutableStateOf(false)
@@ -725,6 +732,48 @@ class MainViewModel : ViewModel() {
                 
                 withContext(Dispatchers.Main) { sessionData = session; prefs?.saveList("session_list", session) }
             } catch (_: Exception) {} finally { withContext(Dispatchers.Main) { isGradesLoading = false } }
+        }
+    }
+
+    // --- JOURNAL FUNCTIONS ---
+    fun openJournal(subject: SessionSubjectWrapper) {
+        selectedJournalSubject = subject
+        selectedJournalType = 1 // Reset to Lecture
+        showJournalSheet = true
+        fetchJournal()
+    }
+    
+    fun changeJournalType(typeId: Int) {
+        selectedJournalType = typeId
+        fetchJournal()
+    }
+    
+    fun fetchJournal() {
+        val subject = selectedJournalSubject ?: return
+        val subjectId = subject.subject?.id ?: return
+        
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                withContext(Dispatchers.Main) { isJournalLoading = true }
+                
+                val semesterId = selectedSemesterId ?: profileData?.active_semester ?: 1
+                val eduYearId = AcademicYearHelper.getDefaultActiveYearId()
+                
+                val journal = NetworkClient.api.getJournal(
+                    idCurricula = subjectId,
+                    idSemester = semesterId,
+                    idSubjectType = selectedJournalType,
+                    idEduYear = eduYearId
+                )
+                
+                withContext(Dispatchers.Main) { 
+                    journalList = journal
+                }
+            } catch (e: Exception) {
+                DebugLogger.log("JOURNAL", "Failed to fetch journal: ${e.message}")
+            } finally {
+                withContext(Dispatchers.Main) { isJournalLoading = false }
+            }
         }
     }
 

@@ -89,6 +89,11 @@
     <string name="sort_low">Low</string>
     <string name="sort_high">High</string>
     <string name="semester_format">%1$d-Semester</string>
+    <string name="journal_title">Journal</string>
+    <string name="topic">Topic</string>
+    <string name="journal_activity">Activity</string>
+    <string name="teacher_label">Teacher</string>
+    <string name="journal_empty">No entries found.</string>
 
     <!-- Profile -->
     <string name="profile">Profile</string>
