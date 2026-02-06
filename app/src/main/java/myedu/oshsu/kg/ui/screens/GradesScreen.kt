@@ -598,7 +598,7 @@ fun JournalRow(item: JournalItem) {
             
             if (hasValidMark) {
                 // Show mark in colored circle
-                val markInt = mark.toIntOrNull() ?: 0
+                val markInt = mark?.toIntOrNull() ?: 0
                 val markColor = when (markInt) {
                     5 -> Color(0xFF4CAF50) // Green
                     4 -> Color(0xFF2196F3) // Blue
@@ -615,7 +615,7 @@ fun JournalRow(item: JournalItem) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = mark,
+                        text = mark ?: "",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = markColor
