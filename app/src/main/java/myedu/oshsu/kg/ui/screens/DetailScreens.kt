@@ -44,6 +44,7 @@ private fun isValid(value: String?): Boolean {
     return !s.isNullOrEmpty() && !s.equals("null", true) && s != "-" && s != "Unknown" && s != "?"
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
     val clipboardManager = LocalClipboardManager.current
