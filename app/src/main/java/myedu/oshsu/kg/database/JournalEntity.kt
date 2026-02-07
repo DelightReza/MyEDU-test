@@ -2,7 +2,6 @@ package myedu.oshsu.kg.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.google.gson.Gson
 import myedu.oshsu.kg.JournalItem
 
 @Entity(tableName = "journal")

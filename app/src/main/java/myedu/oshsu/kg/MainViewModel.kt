@@ -782,10 +782,13 @@ class MainViewModel : ViewModel() {
                 val yearOffset = semesterDiff / 2  // 2 semesters per year
                 val eduYearId = currentActiveYear - yearOffset
                 
+                // Cache key for this journal request
+                val cacheKey = "journal_${curriculaId}_${semesterId}_${selectedJournalType}_${eduYearId}"
+                
                 // Load cached data first (offline support)
                 val cachedJournal = try {
                     prefs?.getRepository()?.getJournalEntriesSync(curriculaId, semesterId, selectedJournalType, eduYearId)
-                        ?: prefs?.loadList<JournalItem>("journal_${curriculaId}_${semesterId}_${selectedJournalType}_${eduYearId}")
+                        ?: prefs?.loadList<JournalItem>(cacheKey)
                         ?: emptyList()
                 } catch (e: Exception) {
                     emptyList()
@@ -813,7 +816,7 @@ class MainViewModel : ViewModel() {
                 
                 // Save to both SharedPreferences and Room database for offline support
                 try {
-                    prefs?.saveList("journal_${curriculaId}_${semesterId}_${selectedJournalType}_${eduYearId}", journal)
+                    prefs?.saveList(cacheKey, journal)
                     prefs?.getRepository()?.updateJournalEntries(curriculaId, semesterId, selectedJournalType, eduYearId, journal)
                     DebugLogger.log("JOURNAL", "Saved journal entries to cache")
                 } catch (e: Exception) {
