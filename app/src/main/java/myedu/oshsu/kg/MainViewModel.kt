@@ -736,8 +736,12 @@ class MainViewModel : ViewModel() {
     }
 
     // --- JOURNAL FUNCTIONS ---
-    fun openJournal(subject: SessionSubjectWrapper) {
+    fun openJournal(subject: SessionSubjectWrapper, semesterId: Int? = null) {
         selectedJournalSubject = subject
+        // If semester is provided, use it; otherwise use current selected or active
+        if (semesterId != null) {
+            selectedSemesterId = semesterId
+        }
         selectedJournalType = 1 // Reset to Lecture
         showJournalSheet = true
         fetchJournal()

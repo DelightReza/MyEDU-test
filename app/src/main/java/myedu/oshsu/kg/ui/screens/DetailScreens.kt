@@ -107,16 +107,25 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
             }
             
             // Journal button - try to find subject from any semester if not in current
-            val journalSubject = subjectGrades ?: session.flatMap { it.subjects ?: emptyList() }.find { it.subject?.get(lang) == item.subject?.get(lang) }
+            // Also track which semester the subject belongs to
+            val journalSubjectData = if (subjectGrades != null) {
+                Pair(subjectGrades, currentSemSession?.semester?.id)
+            } else {
+                // Search all semesters and track which one has the subject
+                session.firstNotNullOfOrNull { sessionResp ->
+                    sessionResp.subjects?.find { it.subject?.get(lang) == item.subject?.get(lang) }
+                        ?.let { Pair(it, sessionResp.semester?.id) }
+                }
+            }
             
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = { 
-                    if (journalSubject != null) {
-                        vm.openJournal(journalSubject)
+                    journalSubjectData?.let { (subject, semesterId) ->
+                        vm.openJournal(subject, semesterId)
                     }
                 },
-                enabled = journalSubject != null,
+                enabled = journalSubjectData != null,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
