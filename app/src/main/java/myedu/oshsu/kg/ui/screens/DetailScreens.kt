@@ -106,20 +106,26 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
                 }
             }
             
-            if (subjectGrades != null) {
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = { vm.openJournal(subjectGrades) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                ) {
-                    Icon(Icons.Outlined.Article, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.journal), style = MaterialTheme.typography.labelLarge)
-                }
+            // Journal button - try to find subject from any semester if not in current
+            val journalSubject = subjectGrades ?: session.flatMap { it.subjects ?: emptyList() }.find { it.subject?.get(lang) == item.subject?.get(lang) }
+            
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = { 
+                    if (journalSubject != null) {
+                        vm.openJournal(journalSubject)
+                    }
+                },
+                enabled = journalSubject != null,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            ) {
+                Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.journal), style = MaterialTheme.typography.labelLarge)
             }
 
             val teacherName = item.teacher?.get()
