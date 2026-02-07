@@ -66,6 +66,16 @@ fun ClassDetailsSheet(vm: MainViewModel, item: ScheduleItem) {
     val subjectDefaultStr = stringResource(R.string.subject_default)
     val descTimeStr = stringResource(R.string.desc_time)
 
+    // Journal Bottom Sheet
+    if (vm.showJournalSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { vm.showJournalSheet = false },
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            JournalContent(vm)
+        }
+    }
+
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.fillMaxWidth().widthIn(max = 840.dp).verticalScroll(rememberScrollState()).padding(16.dp)) {
             ThemedCard(Modifier.fillMaxWidth(), materialColor = MaterialTheme.colorScheme.surfaceContainer, glassmorphismEnabled = vm.glassmorphismEnabled) { 
