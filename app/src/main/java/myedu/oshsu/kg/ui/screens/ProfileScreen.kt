@@ -61,7 +61,8 @@ fun ProfileScreen(vm: MainViewModel) {
         val f = java.io.File(context.filesDir, AppConstants.AVATAR_CACHE_FILENAME)
         if (f.exists()) f else null
     }
-    val displayPhoto: Any? = vm.customPhotoUri ?: cachedAvatarFile ?: profile?.avatar
+    val customPhoto = vm.customPhotoUri?.takeIf { !it.startsWith("http") }
+    val displayPhoto: Any? = customPhoto ?: cachedAvatarFile ?: profile?.avatar
     val displayName = vm.customName ?: "${user?.last_name ?: ""} ${user?.name ?: ""}".trim().ifEmpty { stringResource(R.string.student_default) }
 
     val facultyName = profile?.studentMovement?.faculty?.get(lang) ?: profile?.studentMovement?.speciality?.faculty?.get(lang) ?: "-"

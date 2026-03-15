@@ -118,7 +118,7 @@ fun EditProfileScreen(vm: MainViewModel, onClose: () -> Unit) {
                 Spacer(Modifier.height(48.dp))
                 
                 Button(
-                    onClick = { vm.saveLocalProfile(name, photoUri); onClose() }, 
+                    onClick = { vm.saveLocalProfile(name, if (photoUri != apiPhoto) photoUri else null); onClose() }, 
                     modifier = Modifier
                         .fillMaxWidth()
                         .widthIn(max = 400.dp)
