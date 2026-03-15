@@ -24,9 +24,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -214,7 +217,21 @@ fun AppContent(vm: MainViewModel) {
     val context = LocalContext.current
     Box(Modifier.fillMaxSize()) {
         AnimatedContent(targetState = vm.appState, label = "Root") { state ->
-            when (state) { AppConstants.STATE_LOGIN -> LoginScreen(vm); AppConstants.STATE_APP -> MainAppStructure(vm); else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
+            when (state) {
+                    AppConstants.STATE_LOGIN -> LoginScreen(vm)
+                    AppConstants.STATE_APP -> MainAppStructure(vm)
+                    else -> {
+                        val isDark = when (vm.themeMode) {
+                            AppConstants.THEME_DARK, AppConstants.THEME_GLASS_DARK -> true
+                            AppConstants.THEME_LIGHT, AppConstants.THEME_GLASS -> false
+                            else -> isSystemInDarkTheme()
+                        }
+                        val logoRes = if (isDark) R.drawable.logo_white else R.drawable.logo_dark
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Image(painter = painterResource(logoRes), contentDescription = null, modifier = Modifier.width(200.dp))
+                        }
+                    }
+                }
         }
         if (vm.isDebugPipVisible) { DebugPipButton(onClick = { vm.isDebugConsoleOpen = true }, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp)) }
         if (vm.isDebugConsoleOpen) { DebugConsoleOverlay(onDismiss = { vm.isDebugConsoleOpen = false }) }
