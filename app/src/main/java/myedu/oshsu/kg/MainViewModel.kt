@@ -452,7 +452,7 @@ class MainViewModel : ViewModel() {
     fun fetchTranscript() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val cached = withContext(Dispatchers.IO) { prefs?.getRepository()?.getTranscriptSync() ?: emptyList() }
+                val cached = prefs?.getRepository()?.getTranscriptSync() ?: emptyList()
                 withContext(Dispatchers.Main) { isTranscriptLoading = true; showTranscriptScreen = true; transcriptData = cached }
                 
                 val uid = userData?.id ?: return@launch
