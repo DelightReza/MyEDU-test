@@ -34,10 +34,12 @@ import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
 import androidx.graphics.shapes.toPath
+import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import myedu.oshsu.kg.IdDefinitions
 import myedu.oshsu.kg.MainViewModel
+import myedu.oshsu.kg.NetworkClient
 import myedu.oshsu.kg.R
 import myedu.oshsu.kg.UserData
 import myedu.oshsu.kg.StudentInfoResponse
@@ -180,6 +182,7 @@ fun MetaDataRow(label: String, value: Any?) {
 fun PersonalInfoScreen(vm: MainViewModel, onClose: () -> Unit) {
     val currentLang = vm.language
     val context = LocalContext.current
+    val authImageLoader = remember { ImageLoader.Builder(context).okHttpClient(NetworkClient.imageClient).build() }
     val scope = rememberCoroutineScope()
 
     var localUser by remember { mutableStateOf<UserData?>(null) }
@@ -296,7 +299,7 @@ fun PersonalInfoScreen(vm: MainViewModel, onClose: () -> Unit) {
                                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(136.dp)) {
                                     Box(modifier = Modifier.fillMaxSize().clip(animatedShape)) {
                                         val apiPhoto = profile?.avatar
-                                        key(apiPhoto, vm.avatarRefreshTrigger) { AsyncImage(model = ImageRequest.Builder(context).data(apiPhoto).crossfade(true).setParameter("retry_hash", vm.avatarRefreshTrigger).build(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
+                                        key(apiPhoto, vm.avatarRefreshTrigger) { AsyncImage(model = ImageRequest.Builder(context).data(apiPhoto).crossfade(true).setParameter("retry_hash", vm.avatarRefreshTrigger).build(), imageLoader = authImageLoader, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
                                     }
                                 }
                                 Spacer(Modifier.height(16.dp))

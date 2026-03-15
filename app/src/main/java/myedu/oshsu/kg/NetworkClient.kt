@@ -11,7 +11,14 @@ object NetworkClient {
     val interceptor = WindowsInterceptor()
     val deepSpy = DeepSpyInterceptor()
     val failover = FailoverInterceptor()
-    
+
+    val imageClient: OkHttpClient = OkHttpClient.Builder()
+        .cookieJar(cookieJar)
+        .addInterceptor(interceptor)
+        .connectTimeout(AppConstants.API_CONNECT_TIMEOUT_SEC, TimeUnit.SECONDS)
+        .readTimeout(AppConstants.API_READ_TIMEOUT_SEC, TimeUnit.SECONDS)
+        .build()
+
     val api: OshSuApi = Retrofit.Builder()
         .baseUrl(AppConstants.API_BASE_URL)
         .client(OkHttpClient.Builder()

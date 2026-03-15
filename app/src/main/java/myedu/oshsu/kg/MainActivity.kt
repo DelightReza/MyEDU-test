@@ -161,8 +161,9 @@ class MainActivity : ComponentActivity() {
             }
             
             MyEduTheme(themeMode = vm.themeMode) {
-                Crossfade(targetState = vm.themeMode, animationSpec = tween(400), label = "theme_crossfade") { _ ->
-                    ThemedBackground(themeMode = vm.themeMode, glassmorphismEnabled = vm.glassmorphismEnabled) { AppContent(vm) }
+                Crossfade(targetState = vm.themeMode, animationSpec = tween(400), label = "theme_crossfade") { currentTheme ->
+                    val isGlass = currentTheme == AppConstants.THEME_GLASS || currentTheme == AppConstants.THEME_GLASS_DARK
+                    ThemedBackground(themeMode = currentTheme, glassmorphismEnabled = isGlass) { AppContent(vm) }
                 }
             }
         }
