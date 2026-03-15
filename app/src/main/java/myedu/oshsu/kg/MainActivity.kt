@@ -188,10 +188,10 @@ class MainActivity : ComponentActivity() {
                 splashMinDurationReached = true
             }
 
-            MyEduTheme(themeMode = effectiveTheme) {
-                Crossfade(targetState = effectiveTheme, animationSpec = tween(400), label = "theme_crossfade") { currentTheme ->
+            Crossfade(targetState = effectiveTheme, animationSpec = tween(400), label = "theme_crossfade") { currentTheme ->
+                MyEduTheme(themeMode = currentTheme) {
                     val isGlass = currentTheme == AppConstants.THEME_GLASS || currentTheme == AppConstants.THEME_GLASS_DARK
-                    ThemedBackground(themeMode = currentTheme, glassmorphismEnabled = isGlass) { AppContent(vm, effectiveTheme, splashMinDurationReached) }
+                    ThemedBackground(themeMode = currentTheme, glassmorphismEnabled = isGlass) { AppContent(vm, currentTheme, splashMinDurationReached) }
                 }
             }
         }
