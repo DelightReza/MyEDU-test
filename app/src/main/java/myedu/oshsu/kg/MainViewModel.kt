@@ -228,6 +228,12 @@ class MainViewModel : ViewModel() {
             userData = result.first
             profileData = result.second
         }
+        appContext?.let { ctx ->
+            result.second?.avatar?.let { avatarUrl ->
+                dataSyncManager!!.cacheAvatarImage(ctx, avatarUrl)
+                withContext(Dispatchers.Main) { avatarRefreshTrigger++ }
+            }
+        }
         return result
     }
 
@@ -331,6 +337,10 @@ class MainViewModel : ViewModel() {
                 }
                 
                 if (result.profileData != null) {
+                    appContext?.let { ctx ->
+                        dataSyncManager!!.cacheAvatarImage(ctx, result.profileData.avatar)
+                        withContext(Dispatchers.Main) { avatarRefreshTrigger++ }
+                    }
                     val schedResult = dataSyncManager!!.loadScheduleNetwork(result.profileData)
                     if (schedResult != null) {
                         withContext(Dispatchers.Main) {

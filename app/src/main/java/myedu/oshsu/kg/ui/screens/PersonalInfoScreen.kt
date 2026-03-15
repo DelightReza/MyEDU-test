@@ -37,6 +37,7 @@ import androidx.graphics.shapes.toPath
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import myedu.oshsu.kg.AppConstants
 import myedu.oshsu.kg.IdDefinitions
 import myedu.oshsu.kg.MainViewModel
 import myedu.oshsu.kg.NetworkClient
@@ -298,7 +299,11 @@ fun PersonalInfoScreen(vm: MainViewModel, onClose: () -> Unit) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(136.dp)) {
                                     Box(modifier = Modifier.fillMaxSize().clip(animatedShape)) {
-                                        val apiPhoto = profile?.avatar
+                                        val cachedAvatarFile = remember(vm.avatarRefreshTrigger) {
+                                            val f = java.io.File(context.filesDir, AppConstants.AVATAR_CACHE_FILENAME)
+                                            if (f.exists()) f else null
+                                        }
+                                        val apiPhoto: Any? = cachedAvatarFile ?: profile?.avatar
                                         key(apiPhoto, vm.avatarRefreshTrigger) { AsyncImage(model = ImageRequest.Builder(context).data(apiPhoto).crossfade(true).setParameter("retry_hash", vm.avatarRefreshTrigger).build(), imageLoader = authImageLoader, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) }
                                     }
                                 }

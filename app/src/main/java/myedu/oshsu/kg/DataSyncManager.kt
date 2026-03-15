@@ -1,8 +1,10 @@
 package myedu.oshsu.kg
 
+import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import myedu.oshsu.kg.database.MyEduRepository
+import java.io.File
 import java.util.Calendar
 import java.util.Locale
 
@@ -318,5 +320,25 @@ class DataSyncManager(private val prefs: PrefsManager) {
         val todayClasses = myedu.oshsu.kg.widget.WidgetHelper.getTodayClasses(fullSchedule)
 
         return ScheduleLocalResult(determinedStream, determinedGroup, dayName, todayClasses)
+    }
+
+    // --- AVATAR CACHING ---
+    suspend fun cacheAvatarImage(context: Context, avatarUrl: String?) {
+        if (avatarUrl.isNullOrBlank()) return
+        withContext(Dispatchers.IO) {
+            try {
+                val request = okhttp3.Request.Builder().url(avatarUrl).build()
+                val response = NetworkClient.imageClient.newCall(request).execute()
+                if (response.isSuccessful) {
+                    response.body?.byteStream()?.use { input ->
+                        File(context.filesDir, AppConstants.AVATAR_CACHE_FILENAME).outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                DebugLogger.log("DATA", "Avatar cache failed: ${e.message}")
+            }
+        }
     }
 }

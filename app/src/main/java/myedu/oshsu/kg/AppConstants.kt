@@ -84,6 +84,9 @@ object AppConstants {
     const val DEBUG_LOG_MAX_ENTRIES = 1000
     const val UPDATE_POLL_INTERVAL_MS = 500L
 
+    // --- Cached Files ---
+    const val AVATAR_CACHE_FILENAME = "cached_avatar"
+
     // --- Database ---
     const val DATABASE_NAME = "myedu_database"
 

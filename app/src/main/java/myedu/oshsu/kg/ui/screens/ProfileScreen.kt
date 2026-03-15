@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import myedu.oshsu.kg.AppConstants
 import myedu.oshsu.kg.DebugLogger
 import myedu.oshsu.kg.MainViewModel
 import myedu.oshsu.kg.NetworkClient
@@ -56,7 +57,11 @@ fun ProfileScreen(vm: MainViewModel) {
     val pay = vm.payStatus
     val lang = vm.language
 
-    val displayPhoto = vm.customPhotoUri ?: profile?.avatar
+    val cachedAvatarFile = remember(vm.avatarRefreshTrigger) {
+        val f = java.io.File(context.filesDir, AppConstants.AVATAR_CACHE_FILENAME)
+        if (f.exists()) f else null
+    }
+    val displayPhoto: Any? = vm.customPhotoUri ?: cachedAvatarFile ?: profile?.avatar
     val displayName = vm.customName ?: "${user?.last_name ?: ""} ${user?.name ?: ""}".trim().ifEmpty { stringResource(R.string.student_default) }
 
     val facultyName = profile?.studentMovement?.faculty?.get(lang) ?: profile?.studentMovement?.speciality?.faculty?.get(lang) ?: "-"
