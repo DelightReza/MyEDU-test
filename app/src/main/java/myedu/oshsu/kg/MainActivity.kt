@@ -25,6 +25,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -227,7 +228,7 @@ fun AppContent(vm: MainViewModel) {
                             else -> isSystemInDarkTheme()
                         }
                         val logoRes = if (isDark) R.drawable.logo_white else R.drawable.logo_dark
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
                             Image(painter = painterResource(logoRes), contentDescription = null, modifier = Modifier.width(200.dp))
                         }
                     }
