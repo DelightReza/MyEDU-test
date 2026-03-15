@@ -242,8 +242,13 @@ class DataSyncManager(private val prefs: PrefsManager) {
 
     // --- TUITION ---
     suspend fun fetchTuitionDetails(): List<PaymentDetail> = withContext(Dispatchers.IO) {
-        val response = NetworkClient.api.getStudentPrice()
-        response.flatMap { it.payment ?: emptyList() }.sortedByDescending { it.id_semester ?: 0 }
+        try {
+            val response = NetworkClient.api.getStudentPrice()
+            response.flatMap { it.payment ?: emptyList() }.sortedByDescending { it.id_semester ?: 0 }
+        } catch (e: Exception) {
+            DebugLogger.log("TUITION", "Network unavailable for tuition details: ${e.message}")
+            emptyList()
+        }
     }
 
     // --- FRESH PERSONAL INFO ---

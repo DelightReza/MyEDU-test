@@ -196,8 +196,11 @@ fun PersonalInfoScreen(vm: MainViewModel, onClose: () -> Unit) {
             localProfile = p
             isError = false
         } catch (e: Exception) {
-            isError = true
-            errorMessage = e.message ?: "Unknown Error"
+            // Fallback to ViewModel's cached data instead of showing error
+            localUser = vm.userData
+            localProfile = vm.profileData
+            isError = localUser == null && localProfile == null
+            if (isError) errorMessage = e.message ?: "Unknown Error"
         } finally {
             isFetching = false
         }
@@ -280,7 +283,7 @@ fun PersonalInfoScreen(vm: MainViewModel, onClose: () -> Unit) {
                     Text(stringResource(R.string.personal_error_load), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                     if (errorMessage != null) Text(errorMessage!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                     Spacer(Modifier.height(16.dp))
-                    Button(onClick = { isFetching = true; isError = false; scope.launch { try { val (u, p) = vm.getFreshPersonalInfo(); localUser = u; localProfile = p; isError = false } catch (e: Exception) { isError = true; errorMessage = e.message } finally { isFetching = false } } }) { Text(stringResource(R.string.personal_retry)) }
+                    Button(onClick = { isFetching = true; isError = false; scope.launch { try { val (u, p) = vm.getFreshPersonalInfo(); localUser = u; localProfile = p; isError = false } catch (e: Exception) { localUser = vm.userData; localProfile = vm.profileData; isError = localUser == null && localProfile == null; if (isError) errorMessage = e.message } finally { isFetching = false } } }) { Text(stringResource(R.string.personal_retry)) }
                 }
             } else {
                 AnimatedVisibility(visible = true, enter = fadeIn(tween(500))) {
