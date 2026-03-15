@@ -181,10 +181,17 @@ class MainActivity : ComponentActivity() {
             // Use pre-loaded theme during startup to prevent flash of wrong theme
             val effectiveTheme = if (vm.appState == AppConstants.STATE_STARTUP) initialTheme else vm.themeMode
 
+            // Splash timer lives here so Crossfade theme transitions don't reset it
+            var splashMinDurationReached by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                delay(AppConstants.SPLASH_MIN_DURATION_MS)
+                splashMinDurationReached = true
+            }
+
             MyEduTheme(themeMode = effectiveTheme) {
                 Crossfade(targetState = effectiveTheme, animationSpec = tween(400), label = "theme_crossfade") { currentTheme ->
                     val isGlass = currentTheme == AppConstants.THEME_GLASS || currentTheme == AppConstants.THEME_GLASS_DARK
-                    ThemedBackground(themeMode = currentTheme, glassmorphismEnabled = isGlass) { AppContent(vm, effectiveTheme) }
+                    ThemedBackground(themeMode = currentTheme, glassmorphismEnabled = isGlass) { AppContent(vm, effectiveTheme, splashMinDurationReached) }
                 }
             }
         }
@@ -242,15 +249,8 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppContent(vm: MainViewModel, effectiveTheme: String = vm.themeMode) {
+fun AppContent(vm: MainViewModel, effectiveTheme: String = vm.themeMode, splashMinDurationReached: Boolean = true) {
     val context = LocalContext.current
-
-    // Ensure splash screen stays visible for a minimum duration
-    var splashMinDurationReached by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        delay(AppConstants.SPLASH_MIN_DURATION_MS)
-        splashMinDurationReached = true
-    }
 
     Box(Modifier.fillMaxSize()) {
         val showSplash = vm.appState == AppConstants.STATE_STARTUP || !splashMinDurationReached
