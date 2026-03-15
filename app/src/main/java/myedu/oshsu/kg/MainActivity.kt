@@ -62,11 +62,13 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import kotlinx.coroutines.delay
 import myedu.oshsu.kg.ui.components.MyEduPullToRefreshBox
 import myedu.oshsu.kg.ui.components.ThemedBackground
 import myedu.oshsu.kg.ui.screens.*
 import myedu.oshsu.kg.ui.theme.MyEduTheme
 import java.io.File
+import com.google.gson.Gson
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -121,6 +123,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Read saved theme BEFORE Compose renders to prevent white flash
+        val initialTheme = readSavedTheme()
+        val isDarkInitial = when (initialTheme) {
+            AppConstants.THEME_DARK, AppConstants.THEME_GLASS_DARK -> true
+            AppConstants.THEME_LIGHT, AppConstants.THEME_GLASS -> false
+            else -> (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        }
+        window.decorView.setBackgroundColor(
+            if (isDarkInitial) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+        )
+
         enableEdgeToEdge()
         
         // Request required permissions on startup
@@ -164,10 +178,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
             
-            MyEduTheme(themeMode = vm.themeMode) {
-                Crossfade(targetState = vm.themeMode, animationSpec = tween(400), label = "theme_crossfade") { currentTheme ->
+            // Use pre-loaded theme during startup to prevent flash of wrong theme
+            val effectiveTheme = if (vm.appState == AppConstants.STATE_STARTUP) initialTheme else vm.themeMode
+
+            MyEduTheme(themeMode = effectiveTheme) {
+                Crossfade(targetState = effectiveTheme, animationSpec = tween(400), label = "theme_crossfade") { currentTheme ->
                     val isGlass = currentTheme == AppConstants.THEME_GLASS || currentTheme == AppConstants.THEME_GLASS_DARK
-                    ThemedBackground(themeMode = currentTheme, glassmorphismEnabled = isGlass) { AppContent(vm) }
+                    ThemedBackground(themeMode = currentTheme, glassmorphismEnabled = isGlass) { AppContent(vm, effectiveTheme) }
                 }
             }
         }
@@ -194,6 +211,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** Read the saved theme from SharedPreferences synchronously (before Compose). */
+    private fun readSavedTheme(): String {
+        val prefs = getSharedPreferences(AppConstants.PREFS_NAME, Context.MODE_PRIVATE)
+        val json = prefs.getString(AppConstants.KEY_THEME_MODE, null) ?: return AppConstants.THEME_SYSTEM
+        return try {
+            Gson().fromJson(json, String::class.java) ?: AppConstants.THEME_SYSTEM
+        } catch (_: Exception) {
+            AppConstants.THEME_SYSTEM
+        }
+    }
+
     private fun setupNetworkMonitoring() {
         connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         networkCallback = object : ConnectivityManager.NetworkCallback() { override fun onAvailable(network: Network) { super.onAvailable(network); mainViewModel?.onNetworkAvailable() } }
@@ -214,15 +242,26 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun AppContent(vm: MainViewModel) {
+fun AppContent(vm: MainViewModel, effectiveTheme: String = vm.themeMode) {
     val context = LocalContext.current
+
+    // Ensure splash screen stays visible for a minimum duration
+    var splashMinDurationReached by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(AppConstants.SPLASH_MIN_DURATION_MS)
+        splashMinDurationReached = true
+    }
+
     Box(Modifier.fillMaxSize()) {
-        AnimatedContent(targetState = vm.appState, label = "Root") { state ->
+        val showSplash = vm.appState == AppConstants.STATE_STARTUP || !splashMinDurationReached
+        val displayState = if (showSplash) AppConstants.STATE_STARTUP else vm.appState
+
+        AnimatedContent(targetState = displayState, label = "Root") { state ->
             when (state) {
                     AppConstants.STATE_LOGIN -> LoginScreen(vm)
                     AppConstants.STATE_APP -> MainAppStructure(vm)
                     else -> {
-                        val isDark = when (vm.themeMode) {
+                        val isDark = when (effectiveTheme) {
                             AppConstants.THEME_DARK, AppConstants.THEME_GLASS_DARK -> true
                             AppConstants.THEME_LIGHT, AppConstants.THEME_GLASS -> false
                             else -> isSystemInDarkTheme()

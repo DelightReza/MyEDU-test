@@ -47,6 +47,9 @@ object AppConstants {
     const val THEME_GLASS = "GLASS"
     const val THEME_GLASS_DARK = "GLASS_DARK"
 
+    // --- Splash Screen ---
+    const val SPLASH_MIN_DURATION_MS = 2000L
+
     // --- Download Modes ---
     const val DOC_MODE_IN_APP = "IN_APP"
     const val DOC_MODE_WEBSITE = "WEBSITE"
