@@ -62,18 +62,21 @@ class PdfManager(
             }
 
             val qrUrl = rawUrl.replace("https::/", "https://")
+            val infoObj = JSONObject(infoJsonString)
+            val lastName = infoObj.optString("last_name", "").replace("null", "").trim()
+            val firstName = infoObj.optString("name", "").replace("null", "").trim()
 
             onStatus(context.getString(R.string.generating_pdf))
             val bytes = WebPdfGenerator(context).generatePdf(infoJsonString, transcriptRaw, linkId, qrUrl, resources!!, lang, dictionaryMap) { }
 
             onStatus(context.getString(R.string.uploading_pdf))
             try {
-                uploadPdfOnly(linkId, studentId, bytes, getFormattedFileName("Transcript", lang, null, null), true)
+                uploadPdfOnly(linkId, studentId, bytes, getFormattedFileName("Transcript", lang, lastName, firstName), true)
             } catch (e: Exception) {
                 DebugLogger.log("PDF_UPLOAD", "Failed to upload transcript: ${e.message}")
             }
 
-            return saveToDownloads(context, bytes, getFormattedFileName("Transcript", lang, null, null), onStatus)
+            return saveToDownloads(context, bytes, getFormattedFileName("Transcript", lang, lastName, firstName), onStatus)
         } catch (e: CancellationException) {
             onStatus(null)
             return null
@@ -120,18 +123,21 @@ class PdfManager(
             }
 
             val qrUrl = rawUrl.replace("https::/", "https://")
+            val infoObj = JSONObject(infoJsonString)
+            val lastName = infoObj.optString("last_name", "").replace("null", "").trim()
+            val firstName = infoObj.optString("name", "").replace("null", "").trim()
 
             onStatus(context.getString(R.string.generating_pdf))
             val bytes = ReferencePdfGenerator(context).generatePdf(infoJsonString, licenseRaw, univRaw, linkId, qrUrl, resources!!, authToken ?: "", lang, dictionaryMap) { }
 
             onStatus(context.getString(R.string.uploading_pdf))
             try {
-                uploadPdfOnly(linkId, studentId, bytes, getFormattedFileName("Reference", lang, null, null), false)
+                uploadPdfOnly(linkId, studentId, bytes, getFormattedFileName("Reference", lang, lastName, firstName), false)
             } catch (e: Exception) {
                 DebugLogger.log("PDF_UPLOAD", "Failed to upload reference: ${e.message}")
             }
 
-            return saveToDownloads(context, bytes, getFormattedFileName("Reference", lang, null, null), onStatus)
+            return saveToDownloads(context, bytes, getFormattedFileName("Reference", lang, lastName, firstName), onStatus)
         } catch (e: CancellationException) {
             onStatus(null)
             return null
