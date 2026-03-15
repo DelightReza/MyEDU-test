@@ -12,10 +12,10 @@ class UniversalCookieJar : CookieJar {
     override fun loadForRequest(url: HttpUrl): List<Cookie> = ArrayList(cookieStore)
     fun injectSessionCookies(token: String) {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.000000'Z'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
-        cookieStore.removeAll { it.name == "myedu-jwt-token" || it.name == "my_edu_update" || it.name == "have_2fa" }
-        cookieStore.add(Cookie.Builder().domain("myedu.oshsu.kg").path("/").name("myedu-jwt-token").value(token).build())
-        cookieStore.add(Cookie.Builder().domain("myedu.oshsu.kg").path("/").name("my_edu_update").value(sdf.format(Date())).build())
-        cookieStore.add(Cookie.Builder().domain("myedu.oshsu.kg").path("/").name("have_2fa").value("yes").build())
+        cookieStore.removeAll { it.name == AppConstants.COOKIE_JWT || it.name == AppConstants.COOKIE_LAST_UPDATE || it.name == AppConstants.COOKIE_2FA }
+        cookieStore.add(Cookie.Builder().domain(AppConstants.COOKIE_DOMAIN).path(AppConstants.COOKIE_PATH).name(AppConstants.COOKIE_JWT).value(token).build())
+        cookieStore.add(Cookie.Builder().domain(AppConstants.COOKIE_DOMAIN).path(AppConstants.COOKIE_PATH).name(AppConstants.COOKIE_LAST_UPDATE).value(sdf.format(Date())).build())
+        cookieStore.add(Cookie.Builder().domain(AppConstants.COOKIE_DOMAIN).path(AppConstants.COOKIE_PATH).name(AppConstants.COOKIE_2FA).value(AppConstants.COOKIE_2FA_VALUE).build())
     }
     fun clear() { cookieStore.clear() }
 }

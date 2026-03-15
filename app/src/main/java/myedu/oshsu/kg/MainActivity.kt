@@ -106,8 +106,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        val prefs = newBase.getSharedPreferences("myedu_offline_cache", Context.MODE_PRIVATE)
-        val rawLang = prefs.getString("language_pref", "en") ?: "en"
+        val prefs = newBase.getSharedPreferences(AppConstants.PREFS_NAME, Context.MODE_PRIVATE)
+        val rawLang = prefs.getString(AppConstants.KEY_LANGUAGE, "en") ?: "en"
         val lang = rawLang.replace("\"", "")
         val locale = Locale(lang)
         val config = Configuration(newBase.resources.configuration)
@@ -193,8 +193,8 @@ class MainActivity : ComponentActivity() {
 
     private fun setupBackgroundWork() {
         val constraints = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).setRequiresBatteryNotLow(true).build()
-        val syncRequest = PeriodicWorkRequestBuilder<BackgroundSyncWorker>(4, TimeUnit.HOURS).setConstraints(constraints).build()
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork("MyEduGradeSync", ExistingPeriodicWorkPolicy.KEEP, syncRequest)
+        val syncRequest = PeriodicWorkRequestBuilder<BackgroundSyncWorker>(AppConstants.BACKGROUND_SYNC_HOURS, TimeUnit.HOURS).setConstraints(constraints).build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(AppConstants.WORK_SYNC_NAME, ExistingPeriodicWorkPolicy.KEEP, syncRequest)
     }
 
     override fun onDestroy() { 
@@ -209,7 +209,7 @@ fun AppContent(vm: MainViewModel) {
     val context = LocalContext.current
     Box(Modifier.fillMaxSize()) {
         AnimatedContent(targetState = vm.appState, label = "Root") { state ->
-            when (state) { "LOGIN" -> LoginScreen(vm); "APP" -> MainAppStructure(vm); else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
+            when (state) { AppConstants.STATE_LOGIN -> LoginScreen(vm); AppConstants.STATE_APP -> MainAppStructure(vm); else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
         }
         if (vm.isDebugPipVisible) { DebugPipButton(onClick = { vm.isDebugConsoleOpen = true }, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp)) }
         if (vm.isDebugConsoleOpen) { DebugConsoleOverlay(onDismiss = { vm.isDebugConsoleOpen = false }) }

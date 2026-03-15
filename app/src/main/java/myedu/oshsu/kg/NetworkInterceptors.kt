@@ -9,10 +9,10 @@ class WindowsInterceptor : Interceptor {
     var authToken: String? = null
     override fun intercept(chain: Interceptor.Chain): Response {
         val builder = chain.request().newBuilder()
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-            .header("Accept", "application/json, text/plain, */*")
-            .header("Referer", "https://myedu.oshsu.kg/")
-            .header("Origin", "https://myedu.oshsu.kg") 
+            .header("User-Agent", AppConstants.HEADER_USER_AGENT_VALUE)
+            .header("Accept", AppConstants.HEADER_ACCEPT_VALUE)
+            .header("Referer", AppConstants.PORTAL_BASE_URL_SLASH)
+            .header("Origin", AppConstants.PORTAL_BASE_URL) 
         if (authToken != null) builder.header("Authorization", "Bearer $authToken")
         return chain.proceed(builder.build())
     }
@@ -70,8 +70,8 @@ class DeepSpyInterceptor : Interceptor {
 class FailoverInterceptor : Interceptor {
     @Volatile private var isBackup = false
     
-    private val primaryHost = "api3.myedu.oshsu.kg"
-    private val backupHost = "api.myedu.oshsu.kg"
+    private val primaryHost = AppConstants.PRIMARY_API_HOST
+    private val backupHost = AppConstants.BACKUP_API_HOST
 
     override fun intercept(chain: Interceptor.Chain): Response {
         var request = chain.request()

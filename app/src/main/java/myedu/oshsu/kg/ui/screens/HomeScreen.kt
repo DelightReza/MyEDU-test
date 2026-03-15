@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import myedu.oshsu.kg.MainViewModel
+import myedu.oshsu.kg.AppConstants
 import myedu.oshsu.kg.R
 import myedu.oshsu.kg.ui.components.*
 
@@ -79,7 +80,7 @@ fun HomeScreen(vm: MainViewModel) {
 
                 // --- STATS CARDS ---
                 item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { 
+                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(12.dp)) { 
                         StatCard(
                             icon = Icons.Outlined.CalendarToday, 
                             label = stringResource(R.string.semester), 
@@ -193,9 +194,9 @@ fun StatCard(
     secondaryText: String? = null, 
     modifier: Modifier = Modifier, 
     glassmorphismEnabled: Boolean = false, 
-    themeMode: String = "SYSTEM"
+    themeMode: String = AppConstants.THEME_SYSTEM
 ) {
-    ThemedCard(modifier = modifier, materialColor = MaterialTheme.colorScheme.surfaceContainer, glassmorphismEnabled = glassmorphismEnabled) {
+    ThemedCard(modifier = modifier.fillMaxHeight(), materialColor = MaterialTheme.colorScheme.surfaceContainer, glassmorphismEnabled = glassmorphismEnabled) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally, 

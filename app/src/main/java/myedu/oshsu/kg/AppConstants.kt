@@ -49,6 +49,7 @@ object AppConstants {
 
     // --- Download Modes ---
     const val DOC_MODE_IN_APP = "IN_APP"
+    const val DOC_MODE_WEBSITE = "WEBSITE"
 
     // --- Network ---
     const val API_BASE_URL = "https://api3.myedu.oshsu.kg/"
