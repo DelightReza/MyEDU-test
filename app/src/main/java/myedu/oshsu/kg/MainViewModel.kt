@@ -139,13 +139,14 @@ class MainViewModel : ViewModel() {
 
     // ==================== INIT ====================
     fun initSession(context: Context) {
-        appContext = context.applicationContext
-        if (prefs == null) prefs = PrefsManager(context)
+        val appCtx = context.applicationContext
+        appContext = appCtx
+        if (prefs == null) prefs = PrefsManager(appCtx)
         if (authManager == null) authManager = AuthManager(prefs!!)
         if (settingsManager == null) settingsManager = SettingsManager(prefs!!)
         if (dictionaryManager == null) dictionaryManager = DictionaryManager(prefs!!)
         if (dataSyncManager == null) dataSyncManager = DataSyncManager(prefs!!)
-        if (pdfManager == null) pdfManager = PdfManager(JsResourceFetcher(context), ReferenceJsFetcher(context))
+        if (pdfManager == null) pdfManager = PdfManager(JsResourceFetcher(appCtx), ReferenceJsFetcher(appCtx))
         
         settingsManager!!.loadTheme()?.let { themeMode = it }
         settingsManager!!.loadDocMode()?.let { downloadMode = it }

@@ -328,11 +328,12 @@ class DataSyncManager(private val prefs: PrefsManager) {
         withContext(Dispatchers.IO) {
             try {
                 val request = okhttp3.Request.Builder().url(avatarUrl).build()
-                val response = NetworkClient.imageClient.newCall(request).execute()
-                if (response.isSuccessful) {
-                    response.body?.byteStream()?.use { input ->
-                        File(context.filesDir, AppConstants.AVATAR_CACHE_FILENAME).outputStream().use { output ->
-                            input.copyTo(output)
+                NetworkClient.imageClient.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        response.body?.byteStream()?.use { input ->
+                            File(context.filesDir, AppConstants.AVATAR_CACHE_FILENAME).outputStream().use { output ->
+                                input.copyTo(output)
+                            }
                         }
                     }
                 }

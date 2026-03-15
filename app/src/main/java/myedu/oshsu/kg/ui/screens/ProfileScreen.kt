@@ -35,7 +35,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import myedu.oshsu.kg.AppConstants
@@ -50,7 +49,7 @@ import myedu.oshsu.kg.ui.components.*
 @Composable
 fun ProfileScreen(vm: MainViewModel) {
     val context = LocalContext.current
-    val authImageLoader = remember { ImageLoader.Builder(context).okHttpClient(NetworkClient.imageClient).build() }
+    val authImageLoader = remember { NetworkClient.authImageLoader(context) }
     val clipboardManager = LocalClipboardManager.current
     val user = vm.userData
     val profile = vm.profileData

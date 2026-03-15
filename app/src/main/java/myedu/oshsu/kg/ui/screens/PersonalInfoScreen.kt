@@ -34,7 +34,6 @@ import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
 import androidx.graphics.shapes.toPath
-import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import myedu.oshsu.kg.AppConstants
@@ -183,7 +182,7 @@ fun MetaDataRow(label: String, value: Any?) {
 fun PersonalInfoScreen(vm: MainViewModel, onClose: () -> Unit) {
     val currentLang = vm.language
     val context = LocalContext.current
-    val authImageLoader = remember { ImageLoader.Builder(context).okHttpClient(NetworkClient.imageClient).build() }
+    val authImageLoader = remember { NetworkClient.authImageLoader(context) }
     val scope = rememberCoroutineScope()
 
     var localUser by remember { mutableStateOf<UserData?>(null) }

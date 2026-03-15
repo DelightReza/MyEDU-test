@@ -19,12 +19,17 @@ class WindowsInterceptor : Interceptor {
 }
 
 class DeepSpyInterceptor : Interceptor {
+    private val sensitivePathSegments = listOf("login", "auth", "token")
+
     override fun intercept(chain: Interceptor.Chain): Response {
+        if (!BuildConfig.DEBUG) return chain.proceed(chain.request())
+
         val request = chain.request()
         val url = request.url.toString()
+        val isSensitive = sensitivePathSegments.any { request.url.encodedPath.contains(it, ignoreCase = true) }
         var reqLog = "REQ: ${request.method} $url"
         val reqBody = request.body
-        if (reqBody != null) {
+        if (reqBody != null && !isSensitive) {
             try {
                 val buffer = Buffer()
                 reqBody.writeTo(buffer)
@@ -36,7 +41,7 @@ class DeepSpyInterceptor : Interceptor {
         val response = chain.proceed(request)
         var resLog = "RES: ${response.code} $url"
         val resBody = response.body
-        if (resBody != null && response.code != 204) {
+        if (resBody != null && response.code != 204 && !isSensitive) {
             try {
                 val source = resBody.source()
                 source.request(Long.MAX_VALUE)

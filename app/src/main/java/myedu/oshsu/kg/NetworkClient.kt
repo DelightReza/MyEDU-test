@@ -1,5 +1,6 @@
 package myedu.oshsu.kg
 
+import coil.ImageLoader
 import com.google.gson.GsonBuilder
 import java.util.concurrent.TimeUnit
 import okhttp3.OkHttpClient
@@ -18,6 +19,10 @@ object NetworkClient {
         .connectTimeout(AppConstants.API_CONNECT_TIMEOUT_SEC, TimeUnit.SECONDS)
         .readTimeout(AppConstants.API_READ_TIMEOUT_SEC, TimeUnit.SECONDS)
         .build()
+
+    /** Shared authenticated ImageLoader – reuse across all screens that load API photos. */
+    fun authImageLoader(context: android.content.Context): ImageLoader =
+        ImageLoader.Builder(context.applicationContext).okHttpClient(imageClient).build()
 
     val api: OshSuApi = Retrofit.Builder()
         .baseUrl(AppConstants.API_BASE_URL)

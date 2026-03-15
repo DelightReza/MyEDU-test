@@ -6,13 +6,11 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
-import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.coroutineContext
-import java.io.File
 
 class UpdateManager {
 
@@ -77,17 +75,13 @@ class UpdateManager {
                 cursor = manager.query(query)
                 if (cursor.moveToFirst()) {
                     val status = cursor.getInt(cursor.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_STATUS))
-                    val bytesDl = cursor.getInt(cursor.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
-                    val bytesTot = cursor.getInt(cursor.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                    val bytesDl = cursor.getLong(cursor.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val bytesTot = cursor.getLong(cursor.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
                     
                     when (status) {
                         android.app.DownloadManager.STATUS_SUCCESSFUL -> {
                             downloading = false
-                            val uriStr = cursor.getString(cursor.getColumnIndexOrThrow(android.app.DownloadManager.COLUMN_LOCAL_URI))
-                            val contentUri = if (uriStr != null) {
-                                val file = File(Uri.parse(uriStr).path!!)
-                                FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
-                            } else null
+                            val contentUri = manager.getUriForDownloadedFile(id)
                             onUpdate(DownloadStatus(1f, isComplete = true, isFailed = false, contentUri = contentUri))
                         }
                         android.app.DownloadManager.STATUS_FAILED -> {

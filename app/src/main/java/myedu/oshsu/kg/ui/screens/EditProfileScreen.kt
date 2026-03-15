@@ -38,7 +38,6 @@ import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
 import androidx.graphics.shapes.toPath
-import coil.ImageLoader
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import myedu.oshsu.kg.MainViewModel
@@ -59,7 +58,7 @@ class EditProfileRotatingShape(private val polygon: RoundedPolygon, private val 
 @Composable
 fun EditProfileScreen(vm: MainViewModel, onClose: () -> Unit) {
     val context = LocalContext.current
-    val authImageLoader = remember { ImageLoader.Builder(context).okHttpClient(NetworkClient.imageClient).build() }
+    val authImageLoader = remember { NetworkClient.authImageLoader(context) }
     val density = LocalDensity.current
     val apiPhoto = vm.profileData?.avatar
     val apiName = remember { vm.userData?.let { "${it.last_name ?: ""} ${it.name ?: ""}".trim() } ?: "" }

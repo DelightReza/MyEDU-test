@@ -55,7 +55,6 @@ fun List<GradeEntity>.toSessionResponse(): SessionResponse {
 // Conversion: all GradeEntity → List<SessionResponse>, grouped by semester
 fun List<GradeEntity>.toSessionResponses(): List<SessionResponse> {
     if (this.isEmpty()) return emptyList()
-    return this.filter { it.semesterId != null }
-        .groupBy { it.semesterId }
+    return this.groupBy { it.semesterId ?: -1 }
         .map { (_, entities) -> entities.toSessionResponse() }
 }
