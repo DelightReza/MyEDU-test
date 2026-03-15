@@ -6,7 +6,6 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -125,47 +124,47 @@ class MainViewModel : ViewModel() {
 
     // --- MANAGERS ---
     private var prefs: PrefsManager? = null
+    private var authManager: AuthManager? = null
+    private var settingsManager: SettingsManager? = null
+    private var dictionaryManager: DictionaryManager? = null
     private var dataSyncManager: DataSyncManager? = null
     private val updateManager = UpdateManager()
     private var pdfManager: PdfManager? = null
-    private val dictUtils = DictionaryUtils()
     private var appContext: Context? = null
 
     fun getAuthToken(): String? = prefs?.getToken()
-    fun loadShowWidgetPromotion(): Boolean = prefs?.loadData(AppConstants.KEY_SHOW_WIDGET_PROMOTION, Boolean::class.java) ?: true
-    fun saveShowWidgetPromotion(value: Boolean) { prefs?.saveData(AppConstants.KEY_SHOW_WIDGET_PROMOTION, value) }
+    fun loadShowWidgetPromotion(): Boolean = settingsManager?.loadShowWidgetPromotion() ?: true
+    fun saveShowWidgetPromotion(value: Boolean) { settingsManager?.saveShowWidgetPromotion(value) }
     fun requestAddWidget() { addWidgetRequestPending = true }
 
     // ==================== INIT ====================
     fun initSession(context: Context) {
         appContext = context.applicationContext
         if (prefs == null) prefs = PrefsManager(context)
+        if (authManager == null) authManager = AuthManager(prefs!!)
+        if (settingsManager == null) settingsManager = SettingsManager(prefs!!)
+        if (dictionaryManager == null) dictionaryManager = DictionaryManager(prefs!!)
         if (dataSyncManager == null) dataSyncManager = DataSyncManager(prefs!!)
         if (pdfManager == null) pdfManager = PdfManager(JsResourceFetcher(context), ReferenceJsFetcher(context))
         
-        val token = prefs?.getToken()
-        val savedTheme = prefs?.loadData(AppConstants.KEY_THEME_MODE, String::class.java)
-        if (savedTheme != null) themeMode = savedTheme
-        val savedDocMode = prefs?.loadData(AppConstants.KEY_DOC_DOWNLOAD_MODE, String::class.java)
-        if (savedDocMode != null) downloadMode = savedDocMode
-        val savedLang = prefs?.loadData(AppConstants.KEY_LANGUAGE, String::class.java)
-        if (savedLang != null) language = savedLang.replace("\"", "")
+        settingsManager!!.loadTheme()?.let { themeMode = it }
+        settingsManager!!.loadDocMode()?.let { downloadMode = it }
+        settingsManager!!.loadLanguage()?.let { language = it }
 
-        val isRemember = prefs?.loadData(AppConstants.KEY_REMEMBER_ME, Boolean::class.java) ?: false
+        val isRemember = settingsManager!!.loadRememberMe()
         rememberMe = isRemember
         if (isRemember) {
-            loginEmail = prefs?.loadData(AppConstants.KEY_SAVED_EMAIL, String::class.java) ?: ""
-            loginPass = prefs?.loadData(AppConstants.KEY_SAVED_PASS, String::class.java) ?: ""
+            loginEmail = settingsManager!!.loadSavedEmail()
+            loginPass = settingsManager!!.loadSavedPass()
         }
-        customName = prefs?.loadData(AppConstants.KEY_CUSTOM_NAME, String::class.java)
-        customPhotoUri = prefs?.loadData(AppConstants.KEY_CUSTOM_PHOTO, String::class.java)
+        customName = settingsManager!!.loadCustomName()
+        customPhotoUri = settingsManager!!.loadCustomPhoto()
 
-        loadLocalDictionary()
+        dictionaryMap = dictionaryManager!!.load()
         loadDictionaries()
 
+        val token = authManager!!.restoreSession()
         if (token != null) {
-            NetworkClient.interceptor.authToken = token
-            NetworkClient.cookieJar.injectSessionCookies(token)
             loadOfflineData()
             appState = AppConstants.STATE_APP
             refreshAllData(force = true)
@@ -183,59 +182,32 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private fun loadLocalDictionary() {
-        val savedJson = prefs?.loadData(AppConstants.KEY_CUSTOM_DICTIONARY, String::class.java)
-        if (savedJson != null) {
-            try {
-                val type = object : TypeToken<Map<String, String>>() {}.type
-                dictionaryMap = Gson().fromJson(savedJson, type)
-            } catch (e: Exception) {
-                dictionaryMap = dictUtils.getDefaultDictionary()
-            }
-        } else {
-            dictionaryMap = dictUtils.getDefaultDictionary()
-            saveDictionary()
-        }
-    }
-
-    private fun saveDictionary() {
-        val json = Gson().toJson(dictionaryMap)
-        prefs?.saveData(AppConstants.KEY_CUSTOM_DICTIONARY, json)
-    }
-
     fun addOrUpdateDictionaryEntry(key: String, value: String) {
-        val mutable = dictionaryMap.toMutableMap()
-        mutable[key.trim()] = value.trim()
-        dictionaryMap = mutable
-        saveDictionary()
+        dictionaryMap = dictionaryManager!!.addOrUpdate(dictionaryMap, key, value)
     }
 
     fun removeDictionaryEntry(key: String) {
-        val mutable = dictionaryMap.toMutableMap()
-        mutable.remove(key)
-        dictionaryMap = mutable
-        saveDictionary()
+        dictionaryMap = dictionaryManager!!.remove(dictionaryMap, key)
     }
 
     fun resetDictionaryToDefault() {
-        dictionaryMap = dictUtils.getDefaultDictionary()
-        saveDictionary()
+        dictionaryMap = dictionaryManager!!.resetToDefault()
     }
 
     // ==================== SETTINGS ====================
     fun setTheme(mode: String) {
         themeMode = mode
-        prefs?.saveData(AppConstants.KEY_THEME_MODE, mode)
+        settingsManager?.saveTheme(mode)
     }
 
     fun setDocMode(mode: String) {
         downloadMode = mode
-        prefs?.saveData(AppConstants.KEY_DOC_DOWNLOAD_MODE, mode)
+        settingsManager?.saveDocMode(mode)
     }
     
     fun setAppLanguage(lang: String) {
         language = lang
-        prefs?.saveData(AppConstants.KEY_LANGUAGE, lang)
+        settingsManager?.saveLanguage(lang)
         processScheduleLocally()
     }
 
@@ -243,8 +215,7 @@ class MainViewModel : ViewModel() {
     fun saveLocalProfile(name: String?, photoUri: String?) {
         customName = name
         customPhotoUri = photoUri
-        prefs?.saveData(AppConstants.KEY_CUSTOM_NAME, name)
-        prefs?.saveData(AppConstants.KEY_CUSTOM_PHOTO, photoUri)
+        settingsManager?.saveLocalProfile(name, photoUri)
         avatarRefreshTrigger++
     }
 
@@ -263,29 +234,20 @@ class MainViewModel : ViewModel() {
     // ==================== AUTH ====================
     fun login(email: String, pass: String) {
         viewModelScope.launch {
-            isLoading = true; errorMsg = null; NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
-            val normalizedEmail = EmailHelper.normalizeEmail(email)
-            if (rememberMe) {
-                prefs?.saveData(AppConstants.KEY_REMEMBER_ME, true)
-                prefs?.saveData(AppConstants.KEY_SAVED_EMAIL, normalizedEmail)
-                prefs?.saveData(AppConstants.KEY_SAVED_PASS, pass)
-            } else {
-                prefs?.saveData(AppConstants.KEY_REMEMBER_ME, false)
-                prefs?.saveData(AppConstants.KEY_SAVED_EMAIL, "")
-                prefs?.saveData(AppConstants.KEY_SAVED_PASS, "")
-            }
-            try {
-                val resp = withContext(Dispatchers.IO) { NetworkClient.api.login(LoginRequest(normalizedEmail.trim(), pass.trim())) }
-                val token = resp.authorisation?.token
-                if (token != null) {
-                    prefs?.saveToken(token)
-                    NetworkClient.interceptor.authToken = token
-                    NetworkClient.cookieJar.injectSessionCookies(token)
+            isLoading = true; errorMsg = null
+            val result = authManager!!.login(email, pass, rememberMe)
+            when (result) {
+                is AuthManager.LoginResult.Success -> {
+                    loginEmail = result.normalizedEmail
                     refreshAllData(force = true)
                     appState = AppConstants.STATE_APP
-                } else errorMsg = appContext?.getString(R.string.error_credentials) ?: "Incorrect credentials"
-            } catch (e: Exception) {
-                errorMsg = appContext?.getString(R.string.error_login_failed, e.message) ?: "Login Failed: ${e.message}"
+                }
+                is AuthManager.LoginResult.InvalidCredentials -> {
+                    errorMsg = appContext?.getString(R.string.error_credentials) ?: "Incorrect credentials"
+                }
+                is AuthManager.LoginResult.Error -> {
+                    errorMsg = appContext?.getString(R.string.error_login_failed, result.exception.message) ?: "Login Failed: ${result.exception.message}"
+                }
             }
             isLoading = false
         }
@@ -296,23 +258,22 @@ class MainViewModel : ViewModel() {
         val savedE = loginEmail
         val savedP = loginPass
 
+        authManager?.logout(
+            themeMode = themeMode,
+            downloadMode = downloadMode,
+            language = language,
+            dictionaryJson = Gson().toJson(dictionaryMap),
+            rememberMe = wasRemember,
+            email = savedE,
+            pass = savedP
+        )
+
         appState = AppConstants.STATE_LOGIN; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
         verify2FAStatus = null
-        prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
-        
-        prefs?.saveData(AppConstants.KEY_THEME_MODE, themeMode)
-        prefs?.saveData(AppConstants.KEY_DOC_DOWNLOAD_MODE, downloadMode)
-        prefs?.saveData(AppConstants.KEY_LANGUAGE, language)
-        prefs?.saveData(AppConstants.KEY_CUSTOM_DICTIONARY, Gson().toJson(dictionaryMap))
         
         if (wasRemember) {
-            prefs?.saveData(AppConstants.KEY_REMEMBER_ME, true)
-            prefs?.saveData(AppConstants.KEY_SAVED_EMAIL, savedE)
-            prefs?.saveData(AppConstants.KEY_SAVED_PASS, savedP)
-            loginEmail = savedE
-            loginPass = savedP
-            rememberMe = true
+            loginEmail = savedE; loginPass = savedP; rememberMe = true
         }
     }
 
@@ -352,8 +313,7 @@ class MainViewModel : ViewModel() {
 
     private fun attemptAutoRefresh() {
         if (appState != AppConstants.STATE_APP || isLoading) return
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastRefreshTime > refreshCooldownMs) {
+        if (System.currentTimeMillis() - lastRefreshTime > refreshCooldownMs) {
             refreshAllData(force = false)
         }
     }
@@ -475,7 +435,6 @@ class MainViewModel : ViewModel() {
                 val cached = dataSyncManager!!.loadCachedJournal(curriculaId, semesterId, selectedJournalType, activeSemester)
                 if (cached.isNotEmpty()) {
                     withContext(Dispatchers.Main) { journalList = cached }
-                    DebugLogger.log("JOURNAL", "Loaded ${cached.size} cached journal entries")
                 }
 
                 // Try network fetch
@@ -493,10 +452,7 @@ class MainViewModel : ViewModel() {
     fun fetchTranscript() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Load cached first
-                val cached = dataSyncManager!!.let {
-                    withContext(Dispatchers.IO) { prefs?.getRepository()?.getTranscriptSync() ?: emptyList() }
-                }
+                val cached = withContext(Dispatchers.IO) { prefs?.getRepository()?.getTranscriptSync() ?: emptyList() }
                 withContext(Dispatchers.Main) { isTranscriptLoading = true; showTranscriptScreen = true; transcriptData = cached }
                 
                 val uid = userData?.id ?: return@launch
@@ -578,7 +534,7 @@ class MainViewModel : ViewModel() {
         pdfGenerationJob = viewModelScope.launch {
             isPdfGenerating = true
             generatedPdfUri = null
-            if (dictionaryMap.isEmpty()) loadLocalDictionary()
+            if (dictionaryMap.isEmpty()) dictionaryMap = dictionaryManager!!.load()
             val uri = pdfManager!!.generateTranscriptPdf(context, studentId, movId, lang, dictionaryMap) { msg ->
                 withContext(Dispatchers.Main) { pdfStatusMessage = msg }
             }
@@ -594,7 +550,7 @@ class MainViewModel : ViewModel() {
         pdfGenerationJob = viewModelScope.launch {
             isPdfGenerating = true
             generatedPdfUri = null
-            if (dictionaryMap.isEmpty()) loadLocalDictionary()
+            if (dictionaryMap.isEmpty()) dictionaryMap = dictionaryManager!!.load()
             val uri = pdfManager!!.generateReferencePdf(context, studentId, profileData, prefs?.getToken(), lang, dictionaryMap) { msg ->
                 withContext(Dispatchers.Main) { pdfStatusMessage = msg }
             }

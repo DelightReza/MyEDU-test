@@ -215,7 +215,9 @@ fun StatCard(
                     style = MaterialTheme.typography.labelLarge, 
                     color = MaterialTheme.colorScheme.onPrimaryContainer, 
                     textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -223,7 +225,9 @@ fun StatCard(
                     style = MaterialTheme.typography.headlineLarge, 
                     fontWeight = FontWeight.ExtraBold, 
                     color = MaterialTheme.colorScheme.primary, 
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
                 if (secondaryText != null) { 
                     Spacer(Modifier.height(8.dp))
@@ -231,7 +235,7 @@ fun StatCard(
                         text = secondaryText, 
                         style = MaterialTheme.typography.bodyMedium, 
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f), 
-                        maxLines = 1, 
+                        maxLines = 2, 
                         overflow = TextOverflow.Ellipsis, 
                         textAlign = TextAlign.Center
                     ) 
