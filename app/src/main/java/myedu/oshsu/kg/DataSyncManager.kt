@@ -79,31 +79,44 @@ class DataSyncManager(private val prefs: PrefsManager) {
     )
 
     suspend fun refreshCoreData(): RefreshResult = withContext(Dispatchers.IO) {
-        val user = NetworkClient.api.getUser().user
-        val profile = NetworkClient.api.getProfile()
+        try {
+            val user = NetworkClient.api.getUser().user
+            val profile = NetworkClient.api.getProfile()
 
-        // Save to Room
-        if (user != null) repository.updateUserData(user)
-        repository.updateProfileData(profile)
+            // Save to Room
+            if (user != null) repository.updateUserData(user)
+            repository.updateProfileData(profile)
 
-        // 2FA
-        val v2fa = try { NetworkClient.api.verify2FA() } catch (e: Exception) { null }
+            // 2FA
+            val v2fa = try { NetworkClient.api.verify2FA() } catch (e: Exception) { null }
 
-        // News
-        val news = try {
-            val n = NetworkClient.api.getNews()
-            repository.updateNews(n)
-            n
-        } catch (e: Exception) { null }
+            // News
+            val news = try {
+                val n = NetworkClient.api.getNews()
+                repository.updateNews(n)
+                n
+            } catch (e: Exception) { null }
 
-        // Pay status
-        val pay = try {
-            val p = NetworkClient.api.getPayStatus()
-            repository.updatePayStatus(p)
-            p
-        } catch (e: Exception) { null }
+            // Pay status
+            val pay = try {
+                val p = NetworkClient.api.getPayStatus()
+                repository.updatePayStatus(p)
+                p
+            } catch (e: Exception) { null }
 
-        RefreshResult(user, profile, v2fa, news, pay, isAuthError = false)
+            RefreshResult(user, profile, v2fa, news, pay, isAuthError = false)
+        } catch (e: Exception) {
+            val isAuthError = e.message?.contains("401") == true || e.message?.contains("Unauthenticated") == true
+            if (isAuthError) {
+                throw e
+            }
+            DebugLogger.log("DATA", "Network unavailable, loading cached core data")
+            val cachedUser = repository.getUserDataSync()
+            val cachedProfile = repository.getProfileDataSync()
+            val cachedPay = repository.getPayStatusSync()
+            val cachedNews = repository.getAllNewsSync()
+            RefreshResult(cachedUser, cachedProfile, null, cachedNews, cachedPay, isAuthError = false)
+        }
     }
 
     // --- SCHEDULE ---
@@ -132,27 +145,37 @@ class DataSyncManager(private val prefs: PrefsManager) {
     // --- SESSION/GRADES ---
     suspend fun fetchSession(profile: StudentInfoResponse, appContext: android.content.Context?): List<SessionResponse> = withContext(Dispatchers.IO) {
         val oldSession = repository.getAllGradesSync()
-        val session = NetworkClient.api.getSession(profile.active_semester ?: 1)
+        try {
+            val session = NetworkClient.api.getSession(profile.active_semester ?: 1)
 
-        // Check for updates and send notifications
-        if (oldSession.isNotEmpty() && session.isNotEmpty() && appContext != null) {
-            val localizedContext = NotificationHelper.getLocalizedContext(appContext, prefs)
-            val (gradeUpdates, portalUpdates) = NotificationHelper.checkForUpdates(oldSession, session, localizedContext)
-            if (gradeUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, gradeUpdates, isPortalOpening = false)
-            if (portalUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, portalUpdates, isPortalOpening = true)
+            // Check for updates and send notifications
+            if (oldSession.isNotEmpty() && session.isNotEmpty() && appContext != null) {
+                val localizedContext = NotificationHelper.getLocalizedContext(appContext, prefs)
+                val (gradeUpdates, portalUpdates) = NotificationHelper.checkForUpdates(oldSession, session, localizedContext)
+                if (gradeUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, gradeUpdates, isPortalOpening = false)
+                if (portalUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, portalUpdates, isPortalOpening = true)
+            }
+
+            // Save ALL sessions to Room
+            repository.updateGrades(session)
+
+            session
+        } catch (e: Exception) {
+            DebugLogger.log("DATA", "Network unavailable for session, using cached grades")
+            oldSession
         }
-
-        // Save ALL sessions to Room
-        repository.updateGrades(session)
-
-        session
     }
 
     // --- TRANSCRIPT ---
     suspend fun fetchTranscript(uid: Long, movId: Long): List<TranscriptYear> = withContext(Dispatchers.IO) {
-        val transcript = NetworkClient.api.getTranscript(uid, movId)
-        repository.updateTranscript(transcript)
-        transcript
+        try {
+            val transcript = NetworkClient.api.getTranscript(uid, movId)
+            repository.updateTranscript(transcript)
+            transcript
+        } catch (e: Exception) {
+            DebugLogger.log("DATA", "Network unavailable for transcript, using cached data")
+            repository.getTranscriptSync()
+        }
     }
 
     // --- JOURNAL ---
@@ -169,24 +192,34 @@ class DataSyncManager(private val prefs: PrefsManager) {
 
         DebugLogger.log("JOURNAL", "Fetching journal: curricula=$curriculaId, semester=$semesterId, type=$subjectType, year=$eduYearId (active=$activeSemester, offset=$yearOffset)")
 
-        val journal = NetworkClient.api.getJournal(
-            idCurricula = curriculaId,
-            idSemester = semesterId,
-            idSubjectType = subjectType,
-            idEduYear = eduYearId
-        )
-
-        DebugLogger.log("JOURNAL", "Received ${journal.size} journal entries")
-
-        // Save to Room
         try {
-            repository.updateJournalEntries(curriculaId, semesterId, subjectType, eduYearId, journal)
-            DebugLogger.log("JOURNAL", "Saved journal entries to cache")
-        } catch (e: Exception) {
-            DebugLogger.log("JOURNAL", "Failed to save journal to cache: ${e.message}")
-        }
+            val journal = NetworkClient.api.getJournal(
+                idCurricula = curriculaId,
+                idSemester = semesterId,
+                idSubjectType = subjectType,
+                idEduYear = eduYearId
+            )
 
-        journal
+            DebugLogger.log("JOURNAL", "Received ${journal.size} journal entries")
+
+            // Save to Room
+            try {
+                repository.updateJournalEntries(curriculaId, semesterId, subjectType, eduYearId, journal)
+                DebugLogger.log("JOURNAL", "Saved journal entries to cache")
+            } catch (e: Exception) {
+                DebugLogger.log("JOURNAL", "Failed to save journal to cache: ${e.message}")
+            }
+
+            journal
+        } catch (e: Exception) {
+            DebugLogger.log("JOURNAL", "Network unavailable for journal, using cached data")
+            try {
+                repository.getJournalEntriesSync(curriculaId, semesterId, subjectType, eduYearId)
+            } catch (cacheEx: Exception) {
+                DebugLogger.log("JOURNAL", "Failed to load cached journal: ${cacheEx.message}")
+                emptyList()
+            }
+        }
     }
 
     suspend fun loadCachedJournal(
@@ -225,15 +258,29 @@ class DataSyncManager(private val prefs: PrefsManager) {
         } catch (e: Exception) {
             val isAuthError = e.message?.contains("401") == true || e.message?.contains("Unauthenticated") == true
             if (isAuthError && retryLogin()) {
-                val u = NetworkClient.api.getUser().user
-                val p = NetworkClient.api.getProfile()
-                if (u != null) repository.updateUserData(u)
-                repository.updateProfileData(p)
-                Pair(u, p)
+                try {
+                    val u = NetworkClient.api.getUser().user
+                    val p = NetworkClient.api.getProfile()
+                    if (u != null) repository.updateUserData(u)
+                    repository.updateProfileData(p)
+                    Pair(u, p)
+                } catch (retryEx: Exception) {
+                    fallbackToOfflinePersonalInfo(retryEx)
+                }
             } else {
-                throw e
+                fallbackToOfflinePersonalInfo(e)
             }
         }
+    }
+
+    private suspend fun fallbackToOfflinePersonalInfo(cause: Exception): Pair<UserData?, StudentInfoResponse?> {
+        val cachedUser = repository.getUserDataSync()
+        val cachedProfile = repository.getProfileDataSync()
+        if (cachedUser != null || cachedProfile != null) {
+            DebugLogger.log("DATA", "Using cached personal info (offline fallback)")
+            return Pair(cachedUser, cachedProfile)
+        }
+        throw cause
     }
 
     // --- SCHEDULE LOCAL PROCESSING ---
