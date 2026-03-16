@@ -2,6 +2,24 @@ package myedu.oshsu.kg
 
 import com.google.gson.annotations.SerializedName
 
+// --- Auth ---
+
+data class MoocLoginRequest(val email: String, val password: String)
+
+data class MoocLoginResponse(
+    val success: Boolean?,
+    val token: String?,
+    // Support alternative response shapes from the MOOC API
+    val authorisation: MoocAuthData?,
+    val access_token: String?,
+    val message: String?
+) {
+    /** Extract token from whichever field the API returns it in. */
+    fun extractToken(): String? = token ?: authorisation?.token ?: access_token
+}
+
+data class MoocAuthData(val token: String?, val type: String?)
+
 // --- Streams / Subject listing ---
 
 data class MoocStreamSubject(

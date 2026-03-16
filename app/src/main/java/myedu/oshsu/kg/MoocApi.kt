@@ -4,6 +4,9 @@ import okhttp3.ResponseBody
 import retrofit2.http.*
 
 interface MoocApi {
+    @POST("api/v1/auth/login")
+    suspend fun login(@Body request: MoocLoginRequest): MoocLoginResponse
+
     @GET("api/v1/student/streams")
     suspend fun getStreams(): ResponseBody
 

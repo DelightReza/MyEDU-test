@@ -136,6 +136,7 @@ class MainViewModel : ViewModel() {
     var selectedMoocLesson by mutableStateOf<MoocLesson?>(null)
     var selectedMoocStreamId by mutableStateOf<Int?>(null)
     var moocTestResult by mutableStateOf<String?>(null)
+    private var isMoocLoggedIn = false
 
     // --- MANAGERS ---
     private var prefs: PrefsManager? = null
@@ -293,7 +294,9 @@ class MainViewModel : ViewModel() {
         appState = AppConstants.STATE_LOGIN; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
         verify2FAStatus = null
-        // Clear MOOC data
+        // Clear MOOC session
+        NetworkClient.moocInterceptor.authToken = null
+        isMoocLoggedIn = false
         moocCourses = emptyList()
         
         if (wasRemember) {
@@ -589,11 +592,56 @@ class MainViewModel : ViewModel() {
 
     // ==================== MOOC ====================
 
+    /**
+     * Ensure we have a valid MOOC token. Tries cached token first,
+     * then logs in with the same credentials used for myedu.
+     * Returns true if authenticated.
+     */
+    private suspend fun ensureMoocAuth(): Boolean {
+        if (isMoocLoggedIn && NetworkClient.moocInterceptor.authToken != null) return true
+
+        // Try cached token
+        val cached = prefs?.getMoocToken()
+        if (cached != null) {
+            NetworkClient.moocInterceptor.authToken = cached
+            isMoocLoggedIn = true
+            return true
+        }
+
+        // Login with same credentials
+        val email = loginEmail.ifBlank { null } ?: return false
+        val pass = loginPass.ifBlank { null } ?: return false
+        val normalizedEmail = EmailHelper.normalizeEmail(email)
+
+        return try {
+            val resp = NetworkClient.moocApi.login(MoocLoginRequest(normalizedEmail.trim(), pass.trim()))
+            val token = resp.extractToken()
+            if (token != null) {
+                prefs?.saveMoocToken(token)
+                NetworkClient.moocInterceptor.authToken = token
+                isMoocLoggedIn = true
+                true
+            } else {
+                DebugLogger.log("MOOC", "Login returned no token: ${resp.message}")
+                false
+            }
+        } catch (e: Exception) {
+            DebugLogger.log("MOOC", "Login failed: ${e.message}")
+            false
+        }
+    }
+
     fun loadMoocCourses() {
         if (isMoocLoading) return
         viewModelScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { isMoocLoading = true; moocError = null }
             try {
+                if (!ensureMoocAuth()) {
+                    val msg = appContext?.getString(R.string.mooc_auth_failed) ?: "Authentication failed"
+                    withContext(Dispatchers.Main) { moocError = msg }
+                    return@launch
+                }
+
                 val responseBody = NetworkClient.moocApi.getStreams()
                 val jsonString = responseBody.string()
                 val gson = Gson()

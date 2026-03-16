@@ -10,7 +10,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object NetworkClient {
     val cookieJar = UniversalCookieJar()
     val interceptor = WindowsInterceptor()
-    private val moocInterceptor = MoocInterceptor()
+    val moocInterceptor = MoocInterceptor()
     val deepSpy = DeepSpyInterceptor()
     val failover = FailoverInterceptor()
 

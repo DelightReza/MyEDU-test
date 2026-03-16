@@ -24,6 +24,14 @@ class PrefsManager(private val context: Context) {
         return prefs.getString(AppConstants.KEY_AUTH_TOKEN, null)
     }
 
+    fun saveMoocToken(token: String) {
+        prefs.edit().putString(AppConstants.KEY_MOOC_AUTH_TOKEN, token).apply()
+    }
+
+    fun getMoocToken(): String? {
+        return prefs.getString(AppConstants.KEY_MOOC_AUTH_TOKEN, null)
+    }
+
     fun clearAll() {
         prefs.edit().clear().apply()
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
