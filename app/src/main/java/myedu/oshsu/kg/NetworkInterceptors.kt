@@ -73,15 +73,12 @@ class DeepSpyInterceptor : Interceptor {
 }
 
 class MoocInterceptor : Interceptor {
-    var authToken: String? = null
-
     override fun intercept(chain: Interceptor.Chain): Response {
         val builder = chain.request().newBuilder()
             .header("User-Agent", AppConstants.HEADER_USER_AGENT_VALUE)
             .header("Accept", AppConstants.HEADER_ACCEPT_VALUE)
             .header("Referer", "https://mooc.oshsu.kg/")
             .header("Origin", "https://mooc.oshsu.kg")
-        if (authToken != null) builder.header("Authorization", "Bearer $authToken")
         return chain.proceed(builder.build())
     }
 }

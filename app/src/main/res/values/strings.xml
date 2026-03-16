@@ -71,7 +71,6 @@
     <string name="mooc_step">Step</string>
     <string name="mooc_mark_read">Mark as read</string>
     <string name="mooc_submit_answer">Submit answer</string>
-    <string name="mooc_auth_failed">MOOC authentication failed</string>
     <string name="ok">OK</string>
     <string name="close">Close</string>
     <string name="and_more">and %d more…</string>

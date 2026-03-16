@@ -11,7 +11,6 @@ object AppConstants {
 
     // --- Preference Keys: Auth ---
     const val KEY_AUTH_TOKEN = "auth_token"
-    const val KEY_MOOC_AUTH_TOKEN = "mooc_auth_token"
     const val KEY_REMEMBER_ME = "pref_remember_me"
     const val KEY_SAVED_EMAIL = "pref_saved_email"
     const val KEY_SAVED_PASS = "pref_saved_pass"
