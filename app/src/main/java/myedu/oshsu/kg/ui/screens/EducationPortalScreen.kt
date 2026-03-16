@@ -42,56 +42,63 @@ fun EducationPortalScreen(onClose: () -> Unit) {
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
-            AndroidView(factory = { ctx ->
-                WebView(ctx).apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
+            AndroidView(
+                factory = { ctx ->
+                    WebView(ctx).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
 
-                    val cookieManager = CookieManager.getInstance()
-                    cookieManager.setAcceptCookie(true)
-                    cookieManager.setAcceptThirdPartyCookies(this, true)
+                        val cookieManager = CookieManager.getInstance()
+                        cookieManager.setAcceptCookie(true)
+                        cookieManager.setAcceptThirdPartyCookies(this, true)
 
-                    settings.apply {
-                        javaScriptEnabled = true
-                        domStorageEnabled = true
-                        databaseEnabled = true
-                        loadWithOverviewMode = true
-                        useWideViewPort = true
-                        builtInZoomControls = true
-                        displayZoomControls = false
-                        mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                        settings.apply {
+                            javaScriptEnabled = true
+                            domStorageEnabled = true
+                            databaseEnabled = true
+                            loadWithOverviewMode = true
+                            useWideViewPort = true
+                            builtInZoomControls = true
+                            displayZoomControls = false
+                            mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                        }
+
+                        webChromeClient = object : WebChromeClient() {
+                            override fun onConsoleMessage(cm: ConsoleMessage): Boolean {
+                                DebugLogger.log("MOOC_JS", "${cm.message()} (L${cm.lineNumber()})")
+                                return true
+                            }
+                        }
+
+                        webViewClient = object : WebViewClient() {
+                            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                                isLoading = true
+                            }
+
+                            override fun onPageFinished(view: WebView?, url: String?) {
+                                isLoading = false
+                            }
+
+                            override fun onReceivedError(
+                                view: WebView?,
+                                request: WebResourceRequest?,
+                                error: WebResourceError?
+                            ) {
+                                DebugLogger.log("MOOC_ERR", "Code: ${error?.errorCode} Desc: ${error?.description}")
+                            }
+                        }
+
+                        loadUrl("https://mooc.oshsu.kg")
                     }
-
-                    webChromeClient = object : WebChromeClient() {
-                        override fun onConsoleMessage(cm: ConsoleMessage): Boolean {
-                            DebugLogger.log("MOOC_JS", "${cm.message()} (L${cm.lineNumber()})")
-                            return true
-                        }
-                    }
-
-                    webViewClient = object : WebViewClient() {
-                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                            isLoading = true
-                        }
-
-                        override fun onPageFinished(view: WebView?, url: String?) {
-                            isLoading = false
-                        }
-
-                        override fun onReceivedError(
-                            view: WebView?,
-                            request: WebResourceRequest?,
-                            error: WebResourceError?
-                        ) {
-                            DebugLogger.log("MOOC_ERR", "Code: ${error?.errorCode} Desc: ${error?.description}")
-                        }
-                    }
-
-                    loadUrl("https://mooc.oshsu.kg")
-                }
-            }, modifier = Modifier.fillMaxSize())
+                },
+                onRelease = { webView ->
+                    webView.stopLoading()
+                    webView.destroy()
+                },
+                modifier = Modifier.fillMaxSize()
+            )
             if (isLoading) CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         }
     }
