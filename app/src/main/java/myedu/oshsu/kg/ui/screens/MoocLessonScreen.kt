@@ -109,7 +109,7 @@ fun MoocLessonScreen(vm: MainViewModel, onClose: () -> Unit) {
                                 .padding(16.dp),
                             action = {
                                 TextButton(onClick = { vm.moocTestResult = null }) {
-                                    Text("OK")
+                                    Text(stringResource(R.string.ok))
                                 }
                             }
                         ) {
