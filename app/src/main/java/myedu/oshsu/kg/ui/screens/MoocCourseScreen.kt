@@ -123,7 +123,7 @@ fun MoocCourseScreen(vm: MainViewModel, onClose: () -> Unit) {
 
                             items(lessons, key = { it.id }) { lesson ->
                                 // Pick the first stream ID from the selected course
-                                val streamId = courseItem?.streamIds?.lastOrNull() ?: 0
+                                val streamId = courseItem?.streamIds?.firstOrNull() ?: 0
                                 MoocLessonCard(
                                     lesson = lesson,
                                     glassmorphismEnabled = vm.glassmorphismEnabled,

@@ -395,6 +395,7 @@
     <string name="mooc_step">Шаг</string>
     <string name="mooc_mark_read">Отметить как прочитанное</string>
     <string name="mooc_submit_answer">Отправить ответ</string>
+    <string name="mooc_auth_failed">Ошибка аутентификации MOOC</string>
     <string name="ok">ОК</string>
     <string name="close">Закрыть</string>
     <string name="and_more">и еще %d…</string>

@@ -395,6 +395,7 @@
     <string name="mooc_step">Кадам</string>
     <string name="mooc_mark_read">Окулган деп белгилөө</string>
     <string name="mooc_submit_answer">Жоопту жөнөтүү</string>
+    <string name="mooc_auth_failed">MOOC аутентификация катасы</string>
     <string name="ok">Макул</string>
     <string name="close">Жабуу</string>
     <string name="and_more">жана дагы %d…</string>

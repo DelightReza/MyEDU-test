@@ -637,7 +637,8 @@ class MainViewModel : ViewModel() {
             withContext(Dispatchers.Main) { isMoocLoading = true; moocError = null }
             try {
                 if (!ensureMoocAuth()) {
-                    withContext(Dispatchers.Main) { moocError = "Authentication failed" }
+                    val msg = appContext?.getString(R.string.mooc_auth_failed) ?: "Authentication failed"
+                    withContext(Dispatchers.Main) { moocError = msg }
                     return@launch
                 }
 
