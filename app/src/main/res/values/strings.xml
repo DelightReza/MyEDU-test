@@ -57,6 +57,10 @@
     <string name="add_widget_title">Home Screen Widget</string>
     <string name="add_widget_desc">See your next class at a glance</string>
     <string name="add_widget_button">Add</string>
+
+    <string name="education_portal">Education Portal</string>
+    <string name="education_portal_desc">Access online courses and learning materials</string>
+    <string name="education_portal_open">Open</string>
     <string name="ok">OK</string>
     <string name="close">Close</string>
     <string name="and_more">and %d more…</string>

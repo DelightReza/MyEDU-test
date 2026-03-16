@@ -32,6 +32,7 @@ class MainViewModel : ViewModel() {
     var showReferenceScreen by mutableStateOf(false)
     var showSettingsScreen by mutableStateOf(false)
     var showDictionaryScreen by mutableStateOf(false)
+    var showMoocPortal by mutableStateOf(false)
     var selectedClass by mutableStateOf<ScheduleItem?>(null)
     var webDocumentUrl by mutableStateOf<String?>(null)
     var addWidgetRequestPending by mutableStateOf(false)

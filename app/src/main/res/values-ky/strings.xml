@@ -381,6 +381,10 @@
     <string name="add_widget_title">Башкы экрандагы виджет</string>
     <string name="add_widget_desc">Кийинки сабакты бир карашта көрүңүз</string>
     <string name="add_widget_button">Кошуу</string>
+
+    <string name="education_portal">Билим берүү порталы</string>
+    <string name="education_portal_desc">Онлайн курстарга жана окуу материалдарына жетүү</string>
+    <string name="education_portal_open">Ачуу</string>
     <string name="ok">Макул</string>
     <string name="close">Жабуу</string>
     <string name="and_more">жана дагы %d…</string>

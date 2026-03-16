@@ -381,6 +381,10 @@
     <string name="add_widget_title">Виджет на главном экране</string>
     <string name="add_widget_desc">Видите следующее занятие одним взглядом</string>
     <string name="add_widget_button">Добавить</string>
+
+    <string name="education_portal">Образовательный портал</string>
+    <string name="education_portal_desc">Доступ к онлайн-курсам и учебным материалам</string>
+    <string name="education_portal_open">Открыть</string>
     <string name="ok">ОК</string>
     <string name="close">Закрыть</string>
     <string name="and_more">и еще %d…</string>

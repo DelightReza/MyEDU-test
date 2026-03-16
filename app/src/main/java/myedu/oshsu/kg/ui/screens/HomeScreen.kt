@@ -122,6 +122,15 @@ fun HomeScreen(vm: MainViewModel) {
                     }
                 }
 
+                // --- EDUCATION PORTAL CARD ---
+                item {
+                    EducationPortalCard(
+                        glassmorphismEnabled = vm.glassmorphismEnabled,
+                        onClick = { vm.showMoocPortal = true }
+                    )
+                    Spacer(Modifier.height(32.dp))
+                }
+
                 // --- TITLE ---
                 item {
                     val todayString = stringResource(R.string.today)
@@ -316,6 +325,55 @@ fun WidgetPromotionCard(
                     fontWeight = FontWeight.Light
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun EducationPortalCard(
+    glassmorphismEnabled: Boolean = false,
+    onClick: () -> Unit
+) {
+    ThemedCard(
+        modifier = Modifier.fillMaxWidth(),
+        materialColor = MaterialTheme.colorScheme.secondaryContainer,
+        glassmorphismEnabled = glassmorphismEnabled,
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Outlined.School,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.education_portal),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.education_portal_desc),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Icon(
+                Icons.Outlined.ArrowForward,
+                contentDescription = stringResource(R.string.education_portal_open),
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }

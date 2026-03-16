@@ -311,7 +311,7 @@ fun AppContent(vm: MainViewModel, effectiveTheme: String = vm.themeMode, splashM
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainAppStructure(vm: MainViewModel) {
-    BackHandler(enabled = vm.selectedClass != null || vm.showTranscriptScreen || vm.showReferenceScreen || vm.showSettingsScreen || vm.webDocumentUrl != null || vm.showDictionaryScreen || vm.showPersonalInfoScreen || vm.showEditProfileScreen) { 
+    BackHandler(enabled = vm.selectedClass != null || vm.showTranscriptScreen || vm.showReferenceScreen || vm.showSettingsScreen || vm.webDocumentUrl != null || vm.showDictionaryScreen || vm.showPersonalInfoScreen || vm.showEditProfileScreen || vm.showMoocPortal) { 
         when { 
             vm.webDocumentUrl != null -> vm.webDocumentUrl = null
             vm.showDictionaryScreen -> vm.showDictionaryScreen = false 
@@ -321,6 +321,7 @@ fun MainAppStructure(vm: MainViewModel) {
             vm.showReferenceScreen -> { vm.showReferenceScreen = false; vm.clearPdfState() }
             vm.showEditProfileScreen -> vm.showEditProfileScreen = false
             vm.showPersonalInfoScreen -> vm.showPersonalInfoScreen = false
+            vm.showMoocPortal -> vm.showMoocPortal = false
         }
     }
 
@@ -332,7 +333,7 @@ fun MainAppStructure(vm: MainViewModel) {
                 }
             }
             
-            val showNav = vm.selectedClass == null && !vm.showTranscriptScreen && !vm.showReferenceScreen && !vm.showSettingsScreen && vm.webDocumentUrl == null && !vm.showDictionaryScreen && !vm.showPersonalInfoScreen && !vm.showEditProfileScreen
+            val showNav = vm.selectedClass == null && !vm.showTranscriptScreen && !vm.showReferenceScreen && !vm.showSettingsScreen && vm.webDocumentUrl == null && !vm.showDictionaryScreen && !vm.showPersonalInfoScreen && !vm.showEditProfileScreen && !vm.showMoocPortal
             AnimatedVisibility(visible = showNav, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut(), modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp, start = 16.dp, end = 16.dp).windowInsetsPadding(WindowInsets.navigationBars)) { FloatingNavBar(vm) }
             
             AnimatedVisibility(visible = vm.showTranscriptScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { TranscriptView(vm) { vm.showTranscriptScreen = false; vm.clearPdfState() } } }
@@ -341,6 +342,7 @@ fun MainAppStructure(vm: MainViewModel) {
             AnimatedVisibility(visible = vm.showDictionaryScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { DictionaryScreen(vm) { vm.showDictionaryScreen = false } } }
             AnimatedVisibility(visible = vm.showPersonalInfoScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { PersonalInfoScreen(vm, { vm.showPersonalInfoScreen = false }) } }
             AnimatedVisibility(visible = vm.showEditProfileScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { EditProfileScreen(vm, { vm.showEditProfileScreen = false }) } }
+            AnimatedVisibility(visible = vm.showMoocPortal, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { EducationPortalScreen { vm.showMoocPortal = false } } }
 
             if (vm.webDocumentUrl != null) {
                 val isTranscript = vm.webDocumentUrl!!.contains("Transcript", true)
