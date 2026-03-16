@@ -321,7 +321,13 @@ fun MainAppStructure(vm: MainViewModel) {
             vm.showReferenceScreen -> { vm.showReferenceScreen = false; vm.clearPdfState() }
             vm.showEditProfileScreen -> vm.showEditProfileScreen = false
             vm.showPersonalInfoScreen -> vm.showPersonalInfoScreen = false
-            vm.showMoocPortal -> vm.showMoocPortal = false
+            vm.showMoocPortal -> {
+                when {
+                    vm.selectedMoocLesson != null -> { vm.selectedMoocLesson = null; vm.moocLessonSteps = emptyList() }
+                    vm.selectedMoocCourse != null -> { vm.selectedMoocCourse = null; vm.moocCourseLessons = emptyList() }
+                    else -> vm.showMoocPortal = false
+                }
+            }
         }
     }
 
@@ -342,7 +348,19 @@ fun MainAppStructure(vm: MainViewModel) {
             AnimatedVisibility(visible = vm.showDictionaryScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { DictionaryScreen(vm) { vm.showDictionaryScreen = false } } }
             AnimatedVisibility(visible = vm.showPersonalInfoScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { PersonalInfoScreen(vm, { vm.showPersonalInfoScreen = false }) } }
             AnimatedVisibility(visible = vm.showEditProfileScreen, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { EditProfileScreen(vm, { vm.showEditProfileScreen = false }) } }
-            AnimatedVisibility(visible = vm.showMoocPortal, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) { ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) { EducationPortalScreen { vm.showMoocPortal = false } } }
+            AnimatedVisibility(visible = vm.showMoocPortal, enter = slideInHorizontally{it}, exit = slideOutHorizontally{it}, modifier = Modifier.fillMaxSize()) {
+                ThemedBackground(vm.themeMode, vm.glassmorphismEnabled) {
+                    when {
+                        vm.selectedMoocLesson != null -> MoocLessonScreen(vm) {
+                            vm.selectedMoocLesson = null; vm.moocLessonSteps = emptyList()
+                        }
+                        vm.selectedMoocCourse != null -> MoocCourseScreen(vm) {
+                            vm.selectedMoocCourse = null; vm.moocCourseLessons = emptyList()
+                        }
+                        else -> EducationPortalScreen(vm) { vm.showMoocPortal = false }
+                    }
+                }
+            }
 
             if (vm.webDocumentUrl != null) {
                 val isTranscript = vm.webDocumentUrl!!.contains("Transcript", true)

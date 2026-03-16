@@ -10,6 +10,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object NetworkClient {
     val cookieJar = UniversalCookieJar()
     val interceptor = WindowsInterceptor()
+    val moocInterceptor = MoocInterceptor()
     val deepSpy = DeepSpyInterceptor()
     val failover = FailoverInterceptor()
 
@@ -36,6 +37,17 @@ object NetworkClient {
             .build())
         .addConverterFactory(GsonConverterFactory.create(GsonBuilder().setLenient().create()))
         .build().create(OshSuApi::class.java)
+
+    val moocApi: MoocApi = Retrofit.Builder()
+        .baseUrl(AppConstants.MOOC_API_BASE_URL)
+        .client(OkHttpClient.Builder()
+            .addInterceptor(moocInterceptor)
+            .addInterceptor(deepSpy)
+            .connectTimeout(AppConstants.API_CONNECT_TIMEOUT_SEC, TimeUnit.SECONDS)
+            .readTimeout(AppConstants.API_READ_TIMEOUT_SEC, TimeUnit.SECONDS)
+            .build())
+        .addConverterFactory(GsonConverterFactory.create(GsonBuilder().setLenient().create()))
+        .build().create(MoocApi::class.java)
 
     val githubApi: GitHubApi = Retrofit.Builder().baseUrl(AppConstants.GITHUB_API_BASE_URL)
         .client(OkHttpClient.Builder()

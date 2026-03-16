@@ -6,6 +6,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -122,6 +123,20 @@ class MainViewModel : ViewModel() {
     var isUpdateReady by mutableStateOf(false)
     var updateLocalUri by mutableStateOf<Uri?>(null)
     private var updateDownloadJob: Job? = null
+
+    // --- MOOC ---
+    var moocCourses by mutableStateOf<List<MoocCourseDisplayItem>>(emptyList())
+    var isMoocLoading by mutableStateOf(false)
+    var moocError by mutableStateOf<String?>(null)
+    var moocCourseLessons by mutableStateOf<List<MoocCourse>>(emptyList())
+    var isMoocLessonsLoading by mutableStateOf(false)
+    var moocLessonSteps by mutableStateOf<List<MoocStep>>(emptyList())
+    var isMoocStepsLoading by mutableStateOf(false)
+    var selectedMoocCourse by mutableStateOf<MoocCourseDisplayItem?>(null)
+    var selectedMoocLesson by mutableStateOf<MoocLesson?>(null)
+    var selectedMoocStreamId by mutableStateOf<Int?>(null)
+    var moocTestResult by mutableStateOf<String?>(null)
+    private var isMoocLoggedIn = false
 
     // --- MANAGERS ---
     private var prefs: PrefsManager? = null
@@ -279,6 +294,10 @@ class MainViewModel : ViewModel() {
         appState = AppConstants.STATE_LOGIN; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
         verify2FAStatus = null
+        // Clear MOOC session
+        NetworkClient.moocInterceptor.authToken = null
+        isMoocLoggedIn = false
+        moocCourses = emptyList()
         
         if (wasRemember) {
             loginEmail = savedE; loginPass = savedP; rememberMe = true
@@ -568,6 +587,170 @@ class MainViewModel : ViewModel() {
             }
             generatedPdfUri = uri
             isPdfGenerating = false
+        }
+    }
+
+    // ==================== MOOC ====================
+
+    /**
+     * Ensure we have a valid MOOC token. Tries cached token first,
+     * then logs in with the same credentials used for myedu.
+     * Returns true if authenticated.
+     */
+    private suspend fun ensureMoocAuth(): Boolean {
+        if (isMoocLoggedIn && NetworkClient.moocInterceptor.authToken != null) return true
+
+        // Try cached token
+        val cached = prefs?.getMoocToken()
+        if (cached != null) {
+            NetworkClient.moocInterceptor.authToken = cached
+            isMoocLoggedIn = true
+            return true
+        }
+
+        // Login with same credentials
+        val email = loginEmail.ifBlank { null } ?: return false
+        val pass = loginPass.ifBlank { null } ?: return false
+        val normalizedEmail = EmailHelper.normalizeEmail(email)
+
+        return try {
+            val resp = NetworkClient.moocApi.login(MoocLoginRequest(normalizedEmail.trim(), pass.trim()))
+            val token = resp.extractToken()
+            if (token != null) {
+                prefs?.saveMoocToken(token)
+                NetworkClient.moocInterceptor.authToken = token
+                isMoocLoggedIn = true
+                true
+            } else {
+                DebugLogger.log("MOOC", "Login returned no token: ${resp.message}")
+                false
+            }
+        } catch (e: Exception) {
+            DebugLogger.log("MOOC", "Login failed: ${e.message}")
+            false
+        }
+    }
+
+    fun loadMoocCourses() {
+        if (isMoocLoading) return
+        viewModelScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) { isMoocLoading = true; moocError = null }
+            try {
+                if (!ensureMoocAuth()) {
+                    withContext(Dispatchers.Main) { moocError = "Authentication failed" }
+                    return@launch
+                }
+
+                val responseBody = NetworkClient.moocApi.getStreams()
+                val jsonString = responseBody.string()
+                val gson = Gson()
+                val type = object : TypeToken<Map<String, Map<String, MoocStreamSubject>>>() {}.type
+                val streamsMap: Map<String, Map<String, MoocStreamSubject>> = gson.fromJson(jsonString, type)
+
+                val items = mutableListOf<MoocCourseDisplayItem>()
+                for ((semesterKey, subjects) in streamsMap) {
+                    for ((_, subjectData) in subjects) {
+                        if (subjectData.subject == null || subjectData.streams.isNullOrEmpty()) continue
+                        val streamIds = subjectData.streams.map { it.id }
+                        val curriculaId = subjectData.streams.firstOrNull()?.id_curricula ?: continue
+                        val courseIds = subjectData.streams
+                            .mapNotNull { it.curricula?.id }
+                            .distinct()
+                        val typeName = subjectData.streams.firstOrNull()?.subject_type_name
+                            ?.getShortName(language)
+                        items.add(
+                            MoocCourseDisplayItem(
+                                semesterKey = semesterKey,
+                                subjectName = subjectData.subject,
+                                credit = subjectData.credit,
+                                streamIds = streamIds,
+                                curriculaId = curriculaId,
+                                courseIds = courseIds,
+                                subjectTypeName = typeName
+                            )
+                        )
+                    }
+                }
+                withContext(Dispatchers.Main) { moocCourses = items }
+            } catch (e: Exception) {
+                DebugLogger.log("MOOC", "Error loading courses: ${e.message}")
+                withContext(Dispatchers.Main) { moocError = e.message }
+            } finally {
+                withContext(Dispatchers.Main) { isMoocLoading = false }
+            }
+        }
+    }
+
+    fun loadMoocLessons(item: MoocCourseDisplayItem) {
+        viewModelScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) {
+                isMoocLessonsLoading = true
+                selectedMoocCourse = item
+                moocCourseLessons = emptyList()
+            }
+            try {
+                ensureMoocAuth()
+                val courses = NetworkClient.moocApi.getCourseLessons(
+                    idCurricula = item.curriculaId,
+                    streamIds = item.streamIds
+                )
+                withContext(Dispatchers.Main) { moocCourseLessons = courses }
+            } catch (e: Exception) {
+                DebugLogger.log("MOOC", "Error loading lessons: ${e.message}")
+            } finally {
+                withContext(Dispatchers.Main) { isMoocLessonsLoading = false }
+            }
+        }
+    }
+
+    fun loadMoocSteps(lessonId: Int, streamId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) {
+                isMoocStepsLoading = true
+                selectedMoocStreamId = streamId
+                moocLessonSteps = emptyList()
+            }
+            try {
+                ensureMoocAuth()
+                val steps = NetworkClient.moocApi.getLessonSteps(lessonId, streamId)
+                withContext(Dispatchers.Main) { moocLessonSteps = steps }
+            } catch (e: Exception) {
+                DebugLogger.log("MOOC", "Error loading steps: ${e.message}")
+            } finally {
+                withContext(Dispatchers.Main) { isMoocStepsLoading = false }
+            }
+        }
+    }
+
+    fun submitMoocTestAnswer(stepId: Int, streamId: Int, answerId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                ensureMoocAuth()
+                val result = NetworkClient.moocApi.submitTestAnswer(stepId, streamId, answerId)
+                withContext(Dispatchers.Main) { moocTestResult = result.message }
+                // Refresh steps to show updated scores
+                val lessonId = selectedMoocLesson?.id ?: return@launch
+                val steps = NetworkClient.moocApi.getLessonSteps(lessonId, streamId)
+                withContext(Dispatchers.Main) { moocLessonSteps = steps }
+            } catch (e: Exception) {
+                DebugLogger.log("MOOC", "Error submitting test: ${e.message}")
+                withContext(Dispatchers.Main) { moocTestResult = e.message }
+            }
+        }
+    }
+
+    fun markMoocStepCompleted(stepId: Int, streamId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                ensureMoocAuth()
+                NetworkClient.moocApi.markStepCompleted(stepId, streamId)
+                // Refresh steps
+                val lessonId = selectedMoocLesson?.id ?: return@launch
+                val steps = NetworkClient.moocApi.getLessonSteps(lessonId, streamId)
+                withContext(Dispatchers.Main) { moocLessonSteps = steps }
+            } catch (e: Exception) {
+                DebugLogger.log("MOOC", "Error marking step: ${e.message}")
+            }
         }
     }
 }

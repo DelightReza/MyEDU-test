@@ -61,6 +61,16 @@
     <string name="education_portal">Education Portal</string>
     <string name="education_portal_desc">Access online courses and learning materials</string>
     <string name="education_portal_open">Open</string>
+    <string name="mooc_load_error">Failed to load courses</string>
+    <string name="mooc_retry">Retry</string>
+    <string name="mooc_no_courses">No courses available</string>
+    <string name="mooc_course">Course</string>
+    <string name="mooc_no_lessons">No lessons available</string>
+    <string name="mooc_lesson">Lesson</string>
+    <string name="mooc_no_steps">No steps available</string>
+    <string name="mooc_step">Step</string>
+    <string name="mooc_mark_read">Mark as read</string>
+    <string name="mooc_submit_answer">Submit answer</string>
     <string name="ok">OK</string>
     <string name="close">Close</string>
     <string name="and_more">and %d more…</string>

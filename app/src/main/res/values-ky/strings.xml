@@ -385,6 +385,16 @@
     <string name="education_portal">Билим берүү порталы</string>
     <string name="education_portal_desc">Онлайн курстарга жана окуу материалдарына жетүү</string>
     <string name="education_portal_open">Ачуу</string>
+    <string name="mooc_load_error">Курстарды жүктөө мүмкүн болгон жок</string>
+    <string name="mooc_retry">Кайра аракет кылуу</string>
+    <string name="mooc_no_courses">Жеткиликтүү курстар жок</string>
+    <string name="mooc_course">Курс</string>
+    <string name="mooc_no_lessons">Жеткиликтүү сабактар жок</string>
+    <string name="mooc_lesson">Сабак</string>
+    <string name="mooc_no_steps">Жеткиликтүү кадамдар жок</string>
+    <string name="mooc_step">Кадам</string>
+    <string name="mooc_mark_read">Окулган деп белгилөө</string>
+    <string name="mooc_submit_answer">Жоопту жөнөтүү</string>
     <string name="ok">Макул</string>
     <string name="close">Жабуу</string>
     <string name="and_more">жана дагы %d…</string>

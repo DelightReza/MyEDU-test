@@ -11,6 +11,7 @@ object AppConstants {
 
     // --- Preference Keys: Auth ---
     const val KEY_AUTH_TOKEN = "auth_token"
+    const val KEY_MOOC_AUTH_TOKEN = "mooc_auth_token"
     const val KEY_REMEMBER_ME = "pref_remember_me"
     const val KEY_SAVED_EMAIL = "pref_saved_email"
     const val KEY_SAVED_PASS = "pref_saved_pass"
@@ -57,6 +58,7 @@ object AppConstants {
     // --- Network ---
     const val API_BASE_URL = "https://api3.myedu.oshsu.kg/"
     const val GITHUB_API_BASE_URL = "https://api.github.com/"
+    const val MOOC_API_BASE_URL = "https://api.mooc.oshsu.kg/public/"
     const val PORTAL_BASE_URL = "https://myedu.oshsu.kg"
     const val PORTAL_BASE_URL_SLASH = "https://myedu.oshsu.kg/"
     const val PRIMARY_API_HOST = "api3.myedu.oshsu.kg"

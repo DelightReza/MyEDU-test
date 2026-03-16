@@ -385,6 +385,16 @@
     <string name="education_portal">Образовательный портал</string>
     <string name="education_portal_desc">Доступ к онлайн-курсам и учебным материалам</string>
     <string name="education_portal_open">Открыть</string>
+    <string name="mooc_load_error">Не удалось загрузить курсы</string>
+    <string name="mooc_retry">Повторить</string>
+    <string name="mooc_no_courses">Нет доступных курсов</string>
+    <string name="mooc_course">Курс</string>
+    <string name="mooc_no_lessons">Нет доступных уроков</string>
+    <string name="mooc_lesson">Урок</string>
+    <string name="mooc_no_steps">Нет доступных шагов</string>
+    <string name="mooc_step">Шаг</string>
+    <string name="mooc_mark_read">Отметить как прочитанное</string>
+    <string name="mooc_submit_answer">Отправить ответ</string>
     <string name="ok">ОК</string>
     <string name="close">Закрыть</string>
     <string name="and_more">и еще %d…</string>
