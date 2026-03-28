@@ -84,7 +84,7 @@ fun HomeScreen(vm: MainViewModel) {
                             icon = Icons.Outlined.CalendarToday, 
                             label = stringResource(R.string.semester), 
                             value = profile?.active_semester?.toString() ?: "-", 
-                            secondaryText = "${stringResource(R.string.stream)} ${vm.determinedStream ?: "-"}",
+                            secondaryText = vm.determinedStream?.let { "${stringResource(R.string.stream)} $it" },
                             modifier = Modifier.weight(1f),
                             glassmorphismEnabled = vm.glassmorphismEnabled,
                             themeMode = vm.themeMode

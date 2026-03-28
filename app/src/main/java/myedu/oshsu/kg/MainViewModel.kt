@@ -699,7 +699,12 @@ class MainViewModel : ViewModel() {
     }
 
     private fun processScheduleLocally() {
-        if (fullSchedule.isEmpty()) return
+        if (fullSchedule.isEmpty()) {
+            determinedStream = null
+            determinedGroup = null
+            todayClasses = emptyList()
+            return
+        }
         determinedStream = fullSchedule.asSequence()
             .filter { it.subject_type?.name_en?.contains("Lection", ignoreCase = true) == true }
             .mapNotNull { it.stream?.numeric }
