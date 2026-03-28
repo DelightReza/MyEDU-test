@@ -79,7 +79,7 @@ fun HomeScreen(vm: MainViewModel) {
 
                 // --- STATS CARDS ---
                 item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) { 
+                    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(12.dp)) { 
                         StatCard(
                             icon = Icons.Outlined.CalendarToday, 
                             label = stringResource(R.string.semester), 

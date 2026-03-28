@@ -20,6 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -27,34 +30,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil.ImageLoader
-import coil.compose.AsyncImage
-import coil.decode.SvgDecoder
 import myedu.oshsu.kg.R
 
 @Composable
 fun OshSuLogo(modifier: Modifier = Modifier, themeMode: String = "SYSTEM") {
-    val context = LocalContext.current
-    val imageLoader = remember { ImageLoader.Builder(context).components { add(SvgDecoder.Factory()) }.build() }
-
-    val isDark = when(themeMode) {
-        "DARK" -> true
-        "GLASS" -> false       // Glass uses light background — dark logo
-        "GLASS_DARK" -> true   // Glass Dark uses dark background — white logo
-        "LIGHT" -> false
-        else -> isSystemInDarkTheme()
+    val isDark = when (themeMode) {
+        "DARK", "GLASS_DARK" -> true
+        "LIGHT", "GLASS"     -> false
+        else                 -> isSystemInDarkTheme()
     }
-
-    // Use the asset that matches the theme directly, no tint required
-    val url = if (isDark) "file:///android_asset/logo-white4.svg" else "file:///android_asset/logo-dark4.svg"
-
-    AsyncImage(
-        model = url,
-        imageLoader = imageLoader,
+    Image(
+        painter = painterResource(if (isDark) R.drawable.logo_white else R.drawable.logo_dark),
         contentDescription = stringResource(R.string.desc_logo),
         modifier = modifier,
         contentScale = ContentScale.Fit
@@ -63,22 +54,29 @@ fun OshSuLogo(modifier: Modifier = Modifier, themeMode: String = "SYSTEM") {
 
 @Composable
 fun ThemedBackground(themeMode: String = "SYSTEM", glassmorphismEnabled: Boolean = false, content: @Composable BoxScope.() -> Unit) {
+    // Animate the glass gradient so it fades in/out rather than snapping
+    val gradientAlpha by animateFloatAsState(
+        targetValue = if (glassmorphismEnabled) 1f else 0f,
+        animationSpec = tween(durationMillis = 700),
+        label = "GlassBgAlpha"
+    )
     Box(modifier = Modifier.fillMaxSize()) {
         // Background surface
         Surface(
             color = MaterialTheme.colorScheme.background,
             modifier = Modifier.fillMaxSize()
         ) {
-            // Add darker gradient overlay for Glass mode
-            if (glassmorphismEnabled) {
+            // Glass gradient overlay — drawn at animated opacity
+            if (gradientAlpha > 0f) {
+                // Primary alpha 0.12, tertiary 0.08: subtle tint that defines the glass look
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.08f),
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f * gradientAlpha),
+                                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.08f * gradientAlpha),
                                     MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
                                 )
                             )
@@ -86,7 +84,7 @@ fun ThemedBackground(themeMode: String = "SYSTEM", glassmorphismEnabled: Boolean
                 )
             }
         }
-        
+
         // Content
         Box(Modifier.fillMaxSize(), content = content)
     }
