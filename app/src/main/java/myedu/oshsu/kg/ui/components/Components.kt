@@ -22,7 +22,6 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -40,26 +39,25 @@ import myedu.oshsu.kg.R
 @Composable
 fun OshSuLogo(modifier: Modifier = Modifier, themeMode: String = "SYSTEM") {
     val context = LocalContext.current
-    // In Glass mode, use dark logo without tint for better visibility on light/colorful background
-    // In Glass Dark mode, use white logo for visibility on dark background
-    val url = "file:///android_asset/logo-dark4.svg"
     val imageLoader = remember { ImageLoader.Builder(context).components { add(SvgDecoder.Factory()) }.build() }
-    
+
     val isDark = when(themeMode) {
         "DARK" -> true
-        "GLASS" -> false  // Use dark logo (no tint) in Glass mode
-        "GLASS_DARK" -> true  // Use white logo in Glass Dark mode
+        "GLASS" -> false       // Glass uses light background — dark logo
+        "GLASS_DARK" -> true   // Glass Dark uses dark background — white logo
         "LIGHT" -> false
         else -> isSystemInDarkTheme()
     }
 
+    // Use the asset that matches the theme directly, no tint required
+    val url = if (isDark) "file:///android_asset/logo-white4.svg" else "file:///android_asset/logo-dark4.svg"
+
     AsyncImage(
-        model = url, 
-        imageLoader = imageLoader, 
-        contentDescription = stringResource(R.string.desc_logo), 
-        modifier = modifier, 
-        contentScale = ContentScale.Fit,
-        colorFilter = if (isDark) ColorFilter.tint(Color.White) else null
+        model = url,
+        imageLoader = imageLoader,
+        contentDescription = stringResource(R.string.desc_logo),
+        modifier = modifier,
+        contentScale = ContentScale.Fit
     )
 }
 

@@ -59,6 +59,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import myedu.oshsu.kg.ui.components.MyEduPullToRefreshBox
+import myedu.oshsu.kg.ui.components.OshSuLogo
 import myedu.oshsu.kg.ui.components.ThemedBackground
 import myedu.oshsu.kg.ui.screens.*
 import myedu.oshsu.kg.ui.theme.MyEduTheme
