@@ -126,6 +126,7 @@ class MainViewModel : ViewModel() {
     // --- DOCS UI ---
     var transcriptData by mutableStateOf<List<TranscriptYear>>(emptyList())
     var isTranscriptLoading by mutableStateOf(false)
+    var isTranscriptOffline by mutableStateOf(false)
     
     // --- DICTIONARY UI ---
     var dictionaryMap by mutableStateOf<Map<String, String>>(emptyMap())
@@ -658,7 +659,7 @@ class MainViewModel : ViewModel() {
 
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
-        verify2FAStatus = null; cachedAvatarUri = null
+        verify2FAStatus = null; cachedAvatarUri = null; isTranscriptOffline = false
         appContext?.let { File(it.filesDir, "avatar_cache.jpg").delete() }
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
@@ -699,6 +700,7 @@ class MainViewModel : ViewModel() {
                     try { val pay = NetworkClient.api.getPayStatus(); withContext(Dispatchers.Main) { payStatus = pay; prefs?.saveData("pay_status", pay) } } catch (_: Exception) {}
                     loadScheduleNetwork(profile)
                     fetchSession(profile)
+                    prefetchTranscriptCache(profile)
                 }
                 lastRefreshTime = System.currentTimeMillis()
                 checkForUpdates() 
@@ -784,24 +786,69 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    // Silently refreshes the transcript cache in the background so that the next time the user
+    // opens the transcript screen (even offline) it shows fresh data.
+    private fun prefetchTranscriptCache(profile: StudentInfoResponse) {
+        val uid = userData?.id ?: return
+        val movId = profile.studentMovement?.id ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val transcript = NetworkClient.api.getTranscript(uid, movId)
+                prefs?.saveList("transcript_list", transcript)
+                // Update the in-memory state only if the transcript screen is currently open,
+                // so we don't reset the loading flag managed by fetchTranscript().
+                if (showTranscriptScreen) {
+                    withContext(Dispatchers.Main) { transcriptData = transcript }
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
     private fun fetchSession(profile: StudentInfoResponse) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 withContext(Dispatchers.Main) { isGradesLoading = true }
                 val oldSession = prefs?.loadList<SessionResponse>("session_list") ?: emptyList()
-                val session = NetworkClient.api.getSession(profile.active_semester ?: 1)
-                
-                // Check for updates and send notifications
-                val currentContext = appContext
-                val currentPrefs = prefs
-                if (oldSession.isNotEmpty() && session.isNotEmpty() && currentContext != null && currentPrefs != null) {
-                    val localizedContext = NotificationHelper.getLocalizedContext(currentContext, currentPrefs)
-                    val (gradeUpdates, portalUpdates) = NotificationHelper.checkForUpdates(oldSession, session, localizedContext)
-                    if (gradeUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, gradeUpdates, isPortalOpening = false)
-                    if (portalUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, portalUpdates, isPortalOpening = true)
+
+                // Collect all semester IDs to fetch; fall back to the single active semester.
+                val semesterIds = profile.active_semesters
+                    ?.mapNotNull { it.id }
+                    ?.distinct()
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: listOf(profile.active_semester ?: 1)
+
+                // Fetch each semester independently so a single failure doesn't drop the rest.
+                val freshSessions = mutableListOf<SessionResponse>()
+                for (semId in semesterIds) {
+                    try {
+                        freshSessions.addAll(NetworkClient.api.getSession(semId))
+                    } catch (_: Exception) {}
                 }
-                
-                withContext(Dispatchers.Main) { sessionData = session; prefs?.saveList("session_list", session) }
+
+                // Nothing fetched — leave the existing cache untouched; finally still resets the flag.
+                if (freshSessions.isNotEmpty()) {
+                    // Merge with any cached semesters that the API didn't return (e.g. historical
+                    // semesters not included in active_semesters).  Fresh data takes precedence.
+                    val freshIds = freshSessions.mapNotNull { it.semester?.id }.toSet()
+                    val merged = freshSessions + oldSession.filter { it.semester?.id !in freshIds }
+
+                    // Send grade-change notifications using only the active-semester data to avoid noise.
+                    val currentContext = appContext
+                    val currentPrefs = prefs
+                    if (oldSession.isNotEmpty() && currentContext != null && currentPrefs != null) {
+                        val activeSemId = profile.active_semester
+                        val oldActive = oldSession.filter { it.semester?.id == activeSemId }
+                        val newActive = freshSessions.filter { it.semester?.id == activeSemId }
+                        if (oldActive.isNotEmpty() && newActive.isNotEmpty()) {
+                            val localizedContext = NotificationHelper.getLocalizedContext(currentContext, currentPrefs)
+                            val (gradeUpdates, portalUpdates) = NotificationHelper.checkForUpdates(oldActive, newActive, localizedContext)
+                            if (gradeUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, gradeUpdates, isPortalOpening = false)
+                            if (portalUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, portalUpdates, isPortalOpening = true)
+                        }
+                    }
+
+                    withContext(Dispatchers.Main) { sessionData = merged; prefs?.saveList("session_list", merged) }
+                }
             } catch (_: Exception) {} finally { withContext(Dispatchers.Main) { isGradesLoading = false } }
         }
     }
@@ -879,12 +926,23 @@ class MainViewModel : ViewModel() {
     fun fetchTranscript() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                withContext(Dispatchers.Main) { isTranscriptLoading = true; showTranscriptScreen = true; transcriptData = prefs?.loadList<TranscriptYear>("transcript_list") ?: emptyList() }
+                withContext(Dispatchers.Main) {
+                    isTranscriptLoading = true
+                    isTranscriptOffline = false
+                    showTranscriptScreen = true
+                    transcriptData = prefs?.loadList<TranscriptYear>("transcript_list") ?: emptyList()
+                }
                 val uid = userData?.id ?: return@launch
-                val movId = profileData?.studentMovement?.id ?: return@launch 
+                val movId = profileData?.studentMovement?.id ?: return@launch
                 val transcript = NetworkClient.api.getTranscript(uid, movId)
                 withContext(Dispatchers.Main) { transcriptData = transcript; prefs?.saveList("transcript_list", transcript) }
-            } catch (e: Exception) { } finally { withContext(Dispatchers.Main) { isTranscriptLoading = false } }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    // Keep any cached data already shown; only flip the offline flag when the
+                    // cache is also empty so the user gets a useful message.
+                    if (transcriptData.isEmpty()) isTranscriptOffline = true
+                }
+            } finally { withContext(Dispatchers.Main) { isTranscriptLoading = false } }
         }
     }
     
