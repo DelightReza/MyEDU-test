@@ -278,12 +278,19 @@ class MainViewModel : ViewModel() {
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
 
+    private fun avatarFileForEmail(context: android.content.Context, email: String): File {
+        val hash = email.lowercase().hashCode().toUInt().toString()
+        return File(context.filesDir, "avatar_$hash.jpg")
+    }
+
     private fun downloadAndCacheAvatar(avatarUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val context = appContext ?: return@launch
-                val localFile = File(context.filesDir, "avatar_cache.jpg")
-                val cachedUrl = prefs?.loadData("avatar_source_url", String::class.java)
+                val email = userData?.email ?: return@launch
+                val localFile = avatarFileForEmail(context, email)
+                val cacheKey = "avatar_source_url_${email.lowercase().hashCode().toUInt()}"
+                val cachedUrl = prefs?.loadData(cacheKey, String::class.java)
                 if (localFile.exists() && cachedUrl == avatarUrl) {
                     if (cachedAvatarUri == null) {
                         withContext(Dispatchers.Main) {
@@ -295,8 +302,9 @@ class MainViewModel : ViewModel() {
                 val response = avatarHttpClient.newCall(Request.Builder().url(avatarUrl).build()).execute()
                 response.body?.bytes()?.let { bytes ->
                     localFile.writeBytes(bytes)
-                    prefs?.saveData("avatar_source_url", avatarUrl)
+                    prefs?.saveData(cacheKey, avatarUrl)
                     prefs?.saveData("avatar_local_path", localFile.absolutePath)
+                    updateAccountLocalAvatarPath(email, localFile.absolutePath)
                     withContext(Dispatchers.Main) {
                         cachedAvatarUri = Uri.fromFile(localFile).toString()
                     }
@@ -304,6 +312,16 @@ class MainViewModel : ViewModel() {
             } catch (e: Exception) {
                 DebugLogger.log("AVATAR", "Failed to cache avatar: ${e.message}")
             }
+        }
+    }
+
+    private fun updateAccountLocalAvatarPath(email: String, localPath: String) {
+        val list = savedAccounts.toMutableList()
+        val idx = list.indexOfFirst { it.email.equals(email, ignoreCase = true) }
+        if (idx >= 0) {
+            list[idx] = list[idx].copy(localAvatarPath = localPath)
+            savedAccounts = list
+            prefs?.saveList("saved_accounts", list)
         }
     }
 

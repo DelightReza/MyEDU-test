@@ -19,7 +19,9 @@ data class SavedAccount(
     val email: String,
     val password: String,
     val displayName: String? = null,
-    val avatarUrl: String? = null
+    val avatarUrl: String? = null,
+    val authToken: String? = null,
+    val localAvatarPath: String? = null
 )
 
 // --- AUTH & USER MODELS ---
