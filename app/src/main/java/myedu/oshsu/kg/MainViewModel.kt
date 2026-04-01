@@ -23,6 +23,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.File
@@ -88,6 +90,7 @@ class MainViewModel : ViewModel() {
     // --- LOCAL EDIT STATE ---
     var customName by mutableStateOf<String?>(null)
     var customPhotoUri by mutableStateOf<String?>(null)
+    var cachedAvatarUri by mutableStateOf<String?>(null)
     var avatarRefreshTrigger by mutableStateOf(0)
     var areDictionariesLoaded by mutableStateOf(false)
 
@@ -184,6 +187,10 @@ class MainViewModel : ViewModel() {
         
         customName = prefs?.loadData("local_custom_name", String::class.java)
         customPhotoUri = prefs?.loadData("local_custom_photo", String::class.java)
+        val savedAvatarPath = prefs?.loadData("avatar_local_path", String::class.java)
+        if (savedAvatarPath != null && File(savedAvatarPath).exists()) {
+            cachedAvatarUri = Uri.fromFile(File(savedAvatarPath)).toString()
+        }
 
         loadLocalDictionary()
         loadDictionaries()
@@ -239,6 +246,7 @@ class MainViewModel : ViewModel() {
                 userData = u
                 profileData = p
             }
+            p?.avatar?.let { downloadAndCacheAvatar(it) }
             return@withContext Pair(u, p)
         } catch (e: Exception) {
             val isAuthError = e.message?.contains("401") == true || e.message?.contains("Unauthenticated") == true
@@ -255,6 +263,40 @@ class MainViewModel : ViewModel() {
         prefs?.saveData("local_custom_name", name)
         prefs?.saveData("local_custom_photo", photoUri)
         avatarRefreshTrigger++
+    }
+
+    // --- AVATAR CACHING ---
+    private fun downloadAndCacheAvatar(avatarUrl: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val context = appContext ?: return@launch
+                val localFile = File(context.filesDir, "avatar_cache.jpg")
+                val cachedUrl = prefs?.loadData("avatar_source_url", String::class.java)
+                if (localFile.exists() && cachedUrl == avatarUrl) {
+                    if (cachedAvatarUri == null) {
+                        withContext(Dispatchers.Main) {
+                            cachedAvatarUri = Uri.fromFile(localFile).toString()
+                        }
+                    }
+                    return@launch
+                }
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .build()
+                val response = client.newCall(Request.Builder().url(avatarUrl).build()).execute()
+                response.body?.bytes()?.let { bytes ->
+                    localFile.writeBytes(bytes)
+                    prefs?.saveData("avatar_source_url", avatarUrl)
+                    prefs?.saveData("avatar_local_path", localFile.absolutePath)
+                    withContext(Dispatchers.Main) {
+                        cachedAvatarUri = Uri.fromFile(localFile).toString()
+                    }
+                }
+            } catch (e: Exception) {
+                DebugLogger.log("AVATAR", "Failed to cache avatar: ${e.message}")
+            }
+        }
     }
 
     // --- TUITION LOGIC ---
@@ -618,7 +660,8 @@ class MainViewModel : ViewModel() {
 
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
-        verify2FAStatus = null
+        verify2FAStatus = null; cachedAvatarUri = null
+        appContext?.let { File(it.filesDir, "avatar_cache.jpg").delete() }
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
         prefs?.saveData("theme_mode_pref", themeMode)
@@ -646,6 +689,7 @@ class MainViewModel : ViewModel() {
                     userData = user; profileData = profile
                     prefs?.saveData("user_data", user); prefs?.saveData("profile_data", profile)
                 }
+                profile?.avatar?.let { downloadAndCacheAvatar(it) }
                 
                 try {
                     val v2fa = NetworkClient.api.verify2FA()
