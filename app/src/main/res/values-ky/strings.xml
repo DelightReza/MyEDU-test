@@ -386,4 +386,10 @@
     <string name="and_more">жана дагы %d…</string>
     <string name="loading">Жүктөлүүдө...</string>
     <string name="journal_offline">Интернетке туташыңыз</string>
+
+    <!-- Multi-Account -->
+    <string name="desc_switch_account">Аккаунтту алмаштыруу</string>
+    <string name="desc_add_account">Аккаунт кошуу</string>
+    <string name="switch_account">Аккаунттар</string>
+    <string name="add_account">Аккаунт кошуу</string>
 </resources>

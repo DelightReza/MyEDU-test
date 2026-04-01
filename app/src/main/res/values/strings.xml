@@ -402,4 +402,10 @@
     <string name="fmt_id_val">ID: %s</string>
     <string name="fmt_name_id">%1$s (ID: %2$s)</string>
     <string name="journal_offline">Please Connect To Internet</string>
+
+    <!-- Multi-Account -->
+    <string name="desc_switch_account">Switch Account</string>
+    <string name="desc_add_account">Add Account</string>
+    <string name="switch_account">Accounts</string>
+    <string name="add_account">Add Account</string>
 </resources>

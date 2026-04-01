@@ -14,6 +14,14 @@ import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
 
+// --- MULTI-ACCOUNT MODEL ---
+data class SavedAccount(
+    val email: String,
+    val password: String,
+    val displayName: String? = null,
+    val avatarUrl: String? = null
+)
+
 // --- AUTH & USER MODELS ---
 data class LoginRequest(val email: String, val password: String)
 data class LoginResponse(val status: String?, val authorisation: AuthData?)
@@ -34,7 +42,9 @@ data class UserData(
     val id_university: Long?, 
     val created_at: String?, 
     val updated_at: String? 
-)
+) {
+    fun getDisplayName(): String = "${last_name ?: ""} ${name ?: ""}".trim()
+}
 
 // --- DICTIONARY MODELS ---
 data class DictionaryItem(

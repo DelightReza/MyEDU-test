@@ -13,10 +13,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -40,6 +43,7 @@ import coil.request.ImageRequest
 import myedu.oshsu.kg.DebugLogger
 import myedu.oshsu.kg.MainViewModel
 import myedu.oshsu.kg.R
+import myedu.oshsu.kg.SavedAccount
 import myedu.oshsu.kg.secretDebugTrigger
 import myedu.oshsu.kg.ui.components.*
 
@@ -77,15 +81,35 @@ fun ProfileScreen(vm: MainViewModel) {
             ) {
                 Text(stringResource(R.string.profile), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 
-                IconButton(
-                    onClick = { vm.showSettingsScreen = true },
-                    modifier = Modifier.secretDebugTrigger { 
-                        vm.isDebugPipVisible = !vm.isDebugPipVisible
-                        val msg = if(vm.isDebugPipVisible) context.getString(R.string.debug_enabled) else context.getString(R.string.debug_disabled)
-                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                        DebugLogger.log("UI", msg)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Account switch / add account icon
+                    IconButton(onClick = { vm.showAccountSwitchSheet = true }) {
+                        if (vm.savedAccounts.size > 1 && displayPhoto != null) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context).data(displayPhoto).crossfade(true).build(),
+                                contentDescription = stringResource(R.string.desc_switch_account),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(32.dp).clip(CircleShape)
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.PersonAdd,
+                                contentDescription = stringResource(R.string.desc_add_account),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
-                ) { Icon(Icons.Outlined.Settings, stringResource(R.string.desc_settings), tint = MaterialTheme.colorScheme.onSurface) }
+
+                    IconButton(
+                        onClick = { vm.showSettingsScreen = true },
+                        modifier = Modifier.secretDebugTrigger { 
+                            vm.isDebugPipVisible = !vm.isDebugPipVisible
+                            val msg = if(vm.isDebugPipVisible) context.getString(R.string.debug_enabled) else context.getString(R.string.debug_disabled)
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            DebugLogger.log("UI", msg)
+                        }
+                    ) { Icon(Icons.Outlined.Settings, stringResource(R.string.desc_settings), tint = MaterialTheme.colorScheme.onSurface) }
+                }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -303,6 +327,11 @@ fun ProfileScreen(vm: MainViewModel) {
             }
         }
     }
+
+    // --- ACCOUNT SWITCH SHEET ---
+    if (vm.showAccountSwitchSheet) {
+        AccountSwitchSheet(vm = vm, onDismiss = { vm.showAccountSwitchSheet = false })
+    }
 }
 
 @Composable
@@ -478,6 +507,138 @@ fun ProfileActionButton(
                 text = text,
                 textAlign = TextAlign.Center,
                 lineHeight = 16.sp
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AccountSwitchSheet(vm: MainViewModel, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val currentEmail = vm.userData?.email
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        windowInsets = WindowInsets.statusBars
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.switch_account),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            vm.savedAccounts.forEach { account ->
+                AccountListItem(
+                    account = account,
+                    isActive = account.email.equals(currentEmail, ignoreCase = true),
+                    onClick = {
+                        if (account.email.equals(currentEmail, ignoreCase = true)) {
+                            onDismiss()
+                        } else {
+                            vm.switchToAccount(account)
+                        }
+                    }
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            // Add Account row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { vm.startAddNewAccount() }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = stringResource(R.string.add_account),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
+        }
+    }
+}
+
+@Composable
+private fun AccountListItem(account: SavedAccount, isActive: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            if (account.avatarUrl != null) {
+                AsyncImage(
+                    model = account.avatarUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape)
+                )
+            } else {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = account.displayName ?: account.email,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = account.email,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        if (isActive) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
             )
         }
     }

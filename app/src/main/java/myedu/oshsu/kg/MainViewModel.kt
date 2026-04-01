@@ -45,6 +45,10 @@ class MainViewModel : ViewModel() {
     var loginPass by mutableStateOf("")
     var rememberMe by mutableStateOf(false)
 
+    // --- MULTI-ACCOUNT ---
+    var savedAccounts by mutableStateOf<List<SavedAccount>>(emptyList())
+    var showAccountSwitchSheet by mutableStateOf(false)
+
     // --- NAVIGATION STATES ---
     var showPersonalInfoScreen by mutableStateOf(false)
     var showEditProfileScreen by mutableStateOf(false)
@@ -192,6 +196,8 @@ class MainViewModel : ViewModel() {
         if (savedAvatarPath != null && File(savedAvatarPath).exists()) {
             cachedAvatarUri = Uri.fromFile(File(savedAvatarPath)).toString()
         }
+
+        savedAccounts = prefs?.loadList<SavedAccount>("saved_accounts") ?: emptyList()
 
         loadLocalDictionary()
         loadDictionaries()
@@ -641,6 +647,7 @@ class MainViewModel : ViewModel() {
                     prefs?.saveToken(token)
                     NetworkClient.interceptor.authToken = token
                     NetworkClient.cookieJar.injectSessionCookies(token)
+                    upsertSavedAccount(email = normalizedEmail, password = pass, displayName = null, avatarUrl = null)
                     refreshAllData(force = true)
                     appState = "APP"
                 } else errorMsg = appContext?.getString(R.string.error_credentials) ?: "Incorrect credentials"
@@ -655,6 +662,7 @@ class MainViewModel : ViewModel() {
         val wasRemember = rememberMe
         val savedE = loginEmail
         val savedP = loginPass
+        val existingAccounts = savedAccounts
 
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
@@ -666,6 +674,8 @@ class MainViewModel : ViewModel() {
         prefs?.saveData("doc_download_mode", downloadMode)
         prefs?.saveData("language_pref", language)
         prefs?.saveData("custom_dictionary_json", Gson().toJson(dictionaryMap))
+        prefs?.saveList("saved_accounts", existingAccounts)
+        savedAccounts = existingAccounts
         
         if (wasRemember) {
             prefs?.saveData("pref_remember_me", true)
@@ -674,6 +684,41 @@ class MainViewModel : ViewModel() {
             loginEmail = savedE
             loginPass = savedP
             rememberMe = true
+        }
+    }
+
+    fun switchToAccount(account: SavedAccount) {
+        showAccountSwitchSheet = false
+        login(account.email, account.password)
+    }
+
+    fun startAddNewAccount() {
+        showAccountSwitchSheet = false
+        val existingAccounts = savedAccounts
+        logout()
+        savedAccounts = existingAccounts
+        prefs?.saveList("saved_accounts", existingAccounts)
+    }
+
+    private fun upsertSavedAccount(email: String, password: String, displayName: String?, avatarUrl: String?) {
+        val list = savedAccounts.toMutableList()
+        val idx = list.indexOfFirst { it.email.equals(email, ignoreCase = true) }
+        val updated = SavedAccount(email = email, password = password, displayName = displayName, avatarUrl = avatarUrl)
+        if (idx >= 0) list[idx] = updated else list.add(updated)
+        savedAccounts = list
+        prefs?.saveList("saved_accounts", list)
+    }
+
+    private fun updateCurrentAccountInfo() {
+        val email = userData?.email ?: return
+        val displayName = userData?.getDisplayName()?.ifEmpty { null }
+        val avatarUrl = profileData?.avatar
+        val list = savedAccounts.toMutableList()
+        val idx = list.indexOfFirst { it.email.equals(email, ignoreCase = true) }
+        if (idx >= 0) {
+            list[idx] = list[idx].copy(displayName = displayName, avatarUrl = avatarUrl)
+            savedAccounts = list
+            prefs?.saveList("saved_accounts", list)
         }
     }
 
@@ -686,6 +731,7 @@ class MainViewModel : ViewModel() {
                 withContext(Dispatchers.Main) {
                     userData = user; profileData = profile
                     prefs?.saveData("user_data", user); prefs?.saveData("profile_data", profile)
+                    updateCurrentAccountInfo()
                 }
                 profile?.avatar?.let { downloadAndCacheAvatar(it) }
                 
