@@ -74,5 +74,10 @@ class PrefsManager(private val context: Context) {
     
     // --- ROOM DATABASE ACCESS ---
     fun getRepository(): MyEduRepository = repository
+
+    // --- PER-ACCOUNT KEY HELPER ---
+    // Uses the full lowercased email as the key component – collision-free and human-readable.
+    fun accountDataKey(email: String, suffix: String): String =
+        "acct_${suffix}_${email.lowercase()}"
 }
 

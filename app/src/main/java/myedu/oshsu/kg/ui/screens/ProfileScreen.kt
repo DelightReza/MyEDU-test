@@ -13,6 +13,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
@@ -64,6 +68,20 @@ fun ProfileScreen(vm: MainViewModel) {
     val facultyName = profile?.studentMovement?.faculty?.get(lang) ?: profile?.studentMovement?.speciality?.faculty?.get(lang) ?: "-"
     val specialityName = profile?.studentMovement?.speciality?.get(lang) ?: "-"
 
+    // While an account switch is in progress, show a clean loading state
+    // instead of the profile content with "Student" placeholder text.
+    val isSwitching = vm.userData == null && vm.isLoading
+
+    AnimatedContent(
+        targetState = isSwitching,
+        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        label = "profile_loading"
+    ) { switching ->
+        if (switching) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
             Modifier
@@ -289,6 +307,8 @@ fun ProfileScreen(vm: MainViewModel) {
             Spacer(Modifier.height(32.dp)); Button(onClick = { vm.logout() }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer), modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.log_out)) }; Spacer(Modifier.height(130.dp))
         }
     }
+        } // end else (not switching)
+    } // end AnimatedContent
 
     // --- TUITION SHEET ---
     if (vm.showTuitionSheet) {

@@ -9,6 +9,15 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) : CoroutineWorker(appContext, workerParams) {
+
+    companion object {
+        /**
+         * Max time budget for syncing secondary accounts.
+         * Android gives WorkManager workers 10 minutes; we cap secondary sync at 7 minutes
+         * to leave headroom for the primary sync that runs before this.
+         */
+        private const val SECONDARY_SYNC_TIMEOUT_MINUTES = 7L
+    }
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val success = runSyncTask(retryAuth = true)
         // After primary account sync, refresh offline snapshots for all other saved accounts
@@ -49,22 +58,22 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
             // Save per-account snapshot so offline switching can load user/profile immediately
             val currentEmail = userResponse.user?.email
             if (currentEmail != null) {
-                prefs.saveData(accountDataKey(currentEmail, "user"), userResponse.user)
-                prefs.saveData(accountDataKey(currentEmail, "profile"), profile)
+                prefs.saveData(prefs.accountDataKey(currentEmail, "user"), userResponse.user)
+                prefs.saveData(prefs.accountDataKey(currentEmail, "profile"), profile)
             }
 
             try { 
                 val news = NetworkClient.api.getNews()
                 prefs.saveList("news_list", news)
                 prefs.getRepository().updateNews(news)
-                if (currentEmail != null) prefs.saveList(accountDataKey(currentEmail, "news"), news)
+                if (currentEmail != null) prefs.saveList(prefs.accountDataKey(currentEmail, "news"), news)
             } catch (_: Exception) { }
             
             try { 
                 val pay = NetworkClient.api.getPayStatus()
                 prefs.saveData("pay_status", pay)
                 prefs.getRepository().updatePayStatus(pay)
-                if (currentEmail != null) prefs.saveData(accountDataKey(currentEmail, "pay"), pay)
+                if (currentEmail != null) prefs.saveData(prefs.accountDataKey(currentEmail, "pay"), pay)
             } catch (_: Exception) { }
 
             try {
@@ -79,7 +88,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                     if (portalUpdates.isNotEmpty()) NotificationHelper.sendNotification(localizedContext, portalUpdates, isPortalOpening = true)
                 }
                 prefs.saveList("session_list", newSession)
-                if (currentEmail != null) prefs.saveList(accountDataKey(currentEmail, "session"), newSession)
+                if (currentEmail != null) prefs.saveList(prefs.accountDataKey(currentEmail, "session"), newSession)
                 
                 // Save to Room Database
                 if (newSession.isNotEmpty()) {
@@ -99,14 +108,14 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                     // Always save the latest schedule (even if empty) so removed classes are cleared
                     prefs.saveList("schedule_list", fullSchedule)
                     prefs.getRepository().updateSchedules(fullSchedule)
-                    if (currentEmail != null) prefs.saveList(accountDataKey(currentEmail, "schedule"), fullSchedule)
+                    if (currentEmail != null) prefs.saveList(prefs.accountDataKey(currentEmail, "schedule"), fullSchedule)
 
                     val localizedContext = NotificationHelper.getLocalizedContext(context, prefs)
                     if (fullSchedule.isNotEmpty() && times.isNotEmpty()) {
                         val timeMap = times.associate { it.id_lesson to "${it.begin_time ?: ""} - ${it.end_time ?: ""}" }
                         prefs.saveData("time_map", timeMap)
                         prefs.getRepository().updateTimeMap(timeMap)
-                        if (currentEmail != null) prefs.saveData(accountDataKey(currentEmail, "timemap"), timeMap)
+                        if (currentEmail != null) prefs.saveData(prefs.accountDataKey(currentEmail, "timemap"), timeMap)
                         ScheduleAlarmManager(localizedContext).scheduleNotifications(fullSchedule, timeMap, prefs.loadData("language_pref", String::class.java)?.replace("\"", "") ?: "en")
                     } else {
                         // No classes — cancel any existing alarms so stale notifications are not fired
@@ -133,7 +142,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
             val currentEmail = prefs.loadData("user_data", UserData::class.java)?.email
             val otherAccounts = savedAccounts.filter { !it.email.equals(currentEmail, ignoreCase = true) }
 
-            val deadline = System.currentTimeMillis() + java.util.concurrent.TimeUnit.MINUTES.toMillis(7)
+            val deadline = System.currentTimeMillis() + java.util.concurrent.TimeUnit.MINUTES.toMillis(SECONDARY_SYNC_TIMEOUT_MINUTES)
 
             for (account in otherAccounts) {
                 if (System.currentTimeMillis() > deadline) break
@@ -157,23 +166,23 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                     val user = try { NetworkClient.api.getUser().user } catch (_: Exception) { null } ?: continue
                     val profile = try { NetworkClient.api.getProfile() } catch (_: Exception) { null }
 
-                    prefs.saveData(accountDataKey(account.email, "user"), user)
-                    prefs.saveData(accountDataKey(account.email, "profile"), profile)
+                    prefs.saveData(prefs.accountDataKey(account.email, "user"), user)
+                    prefs.saveData(prefs.accountDataKey(account.email, "profile"), profile)
 
                     try {
                         val news = NetworkClient.api.getNews()
-                        prefs.saveList(accountDataKey(account.email, "news"), news)
+                        prefs.saveList(prefs.accountDataKey(account.email, "news"), news)
                     } catch (_: Exception) {}
 
                     try {
                         val pay = NetworkClient.api.getPayStatus()
-                        prefs.saveData(accountDataKey(account.email, "pay"), pay)
+                        prefs.saveData(prefs.accountDataKey(account.email, "pay"), pay)
                     } catch (_: Exception) {}
 
                     try {
                         val activeSemester = profile?.active_semester ?: 1
                         val session = NetworkClient.api.getSession(activeSemester)
-                        prefs.saveList(accountDataKey(account.email, "session"), session)
+                        prefs.saveList(prefs.accountDataKey(account.email, "session"), session)
                     } catch (_: Exception) {}
 
                     val mov = profile?.studentMovement
@@ -184,10 +193,10 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                             val times = try { NetworkClient.api.getLessonTimes(mov.id_speciality, mov.id_edu_form, activeYearId) } catch (_: Exception) { emptyList() }
                             val wrappers = NetworkClient.api.getSchedule(mov.id_speciality, mov.id_edu_form, activeYearId, profile?.active_semester ?: 1)
                             val schedule = wrappers.flatMap { it.schedule_items ?: emptyList() }.sortedBy { it.id_lesson }
-                            prefs.saveList(accountDataKey(account.email, "schedule"), schedule)
+                            prefs.saveList(prefs.accountDataKey(account.email, "schedule"), schedule)
                             if (times.isNotEmpty()) {
                                 val timeMap = times.associate { it.id_lesson to "${it.begin_time ?: ""} - ${it.end_time ?: ""}" }
-                                prefs.saveData(accountDataKey(account.email, "timemap"), timeMap)
+                                prefs.saveData(prefs.accountDataKey(account.email, "timemap"), timeMap)
                             }
                         } catch (_: Exception) {}
                     }
@@ -201,12 +210,6 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                 NetworkClient.cookieJar.injectSessionCookies(primaryToken)
             }
         } catch (_: Exception) {}
-    }
-
-    // Helper matching the one in MainViewModel
-    private fun accountDataKey(email: String, suffix: String): String {
-        val hash = email.lowercase().hashCode().toUInt().toString()
-        return "acct_${suffix}_$hash"
     }
 
     private suspend fun attemptBgLogin(prefs: PrefsManager): Boolean {

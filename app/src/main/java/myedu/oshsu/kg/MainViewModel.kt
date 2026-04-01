@@ -326,10 +326,9 @@ class MainViewModel : ViewModel() {
     }
 
     // --- PER-ACCOUNT DATA HELPERS ---
-    private fun accountDataKey(email: String, suffix: String): String {
-        val hash = email.lowercase().hashCode().toUInt().toString()
-        return "acct_${suffix}_$hash"
-    }
+    // Key generation is delegated to PrefsManager.accountDataKey (collision-free, uses full email).
+    private fun accountDataKey(email: String, suffix: String): String =
+        prefs?.accountDataKey(email, suffix) ?: "acct_${suffix}_${email.lowercase()}"
 
     private fun saveCurrentAccountData() {
         val email = userData?.email ?: return
