@@ -722,6 +722,7 @@ class MainViewModel : ViewModel() {
         val savedE = loginEmail
         val savedP = loginPass
         val existingAccounts = savedAccounts
+        val widgetPromoDismissed = prefs?.loadData("show_widget_promotion", Boolean::class.java)
 
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
@@ -735,6 +736,10 @@ class MainViewModel : ViewModel() {
         prefs?.saveData("custom_dictionary_json", Gson().toJson(dictionaryMap))
         prefs?.saveList("saved_accounts", existingAccounts)
         savedAccounts = existingAccounts
+        // Preserve widget-promotion dismissal so it doesn't reappear after account add
+        if (widgetPromoDismissed != null) {
+            prefs?.saveData("show_widget_promotion", widgetPromoDismissed)
+        }
         
         if (wasRemember) {
             prefs?.saveData("pref_remember_me", true)
@@ -760,6 +765,9 @@ class MainViewModel : ViewModel() {
             sessionData = emptyList(); transcriptData = emptyList()
             verify2FAStatus = null; cachedAvatarUri = null
             avatarRefreshTrigger++
+            // Navigate to Home tab so the user doesn't see the "Student" placeholder
+            // on the Profile tab while the new account's data is loading
+            currentTab = 0
 
             // Attempt online login first
             var onlineSuccess = false
