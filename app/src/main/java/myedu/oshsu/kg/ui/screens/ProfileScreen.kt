@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
@@ -515,7 +516,6 @@ fun ProfileActionButton(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountSwitchSheet(vm: MainViewModel, onDismiss: () -> Unit) {
-    val context = LocalContext.current
     val currentEmail = vm.userData?.email
 
     ModalBottomSheet(
@@ -538,16 +538,20 @@ fun AccountSwitchSheet(vm: MainViewModel, onDismiss: () -> Unit) {
             )
 
             vm.savedAccounts.forEach { account ->
+                val isActive = account.email.equals(currentEmail, ignoreCase = true)
                 AccountListItem(
                     account = account,
-                    isActive = account.email.equals(currentEmail, ignoreCase = true),
+                    isActive = isActive,
                     onClick = {
-                        if (account.email.equals(currentEmail, ignoreCase = true)) {
+                        if (isActive) {
                             onDismiss()
                         } else {
                             vm.switchToAccount(account)
                         }
-                    }
+                    },
+                    onDelete = if (!isActive) {
+                        { vm.removeAccount(account.email) }
+                    } else null
                 )
             }
 
@@ -588,7 +592,12 @@ fun AccountSwitchSheet(vm: MainViewModel, onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun AccountListItem(account: SavedAccount, isActive: Boolean, onClick: () -> Unit) {
+private fun AccountListItem(
+    account: SavedAccount,
+    isActive: Boolean,
+    onClick: () -> Unit,
+    onDelete: (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -603,9 +612,15 @@ private fun AccountListItem(account: SavedAccount, isActive: Boolean, onClick: (
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
-            if (account.avatarUrl != null) {
+            // Prefer locally-cached avatar so it shows offline too.
+            // Use remember so the File.exists() check runs only when the path changes.
+            val localAvatarExists = remember(account.localAvatarPath) {
+                account.localAvatarPath?.let { java.io.File(it).exists() } ?: false
+            }
+            val avatarSource: Any? = if (localAvatarExists) account.localAvatarPath else account.avatarUrl
+            if (avatarSource != null) {
                 AsyncImage(
-                    model = account.avatarUrl,
+                    model = avatarSource,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -640,6 +655,14 @@ private fun AccountListItem(account: SavedAccount, isActive: Boolean, onClick: (
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
+        } else if (onDelete != null) {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.remove_account),
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }

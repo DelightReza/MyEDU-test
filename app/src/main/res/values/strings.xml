@@ -408,4 +408,5 @@
     <string name="desc_add_account">Add Account</string>
     <string name="switch_account">Accounts</string>
     <string name="add_account">Add Account</string>
+    <string name="remove_account">Remove Account</string>
 </resources>

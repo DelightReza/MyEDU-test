@@ -325,6 +325,45 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    // --- PER-ACCOUNT DATA HELPERS ---
+    private fun accountDataKey(email: String, suffix: String): String {
+        val hash = email.lowercase().hashCode().toUInt().toString()
+        return "acct_${suffix}_$hash"
+    }
+
+    private fun saveCurrentAccountData() {
+        val email = userData?.email ?: return
+        prefs?.saveData(accountDataKey(email, "user"), userData)
+        prefs?.saveData(accountDataKey(email, "profile"), profileData)
+        prefs?.saveData(accountDataKey(email, "pay"), payStatus)
+        prefs?.saveList(accountDataKey(email, "news"), newsList)
+        prefs?.saveList(accountDataKey(email, "schedule"), fullSchedule)
+        prefs?.saveData(accountDataKey(email, "timemap"), timeMap)
+        prefs?.saveList(accountDataKey(email, "session"), sessionData)
+    }
+
+    private fun loadAccountOfflineData(account: SavedAccount) {
+        val email = account.email
+        userData = prefs?.loadData(accountDataKey(email, "user"), UserData::class.java)
+        profileData = prefs?.loadData(accountDataKey(email, "profile"), StudentInfoResponse::class.java)
+        payStatus = prefs?.loadData(accountDataKey(email, "pay"), PayStatusResponse::class.java)
+        newsList = prefs?.loadList<NewsItem>(accountDataKey(email, "news")) ?: emptyList()
+        fullSchedule = prefs?.loadList<ScheduleItem>(accountDataKey(email, "schedule")) ?: emptyList()
+        sessionData = prefs?.loadList<SessionResponse>(accountDataKey(email, "session")) ?: emptyList()
+        val rawTimeMap = prefs?.prefs?.getString(accountDataKey(email, "timemap"), null)
+        timeMap = if (rawTimeMap != null) {
+            try { com.google.gson.Gson().fromJson(rawTimeMap, object : com.google.gson.reflect.TypeToken<Map<Int, String>>() {}.type) } catch (e: Exception) { emptyMap() }
+        } else emptyMap()
+        verify2FAStatus = null
+        if (account.localAvatarPath != null && java.io.File(account.localAvatarPath).exists()) {
+            cachedAvatarUri = android.net.Uri.fromFile(java.io.File(account.localAvatarPath)).toString()
+        } else {
+            cachedAvatarUri = null
+        }
+        avatarRefreshTrigger++
+        processScheduleLocally()
+    }
+
     // --- TUITION LOGIC ---
     fun fetchTuitionDetails() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -665,7 +704,9 @@ class MainViewModel : ViewModel() {
                     prefs?.saveToken(token)
                     NetworkClient.interceptor.authToken = token
                     NetworkClient.cookieJar.injectSessionCookies(token)
-                    upsertSavedAccount(email = normalizedEmail, password = pass, displayName = null, avatarUrl = null)
+                    // Preserve existing localAvatarPath, update token
+                    val existing = savedAccounts.find { it.email.equals(normalizedEmail, ignoreCase = true) }
+                    upsertSavedAccount(email = normalizedEmail, password = pass, displayName = existing?.displayName, avatarUrl = existing?.avatarUrl, authToken = token, localAvatarPath = existing?.localAvatarPath)
                     refreshAllData(force = true)
                     appState = "APP"
                 } else errorMsg = appContext?.getString(R.string.error_credentials) ?: "Incorrect credentials"
@@ -707,7 +748,69 @@ class MainViewModel : ViewModel() {
 
     fun switchToAccount(account: SavedAccount) {
         showAccountSwitchSheet = false
-        login(account.email, account.password)
+        val existingAccounts = savedAccounts
+
+        viewModelScope.launch {
+            isLoading = true
+            errorMsg = null
+
+            // Clear stale state from the previous account immediately
+            userData = null; profileData = null; payStatus = null
+            newsList = emptyList(); fullSchedule = emptyList()
+            sessionData = emptyList(); transcriptData = emptyList()
+            verify2FAStatus = null; cachedAvatarUri = null
+            avatarRefreshTrigger++
+
+            // Attempt online login first
+            var onlineSuccess = false
+            try {
+                NetworkClient.cookieJar.clear()
+                NetworkClient.interceptor.authToken = null
+                val resp = withContext(Dispatchers.IO) {
+                    NetworkClient.api.login(LoginRequest(account.email.trim(), account.password.trim()))
+                }
+                val token = resp.authorisation?.token
+                if (token != null) {
+                    prefs?.saveToken(token)
+                    NetworkClient.interceptor.authToken = token
+                    NetworkClient.cookieJar.injectSessionCookies(token)
+                    upsertSavedAccount(
+                        email = account.email, password = account.password,
+                        displayName = account.displayName, avatarUrl = account.avatarUrl,
+                        authToken = token, localAvatarPath = account.localAvatarPath
+                    )
+                    refreshAllData(force = true)
+                    appState = "APP"
+                    onlineSuccess = true
+                }
+            } catch (_: Exception) { /* fall through to offline */ }
+
+            if (!onlineSuccess) {
+                // Try offline using the cached token and per-account stored data
+                val cachedToken = account.authToken
+                if (cachedToken != null) {
+                    prefs?.saveToken(cachedToken)
+                    NetworkClient.interceptor.authToken = cachedToken
+                    NetworkClient.cookieJar.injectSessionCookies(cachedToken)
+                    loadAccountOfflineData(account)
+                    savedAccounts = existingAccounts
+                    prefs?.saveList("saved_accounts", existingAccounts)
+                    appState = "APP"
+                } else {
+                    // No cached token – restore accounts list and show error
+                    savedAccounts = existingAccounts
+                    errorMsg = appContext?.getString(R.string.error_login_failed, "No network") ?: "Login Failed: No network"
+                }
+            }
+            isLoading = false
+        }
+    }
+
+    fun removeAccount(email: String) {
+        val list = savedAccounts.toMutableList()
+        list.removeAll { it.email.equals(email, ignoreCase = true) }
+        savedAccounts = list
+        prefs?.saveList("saved_accounts", list)
     }
 
     fun startAddNewAccount() {
@@ -716,12 +819,26 @@ class MainViewModel : ViewModel() {
         logout()
         savedAccounts = existingAccounts
         prefs?.saveList("saved_accounts", existingAccounts)
+        // Clear login fields so the form is blank for the new account
+        loginEmail = ""
+        loginPass = ""
+        rememberMe = false
     }
 
-    private fun upsertSavedAccount(email: String, password: String, displayName: String?, avatarUrl: String?) {
+    private fun upsertSavedAccount(
+        email: String, password: String, displayName: String?, avatarUrl: String?,
+        authToken: String? = null, localAvatarPath: String? = null
+    ) {
         val list = savedAccounts.toMutableList()
         val idx = list.indexOfFirst { it.email.equals(email, ignoreCase = true) }
-        val updated = SavedAccount(email = email, password = password, displayName = displayName, avatarUrl = avatarUrl)
+        val existing = if (idx >= 0) list[idx] else null
+        val updated = SavedAccount(
+            email = email, password = password,
+            displayName = displayName ?: existing?.displayName,
+            avatarUrl = avatarUrl ?: existing?.avatarUrl,
+            authToken = authToken ?: existing?.authToken,
+            localAvatarPath = localAvatarPath ?: existing?.localAvatarPath
+        )
         if (idx >= 0) list[idx] = updated else list.add(updated)
         savedAccounts = list
         prefs?.saveList("saved_accounts", list)
@@ -750,6 +867,8 @@ class MainViewModel : ViewModel() {
                     userData = user; profileData = profile
                     prefs?.saveData("user_data", user); prefs?.saveData("profile_data", profile)
                     updateCurrentAccountInfo()
+                    // Save per-account copies so offline switching can load this account's data later
+                    if (user != null) saveCurrentAccountData()
                 }
                 profile?.avatar?.let { downloadAndCacheAvatar(it) }
                 
@@ -765,6 +884,8 @@ class MainViewModel : ViewModel() {
                     fetchSession(profile)
                 }
                 lastRefreshTime = System.currentTimeMillis()
+                // Persist a per-account snapshot so this account can be loaded offline later
+                withContext(Dispatchers.Main) { saveCurrentAccountData() }
                 checkForUpdates() 
             } catch (e: Exception) {
                 // --- RESTORED RETRY LOGIC ---

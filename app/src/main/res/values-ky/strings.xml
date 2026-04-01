@@ -392,4 +392,5 @@
     <string name="desc_add_account">Аккаунт кошуу</string>
     <string name="switch_account">Аккаунттар</string>
     <string name="add_account">Аккаунт кошуу</string>
+    <string name="remove_account">Аккаунтту өчүрүү</string>
 </resources>

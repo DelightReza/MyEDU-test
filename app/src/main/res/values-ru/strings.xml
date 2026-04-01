@@ -392,4 +392,5 @@
     <string name="desc_add_account">Добавить аккаунт</string>
     <string name="switch_account">Аккаунты</string>
     <string name="add_account">Добавить аккаунт</string>
+    <string name="remove_account">Удалить аккаунт</string>
 </resources>
