@@ -119,6 +119,7 @@ class MainViewModel : ViewModel() {
     var showJournalSheet by mutableStateOf(false)
     var journalList by mutableStateOf<List<JournalItem>>(emptyList())
     var isJournalLoading by mutableStateOf(false)
+    var isJournalOffline by mutableStateOf(false)
     var selectedJournalSubject by mutableStateOf<SessionSubjectWrapper?>(null)
     var selectedJournalType by mutableStateOf(1) // 1=Lecture, 2=Practice, 3=Lab
     
@@ -266,6 +267,11 @@ class MainViewModel : ViewModel() {
     }
 
     // --- AVATAR CACHING ---
+    private val avatarHttpClient = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
+
     private fun downloadAndCacheAvatar(avatarUrl: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -280,11 +286,7 @@ class MainViewModel : ViewModel() {
                     }
                     return@launch
                 }
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .build()
-                val response = client.newCall(Request.Builder().url(avatarUrl).build()).execute()
+                val response = avatarHttpClient.newCall(Request.Builder().url(avatarUrl).build()).execute()
                 response.body?.bytes()?.let { bytes ->
                     localFile.writeBytes(bytes)
                     prefs?.saveData("avatar_source_url", avatarUrl)
@@ -834,6 +836,7 @@ class MainViewModel : ViewModel() {
             DebugLogger.log("JOURNAL", "All ID fields are null, cannot fetch journal")
             viewModelScope.launch(Dispatchers.Main) {
                 isJournalLoading = false
+                isJournalOffline = false
                 journalList = emptyList()
             }
             return
@@ -841,43 +844,17 @@ class MainViewModel : ViewModel() {
         
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                withContext(Dispatchers.Main) { isJournalLoading = true }
+                withContext(Dispatchers.Main) { isJournalLoading = true; isJournalOffline = false }
                 
                 val semesterId = selectedSemesterId ?: profileData?.active_semester ?: 1
                 val activeSemester = profileData?.active_semester ?: semesterId
-                
-                // Calculate academic year based on semester
-                // Each academic year has 2 semesters (odd and even)
-                // If current active semester is 9-10, it's year 25
-                // If semester is 7-8, it's year 24, etc.
                 val currentActiveYear = AcademicYearHelper.getDefaultActiveYearId()
                 val semesterDiff = activeSemester - semesterId
                 val yearOffset = semesterDiff / 2  // 2 semesters per year
                 val eduYearId = currentActiveYear - yearOffset
                 
-                // Cache key for this journal request
-                val cacheKey = "journal_${curriculaId}_${semesterId}_${selectedJournalType}_${eduYearId}"
-                
-                // Load cached data first (offline support)
-                val cachedJournal = try {
-                    prefs?.getRepository()?.getJournalEntriesSync(curriculaId, semesterId, selectedJournalType, eduYearId)
-                        ?: prefs?.loadList<JournalItem>(cacheKey)
-                        ?: emptyList()
-                } catch (e: Exception) {
-                    emptyList()
-                }
-                
-                // Display cached data immediately if available
-                if (cachedJournal.isNotEmpty()) {
-                    withContext(Dispatchers.Main) { 
-                        journalList = cachedJournal
-                    }
-                    DebugLogger.log("JOURNAL", "Loaded ${cachedJournal.size} cached journal entries")
-                }
-                
                 DebugLogger.log("JOURNAL", "Fetching journal: curricula=$curriculaId, semester=$semesterId, type=$selectedJournalType, year=$eduYearId (active=$activeSemester, offset=$yearOffset)")
                 
-                // Note: API expects id_curricula from SessionSubjectWrapper (fallback to marklist.id, then subject.id)
                 val journal = NetworkClient.api.getJournal(
                     idCurricula = curriculaId,
                     idSemester = semesterId,
@@ -887,23 +864,16 @@ class MainViewModel : ViewModel() {
                 
                 DebugLogger.log("JOURNAL", "Received ${journal.size} journal entries")
                 
-                // Save to both SharedPreferences and Room database for offline support
-                try {
-                    prefs?.saveList(cacheKey, journal)
-                    prefs?.getRepository()?.updateJournalEntries(curriculaId, semesterId, selectedJournalType, eduYearId, journal)
-                    DebugLogger.log("JOURNAL", "Saved journal entries to cache")
-                } catch (e: Exception) {
-                    DebugLogger.log("JOURNAL", "Failed to save journal to cache: ${e.message}")
-                }
-                
                 withContext(Dispatchers.Main) { 
                     journalList = journal
+                    isJournalOffline = false
                 }
             } catch (e: Exception) {
                 DebugLogger.log("JOURNAL", "Failed to fetch journal: ${e.message}")
-                DebugLogger.log("JOURNAL", "Exception: ${e.stackTraceToString()}")
-                // If network fails and we don't have cached data, show empty list
-                // (cached data would have already been loaded above)
+                withContext(Dispatchers.Main) {
+                    journalList = emptyList()
+                    isJournalOffline = true
+                }
             } finally {
                 withContext(Dispatchers.Main) { isJournalLoading = false }
             }
