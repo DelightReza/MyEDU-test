@@ -553,7 +553,6 @@ class MainViewModel : ViewModel() {
                         val roomNews = repository.getAllNewsSync()
                         val roomSchedule = repository.getAllSchedulesSync()
                         val roomTimeMap = repository.getTimeMapSync()
-                        val roomGrades = repository.getAllGradesSync()
                         
                         withContext(Dispatchers.Main) {
                             // Use Room data if available, otherwise fall back to SharedPreferences
@@ -578,14 +577,11 @@ class MainViewModel : ViewModel() {
                                 }
                             }
                             
-                            // For grades, sessionData and transcriptData come from different sources
-                            // SessionData is from session_list, transcriptData is from transcript_list
-                            if (roomGrades.subjects?.isNotEmpty() == true) {
-                                // roomGrades is a SessionResponse - use it for sessionData
-                                sessionData = listOf(roomGrades)
-                            } else {
-                                sessionData = prefs?.loadList("session_list") ?: emptyList()
-                            }
+                            // Grades: always use SharedPreferences session_list which stores all semesters.
+                            // Room grades only hold one semester (getAllGradesSync merges all entities into
+                            // a single SessionResponse) and fetchSession() never writes to Room, so Room
+                            // grades are always stale.  SharedPrefs is the authoritative multi-semester cache.
+                            sessionData = prefs?.loadList("session_list") ?: emptyList()
                             
                             // transcriptData is separate - load from SharedPreferences fallback
                             transcriptData = prefs?.loadList("transcript_list") ?: emptyList()
