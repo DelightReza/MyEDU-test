@@ -340,6 +340,7 @@
     <string name="preview_msg">This is a preview of the data used for the document.</string>
     <string name="download_msg">Use the buttons below to generate the official signed PDF.</string>
     <string name="unknown_year">Unknown Year</string>
+    <string name="transcript_from_grades">Transcript API unavailable. Showing grades data as fallback.</string>
     <string name="code">Code</string>
     <string name="credits">Credits</string>
     <string name="status_preparing_transcript">Preparing transcript data...</string>

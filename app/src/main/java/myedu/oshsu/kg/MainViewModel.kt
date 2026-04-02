@@ -126,6 +126,7 @@ class MainViewModel : ViewModel() {
     // --- DOCS UI ---
     var transcriptData by mutableStateOf<List<TranscriptYear>>(emptyList())
     var isTranscriptLoading by mutableStateOf(false)
+    var isTranscriptFromGrades by mutableStateOf(false)
     
     // --- DICTIONARY UI ---
     var dictionaryMap by mutableStateOf<Map<String, String>>(emptyMap())
@@ -658,7 +659,7 @@ class MainViewModel : ViewModel() {
 
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
-        verify2FAStatus = null; cachedAvatarUri = null
+        verify2FAStatus = null; cachedAvatarUri = null; isTranscriptFromGrades = false
         appContext?.let { File(it.filesDir, "avatar_cache.jpg").delete() }
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
@@ -883,8 +884,41 @@ class MainViewModel : ViewModel() {
                 val uid = userData?.id ?: return@launch
                 val movId = profileData?.studentMovement?.id ?: return@launch 
                 val transcript = NetworkClient.api.getTranscript(uid, movId)
-                withContext(Dispatchers.Main) { transcriptData = transcript; prefs?.saveList("transcript_list", transcript) }
-            } catch (e: Exception) { } finally { withContext(Dispatchers.Main) { isTranscriptLoading = false } }
+                withContext(Dispatchers.Main) { transcriptData = transcript; isTranscriptFromGrades = false; prefs?.saveList("transcript_list", transcript) }
+            } catch (e: Exception) {
+                // API failed — if there is no cached transcript, reconstruct from grades data
+                withContext(Dispatchers.Main) {
+                    if (transcriptData.isEmpty() && sessionData.isNotEmpty()) {
+                        transcriptData = buildTranscriptFromGrades(sessionData)
+                        isTranscriptFromGrades = transcriptData.isNotEmpty()
+                    }
+                }
+            } finally { withContext(Dispatchers.Main) { isTranscriptLoading = false } }
+        }
+    }
+
+    private fun buildTranscriptFromGrades(sessions: List<SessionResponse>): List<TranscriptYear> {
+        // Group sessions by academic year derived from any subject's marklist.idEduYear.
+        // Sessions without year info are grouped under a shared fallback key.
+        val byYear = sessions.groupBy { session ->
+            session.subjects?.firstOrNull()?.marklist?.idEduYear
+        }
+        return byYear.entries.sortedBy { it.key ?: Int.MAX_VALUE }.mapNotNull { (yearId, yearSessions) ->
+            val yearLabel = yearId?.let { "${2000 + it}-${2001 + it}" }
+            val semesters = yearSessions.mapNotNull { session ->
+                val semName = session.semester?.get(language) ?: return@mapNotNull null
+                val subjects = session.subjects?.map { wrapper ->
+                    TranscriptSubject(
+                        subjectName = wrapper.subject?.get(language),
+                        code = wrapper.subject?.code,
+                        credit = wrapper.curricula?.credit?.toDouble(),
+                        markList = wrapper.marklist,
+                        examRule = null
+                    )
+                } ?: emptyList()
+                if (subjects.isEmpty()) null else TranscriptSemester(semesterName = semName, subjects = subjects)
+            }
+            if (semesters.isEmpty()) null else TranscriptYear(eduYear = yearLabel, semesters = semesters)
         }
     }
     

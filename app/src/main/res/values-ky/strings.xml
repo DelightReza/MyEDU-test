@@ -170,6 +170,7 @@
     <string name="preview_msg">Бул документтин алдын ала көрүнүшү.</string>
     <string name="download_msg">Расмий кол коюлган PDFти алуу үчүн төмөнкү баскычтарды басыңыз.</string>
     <string name="unknown_year">Белгисиз жыл</string>
+    <string name="transcript_from_grades">Транскрипт API жеткиликсиз. Баалар запастык маалымат катары көрсөтүлүүдө.</string>
     <string name="code">Шифр</string>
     <string name="credits">Кредиттер</string>
     <string name="status_preparing_transcript">Транскрипт маалыматы даярдалууда...</string>

@@ -283,7 +283,13 @@ data class PaymentDetail(
 data class NewsItem(val id: Int, val title: String?, val message: String?, val created_at: String?)
 
 data class SessionResponse(val semester: SemesterObj?, val subjects: List<SessionSubjectWrapper>?)
-data class SemesterObj(val id: Int, val name_en: String?)
+data class SemesterObj(val id: Int, val name_en: String?, val name_ru: String?, val name_kg: String?) {
+    fun get(lang: String = "en"): String = when (lang) {
+        "ru" -> name_ru ?: name_en ?: id.toString()
+        "ky" -> name_kg ?: name_ru ?: name_en ?: id.toString()
+        else -> name_en ?: name_ru ?: id.toString()
+    }
+}
 data class SessionSubjectWrapper(
     val subject: NameObj?, 
     val marklist: MarkList?, 
@@ -294,7 +300,7 @@ data class SessionSubjectWrapper(
     val idCurricula: Int? get() = curricula?.id
 }
 data class GraphicInfo(val begin: String?, val end: String?)
-data class CurriculaObj(val id: Int?)
+data class CurriculaObj(val id: Int?, val credit: Int?)
 
 data class MarkList(
     val id: Long?,
@@ -303,7 +309,8 @@ data class MarkList(
     val point3: Double?, 
     @SerializedName("finally") val finalScore: Double?, 
     val total: Double?, 
-    @SerializedName("updated_at") val updated_at: String?
+    @SerializedName("updated_at") val updated_at: String?,
+    @SerializedName("id_edu_year") val idEduYear: Int?
 )
 
 // --- JOURNAL ---

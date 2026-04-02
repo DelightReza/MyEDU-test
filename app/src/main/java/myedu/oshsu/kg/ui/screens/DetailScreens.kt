@@ -372,6 +372,24 @@ fun TranscriptView(vm: MainViewModel, onClose: () -> Unit) {
             else if (vm.transcriptData.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.no_grades), color = MaterialTheme.colorScheme.onSurface) }
             else {
                 LazyColumn(modifier = Modifier.fillMaxSize().align(Alignment.TopCenter).widthIn(max = 840.dp), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 100.dp)) {
+                    if (vm.isTranscriptFromGrades) {
+                        item {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(stringResource(R.string.transcript_from_grades), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                }
+                            }
+                        }
+                    }
                     vm.transcriptData.forEach { yearData ->
                         item { Spacer(Modifier.height(16.dp)); Text(yearData.eduYear ?: stringResource(R.string.unknown_year), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) }
                         yearData.semesters?.forEach { sem ->

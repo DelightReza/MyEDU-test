@@ -170,6 +170,7 @@
     <string name="preview_msg">Это предварительный просмотр данных.</string>
     <string name="download_msg">Используйте кнопки ниже для создания официального PDF.</string>
     <string name="unknown_year">Неизвестный год</string>
+    <string name="transcript_from_grades">API транскрипта недоступен. Отображаются оценки как резервные данные.</string>
     <string name="code">Шифр</string>
     <string name="credits">Кредиты</string>
     <string name="status_preparing_transcript">Подготовка данных транскрипта...</string>
