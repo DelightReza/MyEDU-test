@@ -126,7 +126,6 @@ class MainViewModel : ViewModel() {
     // --- DOCS UI ---
     var transcriptData by mutableStateOf<List<TranscriptYear>>(emptyList())
     var isTranscriptLoading by mutableStateOf(false)
-    var isTranscriptOffline by mutableStateOf(false)
     
     // --- DICTIONARY UI ---
     var dictionaryMap by mutableStateOf<Map<String, String>>(emptyMap())
@@ -659,7 +658,7 @@ class MainViewModel : ViewModel() {
 
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
-        verify2FAStatus = null; cachedAvatarUri = null; isTranscriptOffline = false
+        verify2FAStatus = null; cachedAvatarUri = null
         appContext?.let { File(it.filesDir, "avatar_cache.jpg").delete() }
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
@@ -700,7 +699,6 @@ class MainViewModel : ViewModel() {
                     try { val pay = NetworkClient.api.getPayStatus(); withContext(Dispatchers.Main) { payStatus = pay; prefs?.saveData("pay_status", pay) } } catch (_: Exception) {}
                     loadScheduleNetwork(profile)
                     fetchSession(profile)
-                    prefetchTranscriptCache(profile)
                 }
                 lastRefreshTime = System.currentTimeMillis()
                 checkForUpdates() 
@@ -786,22 +784,48 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // Silently refreshes the transcript cache in the background so that the next time the user
-    // opens the transcript screen (even offline) it shows fresh data.
-    private fun prefetchTranscriptCache(profile: StudentInfoResponse) {
-        val uid = userData?.id ?: return
-        val movId = profile.studentMovement?.id ?: return
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val transcript = NetworkClient.api.getTranscript(uid, movId)
-                prefs?.saveList("transcript_list", transcript)
-                // Update the in-memory state only if the transcript screen is currently open,
-                // so we don't reset the loading flag managed by fetchTranscript().
-                if (showTranscriptScreen) {
-                    withContext(Dispatchers.Main) { transcriptData = transcript }
-                }
-            } catch (_: Exception) {}
-        }
+    // Converts grades (sessionData) into the TranscriptYear/Semester/Subject structure so the
+    // transcript screen can show data even when the transcript API is unavailable.
+    private fun sessionDataToTranscript(sessions: List<SessionResponse>): List<TranscriptYear> {
+        if (sessions.isEmpty()) return emptyList()
+
+        // Anchor the year calculation against the active semester from the profile.
+        val activeSemId = profileData?.active_semester ?: sessions.maxOfOrNull { it.semester?.id ?: 0 } ?: 1
+        val activeAcademicYear = AcademicYearHelper.getDefaultActiveYearId() // e.g. 25 for 2024-2025
+
+        // Group semesters by academic year. Two semesters per year (odd=first, even=second).
+        // Formula: yearOffset = (activeSemId - semId) / 2  →  calYear = activeAcademicYear - yearOffset
+        val grouped = sessions
+            .filter { it.semester != null }
+            .groupBy { session ->
+                val semId = session.semester!!.id
+                val yearOffset = (activeSemId - semId) / 2
+                val calYear = activeAcademicYear - yearOffset  // last-2-digit academic start year
+                calYear
+            }
+
+        return grouped.entries
+            .sortedByDescending { it.key } // most recent year first
+            .map { (calYear, semSessions) ->
+                val startYr = 2000 + calYear
+                val eduYearLabel = "$startYr-${startYr + 1}"
+                val transcriptSemesters = semSessions
+                    .sortedByDescending { it.semester?.id ?: 0 }
+                    .map { session ->
+                        val semName = session.semester?.name_en ?: "Semester ${session.semester?.id}"
+                        val subjects = (session.subjects ?: emptyList()).map { wrapper ->
+                            TranscriptSubject(
+                                subjectName = wrapper.subject?.get(language),
+                                code = null,
+                                credit = null,
+                                markList = wrapper.marklist,
+                                examRule = null
+                            )
+                        }
+                        TranscriptSemester(semesterName = semName, subjects = subjects)
+                    }
+                TranscriptYear(eduYear = eduYearLabel, semesters = transcriptSemesters)
+            }
     }
 
     private fun fetchSession(profile: StudentInfoResponse) {
@@ -928,19 +952,21 @@ class MainViewModel : ViewModel() {
             try {
                 withContext(Dispatchers.Main) {
                     isTranscriptLoading = true
-                    isTranscriptOffline = false
                     showTranscriptScreen = true
-                    transcriptData = prefs?.loadList<TranscriptYear>("transcript_list") ?: emptyList()
+                    // Show cached transcript data immediately while we try the network.
+                    val cached = prefs?.loadList<TranscriptYear>("transcript_list") ?: emptyList()
+                    transcriptData = cached.ifEmpty { sessionDataToTranscript(sessionData) }
                 }
                 val uid = userData?.id ?: return@launch
                 val movId = profileData?.studentMovement?.id ?: return@launch
                 val transcript = NetworkClient.api.getTranscript(uid, movId)
                 withContext(Dispatchers.Main) { transcriptData = transcript; prefs?.saveList("transcript_list", transcript) }
             } catch (e: Exception) {
+                // Transcript API unavailable (e.g. 401 Unauthorized) — fall back to grades data.
                 withContext(Dispatchers.Main) {
-                    // Keep any cached data already shown; only flip the offline flag when the
-                    // cache is also empty so the user gets a useful message.
-                    if (transcriptData.isEmpty()) isTranscriptOffline = true
+                    if (transcriptData.isEmpty()) {
+                        transcriptData = sessionDataToTranscript(sessionData)
+                    }
                 }
             } finally { withContext(Dispatchers.Main) { isTranscriptLoading = false } }
         }

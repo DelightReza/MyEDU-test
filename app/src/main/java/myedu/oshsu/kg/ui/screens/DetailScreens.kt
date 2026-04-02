@@ -369,7 +369,6 @@ fun TranscriptView(vm: MainViewModel, onClose: () -> Unit) {
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
             if (vm.isTranscriptLoading) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            else if (vm.isTranscriptOffline) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.transcript_offline), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             else if (vm.transcriptData.isEmpty()) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(stringResource(R.string.no_grades), color = MaterialTheme.colorScheme.onSurface) }
             else {
                 LazyColumn(modifier = Modifier.fillMaxSize().align(Alignment.TopCenter).widthIn(max = 840.dp), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 100.dp)) {
