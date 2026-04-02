@@ -126,6 +126,7 @@ class MainViewModel : ViewModel() {
     // --- DOCS UI ---
     var transcriptData by mutableStateOf<List<TranscriptYear>>(emptyList())
     var isTranscriptLoading by mutableStateOf(false)
+    var isTranscriptOffline by mutableStateOf(false)
     
     // --- DICTIONARY UI ---
     var dictionaryMap by mutableStateOf<Map<String, String>>(emptyMap())
@@ -658,7 +659,7 @@ class MainViewModel : ViewModel() {
 
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
-        verify2FAStatus = null; cachedAvatarUri = null
+        verify2FAStatus = null; cachedAvatarUri = null; isTranscriptOffline = false
         appContext?.let { File(it.filesDir, "avatar_cache.jpg").delete() }
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
@@ -699,6 +700,7 @@ class MainViewModel : ViewModel() {
                     try { val pay = NetworkClient.api.getPayStatus(); withContext(Dispatchers.Main) { payStatus = pay; prefs?.saveData("pay_status", pay) } } catch (_: Exception) {}
                     loadScheduleNetwork(profile)
                     fetchSession(profile)
+                    prefetchTranscriptCache(profile)
                 }
                 lastRefreshTime = System.currentTimeMillis()
                 checkForUpdates() 
@@ -781,6 +783,24 @@ class MainViewModel : ViewModel() {
             rawEn.contains("Practical", ignoreCase = true) || rawRu.contains("Практические", ignoreCase = true) -> R.string.type_practice
             rawEn.contains("Lab", ignoreCase = true) || rawRu.contains("Лаборатор", ignoreCase = true) -> R.string.type_lab
             else -> null
+        }
+    }
+
+    // Silently refreshes the transcript cache in the background so that the next time the user
+    // opens the transcript screen (even offline) it shows fresh data.
+    private fun prefetchTranscriptCache(profile: StudentInfoResponse) {
+        val uid = userData?.id ?: return
+        val movId = profile.studentMovement?.id ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val transcript = NetworkClient.api.getTranscript(uid, movId)
+                prefs?.saveList("transcript_list", transcript)
+                // Update the in-memory state only if the transcript screen is currently open,
+                // so we don't reset the loading flag managed by fetchTranscript().
+                if (showTranscriptScreen) {
+                    withContext(Dispatchers.Main) { transcriptData = transcript }
+                }
+            } catch (_: Exception) {}
         }
     }
 
@@ -952,20 +972,24 @@ class MainViewModel : ViewModel() {
             try {
                 withContext(Dispatchers.Main) {
                     isTranscriptLoading = true
+                    isTranscriptOffline = false
                     showTranscriptScreen = true
-                    // Show cached transcript data immediately while we try the network.
-                    val cached = prefs?.loadList<TranscriptYear>("transcript_list") ?: emptyList()
-                    transcriptData = cached.ifEmpty { sessionDataToTranscript(sessionData) }
+                    transcriptData = prefs?.loadList<TranscriptYear>("transcript_list") ?: emptyList()
                 }
                 val uid = userData?.id ?: return@launch
                 val movId = profileData?.studentMovement?.id ?: return@launch
                 val transcript = NetworkClient.api.getTranscript(uid, movId)
                 withContext(Dispatchers.Main) { transcriptData = transcript; prefs?.saveList("transcript_list", transcript) }
             } catch (e: Exception) {
-                // Transcript API unavailable (e.g. 401 Unauthorized) — fall back to grades data.
                 withContext(Dispatchers.Main) {
                     if (transcriptData.isEmpty()) {
-                        transcriptData = sessionDataToTranscript(sessionData)
+                        // API unavailable and no cached data — try building from grades as fallback.
+                        val gradesTranscript = sessionDataToTranscript(sessionData)
+                        if (gradesTranscript.isNotEmpty()) {
+                            transcriptData = gradesTranscript
+                        } else {
+                            isTranscriptOffline = true
+                        }
                     }
                 }
             } finally { withContext(Dispatchers.Main) { isTranscriptLoading = false } }
