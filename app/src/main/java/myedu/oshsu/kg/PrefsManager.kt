@@ -23,6 +23,10 @@ class PrefsManager(private val context: Context) {
         prefs.edit().putString("auth_token", token).apply()
     }
 
+    fun clearToken() {
+        prefs.edit().remove("auth_token").apply()
+    }
+
     fun getToken(): String? {
         return prefs.getString("auth_token", null)
     }

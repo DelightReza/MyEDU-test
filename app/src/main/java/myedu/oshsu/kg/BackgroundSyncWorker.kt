@@ -33,17 +33,15 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
         for ((accountIndex, account) in accounts.withIndex()) {
             val accountPrefs = accountManager.getAccountPrefs(account.id)
             val isActive = account.id == activeAccountId
-            val success = syncAccount(
+            val (success, freshToken) = syncAccount(
                 context = context,
                 account = account,
                 accountPrefs = accountPrefs,
-                mainPrefs = if (isActive) prefs else null,
-                accountIndex = accountIndex
+                mainPrefs = if (isActive) prefs else null
             )
             if (success) atLeastOneSuccess = true
 
             // Update cached token in AccountManager if re-login refreshed it
-            val freshToken = NetworkClient.interceptor.authToken
             if (freshToken != null && freshToken != account.token) {
                 accountManager.saveOrUpdateAccount(account.copy(token = freshToken))
                 if (isActive) prefs.saveToken(freshToken)
@@ -123,9 +121,8 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
         context: Context,
         account: SavedAccount,
         accountPrefs: SharedPreferences,
-        mainPrefs: PrefsManager?,
-        accountIndex: Int
-    ): Boolean {
+        mainPrefs: PrefsManager?
+    ): Pair<Boolean, String?> {
         try {
             var token = account.token
 
@@ -142,15 +139,15 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                 val is401 = e.message?.contains("401") == true || token == null
                 if (is401) {
                     val newToken = attemptLoginWithCredentials(account.email, account.password)
-                        ?: return false
+                        ?: return Pair(false, null)
                     token = newToken
                 } else {
-                    return false
+                    return Pair(false, null)
                 }
                 NetworkClient.api.getUser()
             }
 
-            val profile = try { NetworkClient.api.getProfile() } catch (e: Exception) { return false }
+            val profile = try { NetworkClient.api.getProfile() } catch (e: Exception) { return Pair(false, null) }
 
             // If this is the active account, keep Room + main prefs up to date
             if (mainPrefs != null) {
@@ -186,10 +183,11 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                     val lCtx = NotificationHelper.getLocalizedContext(context, mainPrefs ?: PrefsManager(context))
                     val studentName = account.displayName
                     val (grades, portals) = NotificationHelper.checkForUpdates(oldSession, newSession, lCtx)
-                    // IDs: grades slot = 10000 + index*2, portal slot = 10001 + index*2
-                    // Keeps all per-account IDs well away from the legacy 777/778 IDs.
-                    val gradeNotifId  = 10000 + accountIndex * 2
-                    val portalNotifId = 10001 + accountIndex * 2
+                    // Use a stable, per-account notification ID derived from the account's
+                    // unique ID so IDs never shift when the account list order changes.
+                    val stableAccountSlot = account.id.hashCode() and 0x0FFFFFFF
+                    val gradeNotifId  = 10000 + stableAccountSlot * 2
+                    val portalNotifId = gradeNotifId + 1
                     if (grades.isNotEmpty()) NotificationHelper.sendNotification(
                         lCtx, grades,
                         isPortalOpening = false,
@@ -219,9 +217,9 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                 syncSchedule(context, profile, mainPrefs)
             }
 
-            return true
+            return Pair(true, token)
         } catch (e: Exception) {
-            return false
+            return Pair(false, null)
         }
     }
 

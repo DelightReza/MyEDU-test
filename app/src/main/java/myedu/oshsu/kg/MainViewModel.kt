@@ -807,10 +807,14 @@ class MainViewModel : ViewModel() {
             val token = account.token
             if (token != null) {
                 prefs?.saveToken(token)
-                prefs?.saveData("pref_saved_email", account.email)
-                prefs?.saveData("pref_saved_pass", account.password)
-                prefs?.saveData("pref_remember_me", true)
+            } else {
+                // No cached token for this account — clear any leftover token from the
+                // previous account so initSession() does not silently reuse it.
+                prefs?.clearToken()
             }
+            prefs?.saveData("pref_saved_email", account.email)
+            prefs?.saveData("pref_saved_pass", account.password)
+            prefs?.saveData("pref_remember_me", true)
 
             // 3. Restore the new account's offline snapshot to main prefs so the fresh
             //    Activity sees its cached data immediately (offline-first).
