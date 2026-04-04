@@ -16,7 +16,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val context = applicationContext
         val accountManager = AccountManager(context)
-        val prefs = PrefsManager(context)
+        val prefs = PrefsManager(context, accountManager.getActiveAccountId() ?: "default")
 
         val accounts = accountManager.getAllAccounts()
 
@@ -180,7 +180,7 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                 val newSession = NetworkClient.api.getSession(activeSemester)
 
                 if (oldSession.isNotEmpty() && newSession.isNotEmpty()) {
-                    val lCtx = NotificationHelper.getLocalizedContext(context, mainPrefs ?: PrefsManager(context))
+                    val lCtx = NotificationHelper.getLocalizedContext(context, mainPrefs ?: PrefsManager(context, account.id))
                     val studentName = account.displayName
                     val (grades, portals) = NotificationHelper.checkForUpdates(oldSession, newSession, lCtx)
                     // Use a stable, per-account notification ID derived from the account's

@@ -107,7 +107,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        val prefs = newBase.getSharedPreferences("myedu_offline_cache", Context.MODE_PRIVATE)
+        val activeAccountId = AccountManager(newBase).getActiveAccountId() ?: "default"
+        val prefs = newBase.getSharedPreferences("myedu_offline_cache_$activeAccountId", Context.MODE_PRIVATE)
         val rawLang = prefs.getString("language_pref", "en") ?: "en"
         val lang = rawLang.replace("\"", "")
         val locale = Locale(lang)

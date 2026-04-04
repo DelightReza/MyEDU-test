@@ -172,11 +172,15 @@ class MainViewModel : ViewModel() {
 
     fun initSession(context: Context) {
         appContext = context.applicationContext
-        if (prefs == null) prefs = PrefsManager(context)
         if (jsFetcher == null) jsFetcher = JsResourceFetcher(context)
         if (refFetcher == null) refFetcher = ReferenceJsFetcher(context)
         if (accountManager == null) accountManager = AccountManager(context)
-        
+
+        // Resolve active account ID before creating PrefsManager so each account
+        // gets its own isolated "myedu_offline_cache_{id}" SharedPreferences file.
+        val activeAccountId = accountManager!!.getActiveAccountId() ?: "default"
+        if (prefs == null) prefs = PrefsManager(context, activeAccountId)
+
         val token = prefs?.getToken()
         val savedTheme = prefs?.loadData("theme_mode_pref", String::class.java)
         if (savedTheme != null) themeMode = savedTheme
@@ -682,12 +686,10 @@ class MainViewModel : ViewModel() {
                     isAddingAccount = false
                     currentTab = 0
                     if (wasAddingAccount) {
-                        // Clear the old account's cached data so it doesn't bleed into the
-                        // new account.  restoreAccountSnapshot writes the new account's
-                        // snapshot (empty for a brand-new account) to the main prefs, which
-                        // causes every ACCOUNT_SNAPSHOT_KEYS entry to be removed.  Room DB
-                        // is also cleared so stale rows from the previous account are gone.
-                        restoreAccountSnapshot(accountToSave.id)
+                        // Reinitialize prefs for the newly logged-in account so its data
+                        // is fully isolated from the previous account's cache.
+                        val ctx = appContext
+                        if (ctx != null) prefs = PrefsManager(ctx, accountToSave.id)
                         try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {}
 
                         // Show the MyEDU loading splash while offline data is populated,
@@ -736,20 +738,22 @@ class MainViewModel : ViewModel() {
             loginEmail = next.email
             loginPass = next.password
             rememberMe = true
+            // Switch the prefs reference to the next account's own isolated cache file.
+            val ctx = appContext
+            if (ctx != null) prefs = PrefsManager(ctx, next.id)
             prefs?.saveData("pref_remember_me", true)
             prefs?.saveData("pref_saved_email", next.email)
             prefs?.saveData("pref_saved_pass", next.password)
+            prefs?.saveData("theme_mode_pref", themeMode)
+            prefs?.saveData("doc_download_mode", downloadMode)
+            prefs?.saveData("language_pref", language)
             // Silently restore the next account's session
             val nextToken = next.token
             if (nextToken != null) {
                 prefs?.saveToken(nextToken)
                 NetworkClient.interceptor.authToken = nextToken
                 NetworkClient.cookieJar.injectSessionCookies(nextToken)
-                // Clear Room DB (SharedPrefs was already wiped by clearAll() above) and
-                // restore the next account's offline snapshot so only that account's data
-                // is visible — prevents the logged-out account's rows from leaking through.
                 try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {}
-                restoreAccountSnapshot(next.id)
                 loadOfflineData()
                 appState = "APP"
                 refreshAllData(force = true)
@@ -784,71 +788,34 @@ class MainViewModel : ViewModel() {
         if (prefs?.getToken() != null) appState = "APP"
     }
 
-    /** Keys that are snapshotted to / restored from per-account prefs for offline switching. */
-    private val ACCOUNT_SNAPSHOT_KEYS = listOf(
-        "user_data", "profile_data", "pay_status", "news_list",
-        "session_list", "schedule_list", "time_map", "verify_2fa_status",
-        "transcript_list", "avatar_source_url", "avatar_local_path"
-    )
-
-    /** Copy the active account's offline data from main prefs to its per-account prefs. */
-    private fun saveCurrentAccountSnapshot() {
-        val activeId = accountManager?.getActiveAccountId() ?: return
-        val accountPrefs = accountManager?.getAccountPrefs(activeId) ?: return
-        val mainPrefs = prefs?.prefs ?: return
-        val editor = accountPrefs.edit()
-        for (key in ACCOUNT_SNAPSHOT_KEYS) {
-            val value = mainPrefs.getString(key, null)
-            if (value != null) editor.putString(key, value) else editor.remove(key)
-        }
-        editor.apply()
-    }
-
-    /** Copy per-account prefs snapshot to main prefs so offline data is available after switch. */
-    private fun restoreAccountSnapshot(accountId: String) {
-        val accountPrefs = accountManager?.getAccountPrefs(accountId) ?: return
-        val mainPrefs = prefs?.prefs ?: return
-        val editor = mainPrefs.edit()
-        for (key in ACCOUNT_SNAPSHOT_KEYS) {
-            val value = accountPrefs.getString(key, null)
-            if (value != null) editor.putString(key, value) else editor.remove(key)
-        }
-        editor.apply()
-    }
-
-    /** Switch the active session to [account] by fully restarting the app. */
+        /** Switch the active session to [account] by fully restarting the app. */
     fun switchAccount(account: SavedAccount) {
         showAccountSwitcher = false
         viewModelScope.launch(Dispatchers.IO) {
-            // 1. Persist the current account's offline data to its per-account prefs.
-            saveCurrentAccountSnapshot()
+            val ctx = appContext ?: return@launch
 
-            // 2. Set the new account as active and write its credentials to main prefs
-            //    so initSession() picks them up on the fresh start.
+            // 1. Set the new account as active.
             accountManager?.setActiveAccount(account.id)
+
+            // 2. Seed the new account's own prefs file with credentials and
+            //    account-agnostic settings so initSession() has everything it
+            //    needs on the fresh start without any cross-account copying.
+            val newPrefs = PrefsManager(ctx, account.id)
             val token = account.token
-            if (token != null) {
-                prefs?.saveToken(token)
-            } else {
-                // No cached token for this account — clear any leftover token from the
-                // previous account so initSession() does not silently reuse it.
-                prefs?.clearToken()
-            }
-            prefs?.saveData("pref_saved_email", account.email)
-            prefs?.saveData("pref_saved_pass", account.password)
-            prefs?.saveData("pref_remember_me", true)
+            if (token != null) newPrefs.saveToken(token) else newPrefs.clearToken()
+            newPrefs.saveData("pref_saved_email", account.email)
+            newPrefs.saveData("pref_saved_pass", account.password)
+            newPrefs.saveData("pref_remember_me", true)
+            newPrefs.saveData("theme_mode_pref", themeMode)
+            newPrefs.saveData("doc_download_mode", downloadMode)
+            newPrefs.saveData("language_pref", language)
 
-            // 3. Restore the new account's offline snapshot to main prefs so the fresh
-            //    Activity sees its cached data immediately (offline-first).
-            restoreAccountSnapshot(account.id)
-
-            // 4. Clear Room DB — initSession() / loadOfflineData() will repopulate it
-            //    from the restored SharedPrefs on the fresh start.
+            // 3. Clear Room DB — initSession() / loadOfflineData() will repopulate it
+            //    from the new account's prefs on the fresh start.
             try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {}
 
-            // 5. Fully restart the app: FLAG_ACTIVITY_CLEAR_TASK kills the current task
+            // 4. Fully restart the app: FLAG_ACTIVITY_CLEAR_TASK kills the current task
             //    and starts a brand-new Activity, giving a clean ViewModel + home tab.
-            val ctx = appContext ?: return@launch
             val intent = Intent(ctx, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             }
@@ -917,7 +884,6 @@ class MainViewModel : ViewModel() {
                 lastRefreshTime = System.currentTimeMillis()
                 checkForUpdates()
                 withContext(Dispatchers.Main) { syncActiveAccountProfile() }
-                saveCurrentAccountSnapshot()
             } catch (e: Exception) {
                 // --- RESTORED RETRY LOGIC ---
                 val isAuthError = e.message?.contains("401") == true || e.message?.contains("HTTP 401") == true || e.message?.contains("Unauthenticated") == true
