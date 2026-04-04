@@ -87,7 +87,7 @@ fun ProfileScreen(vm: MainViewModel) {
                         if (hasMultiple) {
                             val activeId = vm.getActiveAccountId()
                             val active = accounts.find { it.id == activeId } ?: accounts.first()
-                            val other = accounts.first { it.id != activeId }
+                            val other = accounts.firstOrNull { it.id != activeId } ?: accounts.first()
                             val surfaceColor = MaterialTheme.colorScheme.surface
                             // Two overlapping circles: other account behind, active on top
                             Box(modifier = Modifier.size(36.dp)) {
