@@ -30,14 +30,15 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
         var atLeastOneSuccess = false
         val activeAccountId = accountManager.getActiveAccountId()
 
-        for (account in accounts) {
+        for ((accountIndex, account) in accounts.withIndex()) {
             val accountPrefs = accountManager.getAccountPrefs(account.id)
             val isActive = account.id == activeAccountId
             val success = syncAccount(
                 context = context,
                 account = account,
                 accountPrefs = accountPrefs,
-                mainPrefs = if (isActive) prefs else null
+                mainPrefs = if (isActive) prefs else null,
+                accountIndex = accountIndex
             )
             if (success) atLeastOneSuccess = true
 
@@ -122,7 +123,8 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
         context: Context,
         account: SavedAccount,
         accountPrefs: SharedPreferences,
-        mainPrefs: PrefsManager?
+        mainPrefs: PrefsManager?,
+        accountIndex: Int
     ): Boolean {
         try {
             var token = account.token
@@ -176,19 +178,21 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                     val lCtx = NotificationHelper.getLocalizedContext(context, mainPrefs ?: PrefsManager(context))
                     val studentName = account.displayName
                     val (grades, portals) = NotificationHelper.checkForUpdates(oldSession, newSession, lCtx)
-                    // Use account-specific notification IDs to avoid collisions between accounts
-                    val baseId = account.id.hashCode()
+                    // IDs: grades slot = 10000 + index*2, portal slot = 10001 + index*2
+                    // Keeps all per-account IDs well away from the legacy 777/778 IDs.
+                    val gradeNotifId  = 10000 + accountIndex * 2
+                    val portalNotifId = 10001 + accountIndex * 2
                     if (grades.isNotEmpty()) NotificationHelper.sendNotification(
                         lCtx, grades,
                         isPortalOpening = false,
                         studentName = studentName,
-                        notificationId = (baseId xor 0x1000)
+                        notificationId = gradeNotifId
                     )
                     if (portals.isNotEmpty()) NotificationHelper.sendNotification(
                         lCtx, portals,
                         isPortalOpening = true,
                         studentName = studentName,
-                        notificationId = (baseId xor 0x2000)
+                        notificationId = portalNotifId
                     )
                 }
 

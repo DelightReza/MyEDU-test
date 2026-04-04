@@ -203,7 +203,7 @@ class MainViewModel : ViewModel() {
 
         // Backward-compat: if a token exists but no accounts are saved yet, create a
         // SavedAccount entry from the stored credentials so the switcher sees it.
-        if (token != null && accountManager?.getAllAccounts().isNullOrEmpty() && loginEmail.isNotBlank()) {
+        if (token != null && accountManager?.getAllAccounts().isNullOrEmpty() && loginEmail.isNotBlank() && loginPass.isNotBlank()) {
             val migrated = SavedAccount(
                 email = loginEmail,
                 password = loginPass,

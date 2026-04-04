@@ -13,5 +13,7 @@ data class SavedAccount(
     val cachedAvatarPath: String? = null
 ) {
     val displayName: String
-        get() = "$lastName $name".trim().ifEmpty { email }
+        get() = listOfNotNull(lastName?.ifBlank { null }, name?.ifBlank { null })
+            .joinToString(" ")
+            .ifEmpty { email }
 }

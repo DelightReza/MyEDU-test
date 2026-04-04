@@ -62,7 +62,7 @@ fun AccountSwitcherSheet(vm: MainViewModel, onDismiss: () -> Unit) {
                 items(accounts, key = { it.id }) { account ->
                     AccountItem(
                         account = account,
-                        isActive = account.id == activeId || accounts.size == 1,
+                        isActive = account.id == activeId,
                         onSelect = {
                             if (account.id != activeId) {
                                 vm.switchAccount(account)
