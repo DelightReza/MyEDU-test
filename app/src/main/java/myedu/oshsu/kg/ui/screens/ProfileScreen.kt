@@ -277,7 +277,7 @@ fun ProfileScreen(vm: MainViewModel) {
                 )
                 BeautifulDocButton(
                     text = stringResource(R.string.transcript), 
-                    icon = Icons.Default.School, 
+                    icon = Icons.Outlined.School, 
                     themeMode = vm.themeMode, 
                     isLoading = vm.isTranscriptLoading, 
                     modifier = Modifier.weight(1f).fillMaxHeight(), 
