@@ -678,7 +678,15 @@ class MainViewModel : ViewModel() {
                     accountManager?.setActiveAccount(accountToSave.id)
                     // ---------------------------------------------------------------
 
+                    val wasAddingAccount = isAddingAccount
                     isAddingAccount = false
+                    if (wasAddingAccount) {
+                        // Show the MyEDU loading splash while offline data is populated,
+                        // then fade into the home screen — same experience as a fresh launch.
+                        appState = "STARTUP"
+                        loadOfflineData()
+                        delay(700)
+                    }
                     refreshAllData(force = true)
                     appState = "APP"
                     savedAccounts = accountManager?.getAllAccounts() ?: emptyList()
