@@ -365,6 +365,10 @@
     <string name="desc_close">Close</string>
     <string name="desc_logo">OshSU Logo</string>
 
+    <string name="remove_account_title">Remove Account</string>
+    <string name="remove_account_msg">Remove %1$s from this device? You can add it again later.</string>
+    <string name="remove_account_confirm">Remove</string>
+
     <!-- Account Switcher -->
     <string name="account_switcher_title">Switch Account</string>
     <string name="add_another_account">Add another account</string>

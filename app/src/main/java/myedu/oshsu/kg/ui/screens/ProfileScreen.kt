@@ -17,7 +17,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -77,15 +77,44 @@ fun ProfileScreen(vm: MainViewModel) {
             ) {
                 Text(stringResource(R.string.profile), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 
-                IconButton(
-                    onClick = { vm.showSettingsScreen = true },
-                    modifier = Modifier.secretDebugTrigger { 
-                        vm.isDebugPipVisible = !vm.isDebugPipVisible
-                        val msg = if(vm.isDebugPipVisible) context.getString(R.string.debug_enabled) else context.getString(R.string.debug_disabled)
-                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                        DebugLogger.log("UI", msg)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Account-switcher icon: + when single account, circular avatar when multiple
+                    val accounts = vm.savedAccounts
+                    val hasMultiple = accounts.size > 1
+                    val activeAvatarData = run {
+                        val activeId = vm.getActiveAccountId()
+                        val active = accounts.find { it.id == activeId } ?: accounts.firstOrNull()
+                        active?.cachedAvatarPath
+                            ?.let { p -> java.io.File(p).takeIf { it.exists() }?.let { android.net.Uri.fromFile(it).toString() } }
+                            ?: active?.avatarUrl
                     }
-                ) { Icon(Icons.Outlined.Settings, stringResource(R.string.desc_settings), tint = MaterialTheme.colorScheme.onSurface) }
+                    IconButton(onClick = { vm.showAccountSwitcher = true }) {
+                        if (hasMultiple && activeAvatarData != null) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(context).data(activeAvatarData).crossfade(true).build(),
+                                contentDescription = stringResource(R.string.desc_account_switcher),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(28.dp).clip(CircleShape)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.PersonAdd,
+                                contentDescription = stringResource(R.string.desc_add_account),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = { vm.showSettingsScreen = true },
+                        modifier = Modifier.secretDebugTrigger {
+                            vm.isDebugPipVisible = !vm.isDebugPipVisible
+                            val msg = if (vm.isDebugPipVisible) context.getString(R.string.debug_enabled) else context.getString(R.string.debug_disabled)
+                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                            DebugLogger.log("UI", msg)
+                        }
+                    ) { Icon(Icons.Outlined.Settings, stringResource(R.string.desc_settings), tint = MaterialTheme.colorScheme.onSurface) }
+                }
             }
 
             Spacer(Modifier.height(24.dp))

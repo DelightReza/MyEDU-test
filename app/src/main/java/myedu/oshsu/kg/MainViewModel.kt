@@ -560,7 +560,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private fun loadOfflineData() {
+    internal fun loadOfflineData() {
         viewModelScope.launch {
             try {
                 // Try to load from Room Database first

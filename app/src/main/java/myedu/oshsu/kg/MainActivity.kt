@@ -322,6 +322,10 @@ fun MainAppStructure(vm: MainViewModel) {
                 val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
                 ModalBottomSheet(onDismissRequest = { vm.selectedClass = null }, sheetState = sheetState, containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface, dragHandle = { BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.onSurfaceVariant) }, windowInsets = WindowInsets.statusBars) { vm.selectedClass?.let { ClassDetailsSheet(vm, it) } }
             }
+
+            if (vm.showAccountSwitcher) {
+                AccountSwitcherSheet(vm = vm, onDismiss = { vm.showAccountSwitcher = false })
+            }
         }
     }
 }
