@@ -33,12 +33,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import myedu.oshsu.kg.DebugLogger
 import myedu.oshsu.kg.MainViewModel
+import myedu.oshsu.kg.SavedAccount
 import myedu.oshsu.kg.R
 import myedu.oshsu.kg.secretDebugTrigger
 import myedu.oshsu.kg.ui.components.*
@@ -78,24 +80,30 @@ fun ProfileScreen(vm: MainViewModel) {
                 Text(stringResource(R.string.profile), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Account-switcher icon: + when single account, circular avatar when multiple
+                    // Account-switcher: overlapping avatars when ≥2 accounts, + icon otherwise
                     val accounts = vm.savedAccounts
                     val hasMultiple = accounts.size > 1
-                    val activeAvatarData = run {
-                        val activeId = vm.getActiveAccountId()
-                        val active = accounts.find { it.id == activeId } ?: accounts.firstOrNull()
-                        active?.cachedAvatarPath
-                            ?.let { p -> java.io.File(p).takeIf { it.exists() }?.let { android.net.Uri.fromFile(it).toString() } }
-                            ?: active?.avatarUrl
-                    }
                     IconButton(onClick = { vm.showAccountSwitcher = true }) {
-                        if (hasMultiple && activeAvatarData != null) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(context).data(activeAvatarData).crossfade(true).build(),
-                                contentDescription = stringResource(R.string.desc_account_switcher),
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.size(28.dp).clip(CircleShape)
-                            )
+                        if (hasMultiple) {
+                            val activeId = vm.getActiveAccountId()
+                            val active = accounts.find { it.id == activeId } ?: accounts.first()
+                            val other = accounts.first { it.id != activeId }
+                            val surfaceColor = MaterialTheme.colorScheme.surface
+                            // Two overlapping circles: other account behind, active on top
+                            Box(modifier = Modifier.size(36.dp)) {
+                                AccountAvatarCircle(
+                                    account = other,
+                                    size = 22.dp,
+                                    modifier = Modifier.align(Alignment.CenterStart)
+                                )
+                                AccountAvatarCircle(
+                                    account = active,
+                                    size = 22.dp,
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd)
+                                        .border(1.5.dp, surfaceColor, CircleShape)
+                                )
+                            }
                         } else {
                             Icon(
                                 imageVector = Icons.Default.PersonAdd,
@@ -507,6 +515,45 @@ fun ProfileActionButton(
                 text = text,
                 textAlign = TextAlign.Center,
                 lineHeight = 16.sp
+            )
+        }
+    }
+}
+
+/** Single circular avatar for an account. Shows the cached/remote image, or the first
+ *  letter of the display name as a fallback. Used by the overlapping-avatars indicator
+ *  in the Profile screen top bar. */
+@Composable
+private fun AccountAvatarCircle(
+    account: SavedAccount,
+    size: Dp,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val avatarData = account.cachedAvatarPath
+        ?.let { java.io.File(it).takeIf { f -> f.exists() }?.let { f -> android.net.Uri.fromFile(f).toString() } }
+        ?: account.avatarUrl
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        if (avatarData != null) {
+            AsyncImage(
+                model = ImageRequest.Builder(context).data(avatarData).crossfade(true).build(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Text(
+                text = account.displayName.take(1).uppercase(),
+                fontSize = (size.value * 0.4f).sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
