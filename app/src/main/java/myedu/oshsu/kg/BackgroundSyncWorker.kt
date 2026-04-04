@@ -160,6 +160,14 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                 mainPrefs.getRepository().updateProfileData(profile)
                 try { val news = NetworkClient.api.getNews(); mainPrefs.saveList("news_list", news); mainPrefs.getRepository().updateNews(news) } catch (_: Exception) {}
                 try { val pay = NetworkClient.api.getPayStatus(); mainPrefs.saveData("pay_status", pay); mainPrefs.getRepository().updatePayStatus(pay) } catch (_: Exception) {}
+            } else {
+                // Non-active account: persist user + profile to per-account prefs so the
+                // account is available offline when the user switches to it later.
+                val gson = Gson()
+                accountPrefs.edit()
+                    .putString("user_data", gson.toJson(userResponse.user))
+                    .putString("profile_data", gson.toJson(profile))
+                    .apply()
             }
 
             // Grade/portal change detection — per-account cache

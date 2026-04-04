@@ -297,7 +297,8 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val context = appContext ?: return@launch
-                val localFile = File(context.filesDir, "avatar_cache.jpg")
+                val accountId = accountManager?.getActiveAccountId() ?: "default"
+                val localFile = File(context.filesDir, "avatar_cache_$accountId.jpg")
                 val cachedUrl = prefs?.loadData("avatar_source_url", String::class.java)
                 if (localFile.exists() && cachedUrl == avatarUrl) {
                     if (cachedAvatarUri == null) {
@@ -556,6 +557,11 @@ class MainViewModel : ViewModel() {
             fullSchedule = p.loadList("schedule_list")
             sessionData = p.loadList("session_list")
             transcriptData = p.loadList("transcript_list")
+            val tmJson = p.prefs.getString("time_map", null)
+            timeMap = if (tmJson != null) {
+                try { Gson().fromJson(tmJson, object : TypeToken<Map<Int, String>>() {}.type) }
+                catch (_: Exception) { emptyMap() }
+            } else emptyMap()
             processScheduleLocally()
         }
     }
@@ -756,16 +762,59 @@ class MainViewModel : ViewModel() {
         if (prefs?.getToken() != null) appState = "APP"
     }
 
+    /** Keys that are snapshotted to / restored from per-account prefs for offline switching. */
+    private val ACCOUNT_SNAPSHOT_KEYS = listOf(
+        "user_data", "profile_data", "pay_status", "news_list",
+        "session_list", "schedule_list", "time_map", "verify_2fa_status",
+        "transcript_list", "avatar_source_url", "avatar_local_path"
+    )
+
+    /** Copy the active account's offline data from main prefs to its per-account prefs. */
+    private fun saveCurrentAccountSnapshot() {
+        val activeId = accountManager?.getActiveAccountId() ?: return
+        val accountPrefs = accountManager?.getAccountPrefs(activeId) ?: return
+        val mainPrefs = prefs?.prefs ?: return
+        val editor = accountPrefs.edit()
+        for (key in ACCOUNT_SNAPSHOT_KEYS) {
+            val value = mainPrefs.getString(key, null)
+            if (value != null) editor.putString(key, value) else editor.remove(key)
+        }
+        editor.apply()
+    }
+
+    /** Copy per-account prefs snapshot to main prefs so offline data is available after switch. */
+    private fun restoreAccountSnapshot(accountId: String) {
+        val accountPrefs = accountManager?.getAccountPrefs(accountId) ?: return
+        val mainPrefs = prefs?.prefs ?: return
+        val editor = mainPrefs.edit()
+        for (key in ACCOUNT_SNAPSHOT_KEYS) {
+            val value = accountPrefs.getString(key, null)
+            if (value != null) editor.putString(key, value) else editor.remove(key)
+        }
+        editor.apply()
+    }
+
     /** Switch the active session to [account]. */
     fun switchAccount(account: SavedAccount) {
         showAccountSwitcher = false
         viewModelScope.launch {
-            isLoading = true
+            // Show the MyEDU loading/splash screen while we swap accounts
+            appState = "STARTUP"
             try {
+                // 1. Persist the current account's offline data before leaving it
+                withContext(Dispatchers.IO) { saveCurrentAccountSnapshot() }
+
+                accountManager?.setActiveAccount(account.id)
                 val token = account.token
+
+                // 2. Clear stale UI so the previous account's data never bleeds through
+                userData = null; profileData = null; payStatus = null
+                newsList = emptyList(); fullSchedule = emptyList()
+                sessionData = emptyList(); cachedAvatarUri = null
+                customName = null; customPhotoUri = null
+
                 if (token != null) {
-                    // Restore this account's credentials in shared state
-                    accountManager?.setActiveAccount(account.id)
+                    // 3. Restore credentials for the new account
                     prefs?.saveToken(token)
                     prefs?.saveData("pref_saved_email", account.email)
                     prefs?.saveData("pref_saved_pass", account.password)
@@ -775,16 +824,39 @@ class MainViewModel : ViewModel() {
                     rememberMe = true
                     NetworkClient.interceptor.authToken = token
                     NetworkClient.cookieJar.injectSessionCookies(token)
-                    // Clear UI data so stale data isn't shown during reload
-                    userData = null; profileData = null; payStatus = null
-                    newsList = emptyList(); fullSchedule = emptyList()
-                    sessionData = emptyList(); cachedAvatarUri = null
-                    customName = null; customPhotoUri = null
-                    appState = "APP"
+
+                    // 4. Restore the new account's offline snapshot to main prefs and clear
+                    //    Room DB so loadFromSharedPreferences() / the widget use the restored
+                    //    SharedPrefs (Room is empty → widget falls back to SharedPrefs too).
+                    withContext(Dispatchers.IO) {
+                        restoreAccountSnapshot(account.id)
+                        try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {}
+                    }
+
+                    // 5. Populate UI state from the restored SharedPrefs (fast, synchronous)
+                    loadFromSharedPreferences()
+
+                    // 6. Show the per-account cached avatar immediately (no flicker)
+                    val avatarPath = account.cachedAvatarPath
+                    if (avatarPath != null && File(avatarPath).exists()) {
+                        cachedAvatarUri = Uri.fromFile(File(avatarPath)).toString()
+                    }
+                }
+
+                appState = "APP"
+
+                // 7. Refresh widget with the new account's schedule (SharedPrefs fallback works)
+                appContext?.let { ctx ->
+                    try { myedu.oshsu.kg.widget.ScheduleWidgetUpdater.updateWidget(ctx) } catch (_: Exception) {}
+                }
+
+                if (token != null) {
+                    // 8. Background network refresh (populates Room DB with fresh data)
                     refreshAllData(force = true)
                 }
+            } catch (e: Exception) {
+                appState = "APP"
             } finally {
-                isLoading = false
                 savedAccounts = accountManager?.getAllAccounts() ?: emptyList()
             }
         }
@@ -851,6 +923,7 @@ class MainViewModel : ViewModel() {
                 lastRefreshTime = System.currentTimeMillis()
                 checkForUpdates()
                 withContext(Dispatchers.Main) { syncActiveAccountProfile() }
+                saveCurrentAccountSnapshot()
             } catch (e: Exception) {
                 // --- RESTORED RETRY LOGIC ---
                 val isAuthError = e.message?.contains("401") == true || e.message?.contains("HTTP 401") == true || e.message?.contains("Unauthenticated") == true
