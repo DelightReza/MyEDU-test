@@ -753,7 +753,7 @@ class MainViewModel : ViewModel() {
                 prefs?.saveToken(nextToken)
                 NetworkClient.interceptor.authToken = nextToken
                 NetworkClient.cookieJar.injectSessionCookies(nextToken)
-                try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {}
+                viewModelScope.launch(Dispatchers.IO) { try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {} }
                 loadOfflineData()
                 appState = "APP"
                 refreshAllData(force = true)
