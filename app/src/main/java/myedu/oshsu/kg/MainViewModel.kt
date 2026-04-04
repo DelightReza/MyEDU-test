@@ -682,6 +682,14 @@ class MainViewModel : ViewModel() {
                     isAddingAccount = false
                     currentTab = 0
                     if (wasAddingAccount) {
+                        // Clear the old account's cached data so it doesn't bleed into the
+                        // new account.  restoreAccountSnapshot writes the new account's
+                        // snapshot (empty for a brand-new account) to the main prefs, which
+                        // causes every ACCOUNT_SNAPSHOT_KEYS entry to be removed.  Room DB
+                        // is also cleared so stale rows from the previous account are gone.
+                        restoreAccountSnapshot(accountToSave.id)
+                        try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {}
+
                         // Show the MyEDU loading splash while offline data is populated,
                         // then fade into the home screen — same experience as a fresh launch.
                         appState = "STARTUP"
@@ -737,6 +745,11 @@ class MainViewModel : ViewModel() {
                 prefs?.saveToken(nextToken)
                 NetworkClient.interceptor.authToken = nextToken
                 NetworkClient.cookieJar.injectSessionCookies(nextToken)
+                // Clear Room DB (SharedPrefs was already wiped by clearAll() above) and
+                // restore the next account's offline snapshot so only that account's data
+                // is visible — prevents the logged-out account's rows from leaking through.
+                try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {}
+                restoreAccountSnapshot(next.id)
                 loadOfflineData()
                 appState = "APP"
                 refreshAllData(force = true)
