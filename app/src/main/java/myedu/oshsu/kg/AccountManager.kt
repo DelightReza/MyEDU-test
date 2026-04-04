@@ -111,6 +111,10 @@ class AccountManager(private val context: Context) {
                             is Int -> editor.putInt(key, value)
                             is Long -> editor.putLong(key, value)
                             is Float -> editor.putFloat(key, value)
+                            is Set<*> -> {
+                                @Suppress("UNCHECKED_CAST")
+                                editor.putStringSet(key, value as Set<String>)
+                            }
                         }
                     }
                     editor.apply()

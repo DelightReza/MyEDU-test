@@ -185,7 +185,9 @@ class BackgroundSyncWorker(appContext: Context, workerParams: WorkerParameters) 
                     val (grades, portals) = NotificationHelper.checkForUpdates(oldSession, newSession, lCtx)
                     // Use a stable, per-account notification ID derived from the account's
                     // unique ID so IDs never shift when the account list order changes.
-                    val stableAccountSlot = account.id.hashCode() and 0x0FFFFFFF
+                    // Mask to 24 bits (max 16 777 215) so gradeNotifId never approaches
+                    // Integer.MAX_VALUE even after multiplying by 2 and adding the base.
+                    val stableAccountSlot = account.id.hashCode() and 0x00FFFFFF
                     val gradeNotifId  = 10000 + stableAccountSlot * 2
                     val portalNotifId = gradeNotifId + 1
                     if (grades.isNotEmpty()) NotificationHelper.sendNotification(
