@@ -794,71 +794,39 @@ class MainViewModel : ViewModel() {
         editor.apply()
     }
 
-    /** Switch the active session to [account]. */
+    /** Switch the active session to [account] by fully restarting the app. */
     fun switchAccount(account: SavedAccount) {
         showAccountSwitcher = false
-        viewModelScope.launch {
-            // Show the MyEDU loading/splash screen while we swap accounts
-            appState = "STARTUP"
-            try {
-                // 1. Persist the current account's offline data before leaving it
-                withContext(Dispatchers.IO) { saveCurrentAccountSnapshot() }
+        viewModelScope.launch(Dispatchers.IO) {
+            // 1. Persist the current account's offline data to its per-account prefs.
+            saveCurrentAccountSnapshot()
 
-                accountManager?.setActiveAccount(account.id)
-                val token = account.token
-
-                // 2. Clear stale UI so the previous account's data never bleeds through
-                userData = null; profileData = null; payStatus = null
-                newsList = emptyList(); fullSchedule = emptyList()
-                sessionData = emptyList(); cachedAvatarUri = null
-                customName = null; customPhotoUri = null
-
-                if (token != null) {
-                    // 3. Restore credentials for the new account
-                    prefs?.saveToken(token)
-                    prefs?.saveData("pref_saved_email", account.email)
-                    prefs?.saveData("pref_saved_pass", account.password)
-                    prefs?.saveData("pref_remember_me", true)
-                    loginEmail = account.email
-                    loginPass = account.password
-                    rememberMe = true
-                    NetworkClient.interceptor.authToken = token
-                    NetworkClient.cookieJar.injectSessionCookies(token)
-
-                    // 4. Restore the new account's offline snapshot to main prefs and clear
-                    //    Room DB so loadFromSharedPreferences() / the widget use the restored
-                    //    SharedPrefs (Room is empty → widget falls back to SharedPrefs too).
-                    withContext(Dispatchers.IO) {
-                        restoreAccountSnapshot(account.id)
-                        try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {}
-                    }
-
-                    // 5. Populate UI state from the restored SharedPrefs (fast, synchronous)
-                    loadFromSharedPreferences()
-
-                    // 6. Show the per-account cached avatar immediately (no flicker)
-                    val avatarPath = account.cachedAvatarPath
-                    if (avatarPath != null && File(avatarPath).exists()) {
-                        cachedAvatarUri = Uri.fromFile(File(avatarPath)).toString()
-                    }
-                }
-
-                appState = "APP"
-
-                // 7. Refresh widget with the new account's schedule (SharedPrefs fallback works)
-                appContext?.let { ctx ->
-                    try { myedu.oshsu.kg.widget.ScheduleWidgetUpdater.updateWidget(ctx) } catch (_: Exception) {}
-                }
-
-                if (token != null) {
-                    // 8. Background network refresh (populates Room DB with fresh data)
-                    refreshAllData(force = true)
-                }
-            } catch (e: Exception) {
-                appState = "APP"
-            } finally {
-                savedAccounts = accountManager?.getAllAccounts() ?: emptyList()
+            // 2. Set the new account as active and write its credentials to main prefs
+            //    so initSession() picks them up on the fresh start.
+            accountManager?.setActiveAccount(account.id)
+            val token = account.token
+            if (token != null) {
+                prefs?.saveToken(token)
+                prefs?.saveData("pref_saved_email", account.email)
+                prefs?.saveData("pref_saved_pass", account.password)
+                prefs?.saveData("pref_remember_me", true)
             }
+
+            // 3. Restore the new account's offline snapshot to main prefs so the fresh
+            //    Activity sees its cached data immediately (offline-first).
+            restoreAccountSnapshot(account.id)
+
+            // 4. Clear Room DB — initSession() / loadOfflineData() will repopulate it
+            //    from the restored SharedPrefs on the fresh start.
+            try { prefs?.getRepository()?.clearAll() } catch (_: Exception) {}
+
+            // 5. Fully restart the app: FLAG_ACTIVITY_CLEAR_TASK kills the current task
+            //    and starts a brand-new Activity, giving a clean ViewModel + home tab.
+            val ctx = appContext ?: return@launch
+            val intent = Intent(ctx, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            ctx.startActivity(intent)
         }
     }
 
