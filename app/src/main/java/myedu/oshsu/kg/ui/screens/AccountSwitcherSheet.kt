@@ -17,6 +17,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -118,8 +120,8 @@ fun AccountSwitcherSheet(vm: MainViewModel, onDismiss: () -> Unit) {
                 TextButton(
                     onClick = {
                         pendingDelete = null
-                        onDismiss()
                         vm.removeAccount(account)
+                        onDismiss()
                     }
                 ) {
                     Text(
@@ -201,11 +203,13 @@ private fun AccountItem(
         }
 
         if (isActive) {
+            val activeDesc = stringResource(R.string.desc_active_account_indicator)
             Box(
                 modifier = Modifier
                     .size(10.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
+                    .semantics { contentDescription = activeDesc }
             )
         }
 

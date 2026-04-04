@@ -376,6 +376,7 @@
     <string name="signing_in_as">Signing in as new account…</string>
     <string name="desc_account_switcher">Switch Account</string>
     <string name="desc_add_account">Add Account</string>
+    <string name="desc_active_account_indicator">Active account</string>
 
     <!-- Notif -->
     <string name="notif_new_grades_title">New Grades Available</string>

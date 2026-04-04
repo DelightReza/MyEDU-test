@@ -40,10 +40,9 @@ class AccountManager(private val context: Context) {
     fun removeAccount(id: String) {
         val accounts = getAllAccounts().toMutableList()
         accounts.removeAll { it.id == id }
-        prefs.edit().putString(KEY_ACCOUNTS, gson.toJson(accounts)).apply()
-        if (getActiveAccountId() == id) {
-            prefs.edit().remove(KEY_ACTIVE_ID).apply()
-        }
+        val editor = prefs.edit().putString(KEY_ACCOUNTS, gson.toJson(accounts))
+        if (getActiveAccountId() == id) editor.remove(KEY_ACTIVE_ID)
+        editor.apply()
     }
 
     // ── Active account ────────────────────────────────────────────────────────
