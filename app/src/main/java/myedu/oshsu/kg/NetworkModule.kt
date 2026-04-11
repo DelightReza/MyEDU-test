@@ -392,8 +392,8 @@ data class DocumentTypeInfo(
     }
     fun getShortName(lang: String): String? = when (lang) {
         "ky" -> short_name_kg ?: short_name_ru ?: short_name_en
-        "en" -> short_name_en ?: short_name_ru
-        else -> short_name_ru ?: short_name_en
+        "en" -> short_name_en ?: short_name_ru ?: short_name_kg
+        else -> short_name_ru ?: short_name_en ?: short_name_kg
     }
 }
 
