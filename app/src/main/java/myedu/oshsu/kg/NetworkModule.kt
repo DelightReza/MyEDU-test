@@ -33,7 +33,11 @@ data class UserData(
     val id_user: Long?, 
     val id_university: Long?, 
     val created_at: String?, 
-    val updated_at: String? 
+    val updated_at: String?,
+    val phone: String?,
+    val is_student: Boolean?,
+    val birthday: String?,
+    val roles: List<Any>?
 )
 
 // --- DICTIONARY MODELS ---
@@ -82,6 +86,7 @@ data class StudentInfoResponse(
     @SerializedName("active_semesters") val active_semesters: List<NameObj>?, 
     @SerializedName("is_library_debt") val is_library_debt: Boolean?,
     @SerializedName("access_debt_credit_count") val access_debt_credit_count: Int?,
+    @SerializedName("is_have_image") val is_have_image: Boolean?,
     @SerializedName("studentlibrary") val studentlibrary: List<Any>?,
     @SerializedName("student_debt_transcript") val student_debt_transcript: List<Any>?,
     @SerializedName("total_price") val total_price: List<Any>?
@@ -326,6 +331,78 @@ data class Verify2FAResponse(@SerializedName("have_role") val haveRole: Boolean?
 data class GitHubRelease(@SerializedName("tag_name") val tagName: String, @SerializedName("body") val body: String, @SerializedName("assets") val assets: List<GitHubAsset>)
 data class GitHubAsset(@SerializedName("browser_download_url") val downloadUrl: String, @SerializedName("name") val name: String, @SerializedName("content_type") val contentType: String)
 
+// --- DEBT & PAYMENT MODELS ---
+// Response item for GET api/student/lsDebt (returns [] when no debts)
+data class LsDebtItem(
+    val id: Long?,
+    val id_student: Long?,
+    val sum: Double?,
+    val description: String?,
+    val created_at: String?,
+    val updated_at: String?
+)
+
+// Response item for GET api/student/paymenttype
+data class PaymentTypeItem(
+    val id: Int,
+    val title: String?,
+    val created_at: String?,
+    val updated_at: String?
+)
+
+// --- CURRICULA MODEL ---
+// Response item for GET api/studentscurricula
+data class CurriculaItem(
+    val id: Int,
+    val workload: Int?,
+    val credit: Int?,
+    val auditorium_load: Int?,
+    @SerializedName("student_indepent_work") val studentIndependentWork: String?,
+    val id_block: Int?,
+    val id_part: Int?,
+    val id_edu_year: Int?,
+    val id_edu_form: Int?,
+    val id_subject: Int?,
+    val id_semester: Int?,
+    val id_speciality: Int?,
+    val is_exam: Boolean?,
+    val is_extra_curricula: Boolean?,
+    val is_kpv: Boolean?,
+    val required: Boolean?,
+    val approval: Boolean?,
+    val name_subject: String?,
+    val name_semester: String?
+)
+
+// --- STUDENT IMAGE MODELS ---
+// Response from GET api/student/image
+data class DocumentTypeInfo(
+    val id: Int?,
+    val name_en: String?,
+    val name_ru: String?,
+    val name_kg: String?,
+    val short_name_en: String?,
+    val short_name_ru: String?,
+    val short_name_kg: String?
+) {
+    fun getName(lang: String): String = when (lang) {
+        "ky" -> name_kg ?: name_ru ?: name_en ?: "-"
+        "en" -> name_en ?: name_ru ?: name_kg ?: "-"
+        else -> name_ru ?: name_kg ?: name_en ?: "-"
+    }
+    fun getShortName(lang: String): String? = when (lang) {
+        "ky" -> short_name_kg ?: short_name_ru ?: short_name_en
+        "en" -> short_name_en ?: short_name_ru
+        else -> short_name_ru ?: short_name_en
+    }
+}
+
+data class StudentImageItem(
+    val id_document_type: Int?,
+    val document_type: DocumentTypeInfo?,
+    val url: String?
+)
+
 // --- INTERFACES ---
 interface OshSuApi {
     @POST("api/login") suspend fun login(@Body request: LoginRequest): LoginResponse
@@ -350,6 +427,15 @@ interface OshSuApi {
     @POST("api/student/doc/form8link") suspend fun getReferenceLink(@Body req: DocIdRequest): ResponseBody
     @Multipart @POST("api/student/doc/form8") suspend fun uploadReferencePdf(@Part("id") id: RequestBody, @Part("id_student") idStudent: RequestBody, @Part pdf: MultipartBody.Part): ResponseBody
     @POST("api/open/doc/showlink") suspend fun resolveDocLink(@Body req: DocKeyRequest): ResponseBody
+
+    // --- DEBT & NOTIFICATION ---
+    @GET("api/student/lsDebt") suspend fun getLsDebt(): List<LsDebtItem>
+    @GET("api/studentnotification/notification") suspend fun getNotificationCount(): ResponseBody
+    @GET("api/studentRegisterCheck") suspend fun getRegisterCheck(@Query("id_semester") semesterId: Int): List<String>
+    @GET("api/studentscurricula") suspend fun getCurricula(@Query("id_semester") semesterId: Int): List<CurriculaItem>
+    @GET("api/student/paymenttype") suspend fun getPaymentTypes(): List<PaymentTypeItem>
+    @GET("api/studentAdviser") suspend fun getStudentAdviser(): ResponseBody
+    @GET("api/student/image") suspend fun getStudentImages(@Query("id_student") studentId: Long): List<StudentImageItem>
 
     // --- DICTIONARIES ---
     @GET("api/open/pdscountry") suspend fun getCountries(): List<DictionaryItem>
