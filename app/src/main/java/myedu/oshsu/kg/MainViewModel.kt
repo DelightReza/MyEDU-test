@@ -1113,11 +1113,11 @@ class MainViewModel : ViewModel() {
 
                 ensureActive()
 
+                val movId = profileData?.studentMovement?.id ?: 0L
                 val (infoJsonString, transcriptRaw, linkId, rawUrl) = withContext(Dispatchers.IO) {
-                    val infoRaw = NetworkClient.api.getStudentInfoRaw(studentId).string()
+                    val infoRaw = NetworkClient.api.getStudentInfoRaw(studentId, movId).string()
                     val infoJson = JSONObject(infoRaw)
                     infoJson.put("fullName", "${infoJson.optString("last_name")} ${infoJson.optString("name")} ${infoJson.optString("father_name")}".replace("null", "").trim())
-                    val movId = profileData?.studentMovement?.id ?: 0L
                     val transcriptRaw = NetworkClient.api.getTranscriptDataRaw(studentId, movId).string()
                     val keyRaw = NetworkClient.api.getTranscriptLink(DocIdRequest(studentId)).string()
                     val keyObj = JSONObject(keyRaw)
@@ -1170,8 +1170,9 @@ class MainViewModel : ViewModel() {
 
                 ensureActive()
 
+                val movId = profileData?.studentMovement?.id ?: 0L
                 val (infoJsonString, licenseRaw, univRaw, linkId, rawUrl) = withContext(Dispatchers.IO) {
-                    val infoRaw = NetworkClient.api.getStudentInfoRaw(studentId).string()
+                    val infoRaw = NetworkClient.api.getStudentInfoRaw(studentId, movId).string()
                     val infoJson = JSONObject(infoRaw)
                     infoJson.put("fullName", "${infoJson.optString("last_name")} ${infoJson.optString("name")} ${infoJson.optString("father_name")}".replace("null", "").trim())
                     var specId = infoJson.optJSONObject("speciality")?.optInt("id") ?: infoJson.optJSONObject("lastStudentMovement")?.optJSONObject("speciality")?.optInt("id") ?: 0
