@@ -340,9 +340,9 @@ interface OshSuApi {
     @GET("api/studentscheduleitem") suspend fun getSchedule(@Query("id_speciality") specId: Int, @Query("id_edu_form") formId: Int, @Query("id_edu_year") yearId: Int, @Query("id_semester") semId: Int): List<ScheduleWrapper>
     @GET("api/studentsession") suspend fun getSession(@Query("id_semester") semesterId: Int): List<SessionResponse>
     @GET("api/student/journal") suspend fun getJournal(@Query("id_curricula") idCurricula: Int, @Query("id_semester") idSemester: Int, @Query("id_subject_type") idSubjectType: Int, @Query("id_edu_year") idEduYear: Int): List<JournalItem>
-    @GET("api/studenttranscript") suspend fun getTranscript(@Query("id_student") studentId: Long, @Query("id_movement") movementId: Long): List<TranscriptYear>
-    @GET("api/searchstudentinfo") suspend fun getStudentInfoRaw(@Query("id_student") studentId: Long): ResponseBody
-    @GET("api/studenttranscript") suspend fun getTranscriptDataRaw(@Query("id_student") sId: Long, @Query("id_movement") mId: Long): ResponseBody
+    @GET("api/student/studenttranscript") suspend fun getTranscript(@Query("id_student") studentId: Long, @Query("id_movement") movementId: Long): List<TranscriptYear>
+    @GET("api/student/studentinfo") suspend fun getStudentInfoRaw(@Query("id_student") studentId: Long, @Query("id_movement") movementId: Long): ResponseBody
+    @GET("api/student/studenttranscript") suspend fun getTranscriptDataRaw(@Query("id_student") sId: Long, @Query("id_movement") mId: Long): ResponseBody
     @GET("api/control/structure/specialitylicense") suspend fun getSpecialityLicense(@Query("id_speciality") sId: Int, @Query("id_edu_form") eId: Int): ResponseBody
     @GET("api/control/structure/university") suspend fun getUniversityInfo(): ResponseBody
     @POST("api/student/doc/form13link") suspend fun getTranscriptLink(@Body req: DocIdRequest): ResponseBody
