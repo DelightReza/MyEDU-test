@@ -18,11 +18,16 @@ data class UserDataEntity(
     val id_aryz: Long?,
     val id_user: Long?,
     val id_university: Long?,
+    val phone: String?,
+    val is_student: Boolean?,
+    val birthday: String?,
+    val rolesJson: String?,
     val created_at: String?,
     val updated_at: String?
 )
 
 fun UserData.toEntity(): UserDataEntity {
+    val gson = com.google.gson.Gson()
     return UserDataEntity(
         id = this.id,
         name = this.name,
@@ -36,12 +41,19 @@ fun UserData.toEntity(): UserDataEntity {
         id_aryz = this.id_aryz,
         id_user = this.id_user,
         id_university = this.id_university,
+        phone = this.phone,
+        is_student = this.is_student,
+        birthday = this.birthday,
+        rolesJson = this.roles?.let { gson.toJson(it) },
         created_at = this.created_at,
         updated_at = this.updated_at
     )
 }
 
 fun UserDataEntity.toUserData(): UserData {
+    val gson = com.google.gson.Gson()
+    val type = object : com.google.gson.reflect.TypeToken<List<Any>>() {}.type
+    val rolesList = this.rolesJson?.let { gson.fromJson<List<Any>>(it, type) }
     return UserData(
         id = this.id,
         name = this.name,
@@ -55,6 +67,10 @@ fun UserDataEntity.toUserData(): UserData {
         id_aryz = this.id_aryz,
         id_user = this.id_user,
         id_university = this.id_university,
+        phone = this.phone,
+        is_student = this.is_student,
+        birthday = this.birthday,
+        roles = rolesList,
         created_at = this.created_at,
         updated_at = this.updated_at
     )
