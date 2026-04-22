@@ -197,6 +197,34 @@ fun ProfileScreen(vm: MainViewModel) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text(stringResource(R.string.paid), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${pay.paid_summa?.toInt() ?: 0} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = Color(0xFF00FF88)) }; Column(horizontalAlignment = Alignment.End) { Text(stringResource(R.string.total), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${pay.need_summa?.toInt() ?: 0} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface) } }
                         val debt = pay.getDebt(); if (debt > 0) { Spacer(Modifier.height(8.dp)); HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant); Spacer(Modifier.height(8.dp)); Text(stringResource(R.string.remaining, debt.toInt()), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
                         
+                        val lsDebts = vm.lsDebt.filter { it.getDebt() > 0 }
+                        if (lsDebts.isNotEmpty()) {
+                            Spacer(Modifier.height(8.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            Spacer(Modifier.height(8.dp))
+                            lsDebts.forEach { item ->
+                                Row(
+                                    Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = item.payment_type?.title ?: stringResource(R.string.remaining, item.getDebt().toInt()),
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                    )
+                                    Text(
+                                        text = "${item.getDebt().toInt()} ${stringResource(R.string.currency_kgs)}",
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
+                        
                         // Combine warnings from Pay API and Profile Data
                         val combinedWarnings = remember(pay, profile) {
                             val list = pay.access_message?.toMutableList() ?: mutableListOf()
