@@ -110,6 +110,7 @@
     <string name="access_msg_library">Библиотечная задолженность: %d</string>
 
     <string name="payment_type_diploma_fee">Оплата за корочку диплома</string>
+    <string name="payment_type_diploma_supplement">ЕПД саплимент</string>
 
     <string name="settings">Настройки</string>
     <string name="appearance">Оформление</string>

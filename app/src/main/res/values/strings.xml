@@ -127,6 +127,7 @@
 
     <!-- Payment Types -->
     <string name="payment_type_diploma_fee">Diploma Certificate Fee</string>
+    <string name="payment_type_diploma_supplement">European Diploma Supplement (EDS)</string>
 
     <!-- Personal Info Screen -->
     <string name="personal_error_load">Failed to load data</string>

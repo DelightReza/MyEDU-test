@@ -207,8 +207,10 @@ fun ProfileScreen(vm: MainViewModel) {
                             Spacer(Modifier.height(8.dp))
                             lsDebts.forEach { item ->
                                 val diplomaFeeTitle = stringResource(R.string.payment_type_diploma_fee)
+                                val diplomaSupplementTitle = stringResource(R.string.payment_type_diploma_supplement)
                                 val itemTitle = when {
                                     item.payment_type?.title?.contains("корочку диплома", ignoreCase = true) == true -> diplomaFeeTitle
+                                    item.payment_type?.title?.contains("ЕПД", ignoreCase = true) == true -> diplomaSupplementTitle
                                     item.payment_type?.title != null -> item.payment_type.title
                                     else -> stringResource(R.string.remaining, item.getDebt().toInt())
                                 }

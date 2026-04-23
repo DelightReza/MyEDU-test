@@ -110,6 +110,7 @@
     <string name="access_msg_library">Китепкана карызы: %d</string>
 
     <string name="payment_type_diploma_fee">Диплом корочкосу үчүн төлөм</string>
+    <string name="payment_type_diploma_supplement">ЕПД саплимент</string>
 
     <string name="settings">Орнотуулар</string>
     <string name="appearance">Көрүнүш</string>
