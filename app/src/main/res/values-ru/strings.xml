@@ -109,6 +109,11 @@
     <string name="access_msg_academic">Академическая задолженность: %d</string>
     <string name="access_msg_library">Библиотечная задолженность: %d</string>
 
+    <string name="payment_type_contract_training">Контрактное обучение</string>
+    <string name="payment_type_diploma_fee">Оплата за корочку диплома</string>
+    <string name="payment_type_diploma_supplement">ЕПД саплимент</string>
+    <string name="payment_type_academic_debt_payment">Оплата академической задолженности</string>
+
     <string name="settings">Настройки</string>
     <string name="appearance">Оформление</string>
     <string name="follow_system">Системная</string>

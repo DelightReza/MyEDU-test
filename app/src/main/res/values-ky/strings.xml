@@ -109,6 +109,11 @@
     <string name="access_msg_academic">Академиялык карыз: %d</string>
     <string name="access_msg_library">Китепкана карызы: %d</string>
 
+    <string name="payment_type_contract_training">Келишимдик окуу</string>
+    <string name="payment_type_diploma_fee">Диплом корочкосу үчүн төлөм</string>
+    <string name="payment_type_diploma_supplement">ЕПД саплимент</string>
+    <string name="payment_type_academic_debt_payment">Академиялык карызды төлөө</string>
+
     <string name="settings">Орнотуулар</string>
     <string name="appearance">Көрүнүш</string>
     <string name="follow_system">Системалык</string>

@@ -36,6 +36,13 @@ import java.util.concurrent.TimeUnit
 enum class SortOption { DEFAULT, ALPHABETICAL, UPDATED_TIME, LOWEST_FIRST, HIGHEST_FIRST }
 
 class MainViewModel : ViewModel() {
+    private data class TuitionSnapshot(
+        val allTuitionHistoryPayments: List<PaymentDetail>,
+        val currentSemesterContractPayments: List<PaymentDetail>,
+        val contractPaid: Double,
+        val contractTotal: Double
+    )
+
     var appState by mutableStateOf("STARTUP")
     var currentTab by mutableStateOf(0)
     var isLoading by mutableStateOf(false)
@@ -93,6 +100,9 @@ class MainViewModel : ViewModel() {
     var showTuitionSheet by mutableStateOf(false)
     var tuitionDetails by mutableStateOf<List<PaymentDetail>>(emptyList())
     var isTuitionLoading by mutableStateOf(false)
+    var lsDebt by mutableStateOf<List<LsDebtItem>>(emptyList())
+    var contractPaidAmount by mutableStateOf<Double?>(null)
+    var contractTotalAmount by mutableStateOf<Double?>(null)
 
     // --- LOCAL EDIT STATE ---
     var customName by mutableStateOf<String?>(null)
@@ -337,18 +347,67 @@ class MainViewModel : ViewModel() {
                 }
                 
                 val response = NetworkClient.api.getStudentPrice()
-                val allPayments = response.flatMap { it.payment ?: emptyList() }
-                    .sortedByDescending { it.id_semester ?: 0 }
+                val snapshot = buildTuitionSnapshot(response, profileData?.active_semester)
                 
                 withContext(Dispatchers.Main) { 
-                    tuitionDetails = allPayments 
+                    tuitionDetails = snapshot.allTuitionHistoryPayments
+                    contractPaidAmount = snapshot.contractPaid
+                    contractTotalAmount = snapshot.contractTotal
+                    prefs?.saveList("tuition_details", snapshot.allTuitionHistoryPayments)
+                    prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
+                    prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                 }
             } catch (e: Exception) {
                 DebugLogger.log("TUITION", "Failed to fetch tuition: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    tuitionDetails = prefs?.loadList("tuition_details") ?: tuitionDetails
+                    contractPaidAmount = prefs?.loadData("contract_paid_amount", Double::class.java) ?: contractPaidAmount
+                    contractTotalAmount = prefs?.loadData("contract_total_amount", Double::class.java) ?: contractTotalAmount
+                }
             } finally {
                 withContext(Dispatchers.Main) { isTuitionLoading = false }
             }
         }
+    }
+
+    private fun isContractTuitionType(item: StudentPriceResponse): Boolean {
+        return item.id == PaymentTypeIds.CONTRACT_TUITION
+    }
+
+    private fun isTuitionHistoryType(item: StudentPriceResponse): Boolean {
+        return item.id in PaymentTypeIds.TUITION_HISTORY
+    }
+
+    private fun buildTuitionSnapshot(
+        price: List<StudentPriceResponse>,
+        activeSemester: Int?
+    ): TuitionSnapshot {
+        val contractPayments = price
+            .filter { isContractTuitionType(it) }
+            .flatMap { item ->
+                (item.payment ?: emptyList()).map { payment ->
+                    payment.copy(sourcePaymentTypeId = item.id)
+                }
+            }
+            .sortedByDescending { it.id_semester ?: 0 }
+        val historyPayments = price
+            .filter { isTuitionHistoryType(it) }
+            .flatMap { item ->
+                (item.payment ?: emptyList()).map { payment ->
+                    payment.copy(sourcePaymentTypeId = item.id)
+                }
+            }
+            .sortedByDescending { it.id_semester ?: 0 }
+        val selectedContractPayments = activeSemester
+            ?.takeIf { it > 0 }
+            ?.let { semesterId -> contractPayments.filter { it.id_semester == semesterId } }
+            ?: contractPayments
+        return TuitionSnapshot(
+            allTuitionHistoryPayments = historyPayments,
+            currentSemesterContractPayments = selectedContractPayments,
+            contractPaid = selectedContractPayments.sumOf { it.paid ?: 0.0 },
+            contractTotal = selectedContractPayments.sumOf { it.total ?: 0.0 }
+        )
     }
 
     // --- UPDATER LOGIC ---
@@ -558,6 +617,9 @@ class MainViewModel : ViewModel() {
             payStatus = p.loadData("pay_status", PayStatusResponse::class.java)
             verify2FAStatus = p.loadData("verify_2fa_status", Verify2FAResponse::class.java)
             newsList = p.loadList("news_list")
+            tuitionDetails = p.loadList("tuition_details")
+            contractPaidAmount = p.loadData("contract_paid_amount", Double::class.java)
+            contractTotalAmount = p.loadData("contract_total_amount", Double::class.java)
             fullSchedule = p.loadList("schedule_list")
             sessionData = p.loadList("session_list")
             transcriptData = p.loadList("transcript_list")
@@ -591,6 +653,9 @@ class MainViewModel : ViewModel() {
                             profileData = roomProfileData ?: prefs?.loadData("profile_data", StudentInfoResponse::class.java)
                             payStatus = roomPayStatus ?: prefs?.loadData("pay_status", PayStatusResponse::class.java)
                             verify2FAStatus = prefs?.loadData("verify_2fa_status", Verify2FAResponse::class.java)
+                            tuitionDetails = prefs?.loadList("tuition_details") ?: emptyList()
+                            contractPaidAmount = prefs?.loadData("contract_paid_amount", Double::class.java)
+                            contractTotalAmount = prefs?.loadData("contract_total_amount", Double::class.java)
                             
                             newsList = if (roomNews.isNotEmpty()) roomNews else prefs?.loadList("news_list") ?: emptyList()
                             fullSchedule = if (roomSchedule.isNotEmpty()) roomSchedule else prefs?.loadList("schedule_list") ?: emptyList()
@@ -720,7 +785,8 @@ class MainViewModel : ViewModel() {
 
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
-        verify2FAStatus = null; cachedAvatarUri = null
+        verify2FAStatus = null; cachedAvatarUri = null; lsDebt = emptyList()
+        contractPaidAmount = null; contractTotalAmount = null
         appContext?.let { File(it.filesDir, "avatar_cache.jpg").delete() }
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
@@ -878,6 +944,21 @@ class MainViewModel : ViewModel() {
                 if (profile != null) {
                     try { val news = NetworkClient.api.getNews(); withContext(Dispatchers.Main) { newsList = news; prefs?.saveList("news_list", news) } } catch (_: Exception) {}
                     try { val pay = NetworkClient.api.getPayStatus(); withContext(Dispatchers.Main) { payStatus = pay; prefs?.saveData("pay_status", pay) } } catch (_: Exception) {}
+                    try { val debt = NetworkClient.api.getLsDebt(); withContext(Dispatchers.Main) { lsDebt = debt } } catch (_: Exception) {}
+                    try {
+                        val price = NetworkClient.api.getStudentPrice()
+                        val snapshot = buildTuitionSnapshot(price, profile.active_semester)
+                        withContext(Dispatchers.Main) {
+                            tuitionDetails = snapshot.allTuitionHistoryPayments
+                            contractPaidAmount = snapshot.contractPaid
+                            contractTotalAmount = snapshot.contractTotal
+                            prefs?.saveList("tuition_details", snapshot.allTuitionHistoryPayments)
+                            prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
+                            prefs?.saveData("contract_total_amount", snapshot.contractTotal)
+                        }
+                    } catch (e: Exception) {
+                        DebugLogger.log("TUITION", "Failed to refresh tuition snapshot: ${e.message}")
+                    }
                     loadScheduleNetwork(profile)
                     fetchSession(profile)
                 }

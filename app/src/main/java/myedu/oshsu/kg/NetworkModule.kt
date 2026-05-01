@@ -280,7 +280,8 @@ data class PaymentDetail(
     val edu_form: String?,
     val total: Double?,
     val paid: Double?,
-    val tariff: String?
+    val tariff: String?,
+    val sourcePaymentTypeId: Int? = null
 ) {
     fun getRemaining(): Double = (total ?: 0.0) - (paid ?: 0.0)
 }
@@ -336,11 +337,15 @@ data class GitHubAsset(@SerializedName("browser_download_url") val downloadUrl: 
 data class LsDebtItem(
     val id: Long?,
     val id_student: Long?,
-    val sum: Double?,
-    val description: String?,
-    val created_at: String?,
-    val updated_at: String?
-)
+    val id_semester: Int?,
+    val sum_contract: String?,
+    val pay_sum: String?,
+    val dolg_contract: String?,
+    val payment_type: PaymentTypeItem?,
+    val edu_year: NameObj?
+) {
+    fun getDebt(): Double = dolg_contract?.toDoubleOrNull() ?: 0.0
+}
 
 // Response item for GET api/student/paymenttype
 data class PaymentTypeItem(

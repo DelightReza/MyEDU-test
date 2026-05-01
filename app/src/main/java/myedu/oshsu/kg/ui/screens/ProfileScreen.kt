@@ -40,6 +40,8 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import myedu.oshsu.kg.DebugLogger
 import myedu.oshsu.kg.MainViewModel
+import myedu.oshsu.kg.PaymentDetail
+import myedu.oshsu.kg.PaymentTypeIds
 import myedu.oshsu.kg.SavedAccount
 import myedu.oshsu.kg.R
 import myedu.oshsu.kg.secretDebugTrigger
@@ -194,8 +196,45 @@ fun ProfileScreen(vm: MainViewModel) {
                             Icon(Icons.Outlined.Payments, null, tint = MaterialTheme.colorScheme.primary) 
                         }
                         Spacer(Modifier.height(12.dp))
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text(stringResource(R.string.paid), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${pay.paid_summa?.toInt() ?: 0} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = Color(0xFF00FF88)) }; Column(horizontalAlignment = Alignment.End) { Text(stringResource(R.string.total), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${pay.need_summa?.toInt() ?: 0} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface) } }
-                        val debt = pay.getDebt(); if (debt > 0) { Spacer(Modifier.height(8.dp)); HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant); Spacer(Modifier.height(8.dp)); Text(stringResource(R.string.remaining, debt.toInt()), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
+                        val contractDisplayedPaidAmount = vm.contractPaidAmount ?: pay.paid_summa ?: 0.0
+                        val contractDisplayedTotalAmount = vm.contractTotalAmount ?: pay.need_summa ?: 0.0
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text(stringResource(R.string.paid), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${contractDisplayedPaidAmount.toInt()} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = Color(0xFF00FF88)) }; Column(horizontalAlignment = Alignment.End) { Text(stringResource(R.string.total), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${contractDisplayedTotalAmount.toInt()} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface) } }
+                        
+                        val lsDebts = vm.lsDebt.filter { it.getDebt() > 0 }
+                        val lsDebtTotal = lsDebts.sumOf { it.getDebt() }
+                        val residualDebt = pay.getDebt() - lsDebtTotal
+                        if (residualDebt > 0) { Spacer(Modifier.height(8.dp)); HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant); Spacer(Modifier.height(8.dp)); Text(stringResource(R.string.remaining, residualDebt.toInt()), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
+                        
+                        if (lsDebts.isNotEmpty()) {
+                            Spacer(Modifier.height(8.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            Spacer(Modifier.height(8.dp))
+                            lsDebts.forEach { item ->
+                                val itemTitle = getPaymentTypeLabel(
+                                    paymentTypeId = item.payment_type?.id,
+                                    fallbackTitle = item.payment_type?.title
+                                ) ?: stringResource(R.string.remaining, item.getDebt().toInt())
+                                Row(
+                                    Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = itemTitle,
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                    )
+                                    Text(
+                                        text = "${item.getDebt().toInt()} ${stringResource(R.string.currency_kgs)}",
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
                         
                         // Combine warnings from Pay API and Profile Data
                         val combinedWarnings = remember(pay, profile) {
@@ -328,10 +367,58 @@ fun ProfileScreen(vm: MainViewModel) {
                         CircularProgressIndicator()
                     }
                 } else {
+                    val availablePaymentTypeIds = remember(vm.tuitionDetails) {
+                        vm.tuitionDetails
+                            .mapNotNull { it.sourcePaymentTypeId }
+                            .filter { it in PaymentTypeIds.TUITION_HISTORY }
+                            .distinct()
+                    }
+                    var selectedPaymentTypeId by remember(availablePaymentTypeIds) {
+                        mutableStateOf(availablePaymentTypeIds.firstOrNull())
+                    }
+                    LaunchedEffect(availablePaymentTypeIds) {
+                        if (
+                            selectedPaymentTypeId != null &&
+                            selectedPaymentTypeId !in availablePaymentTypeIds
+                        ) {
+                            selectedPaymentTypeId = availablePaymentTypeIds.firstOrNull()
+                        }
+                    }
+                    val filteredTuitionDetails = remember(vm.tuitionDetails, selectedPaymentTypeId) {
+                        if (selectedPaymentTypeId == null) {
+                            vm.tuitionDetails
+                        } else {
+                            vm.tuitionDetails.filter { it.sourcePaymentTypeId == selectedPaymentTypeId }
+                        }
+                    }
+
+                    if (availablePaymentTypeIds.isNotEmpty()) {
+                        val selectedTabIndex = availablePaymentTypeIds.indexOf(selectedPaymentTypeId).coerceAtLeast(0)
+                        ScrollableTabRow(
+                            selectedTabIndex = selectedTabIndex,
+                            edgePadding = 0.dp
+                        ) {
+                            availablePaymentTypeIds.forEach { paymentTypeId ->
+                                Tab(
+                                    selected = selectedPaymentTypeId == paymentTypeId,
+                                    onClick = { selectedPaymentTypeId = paymentTypeId },
+                                    text = {
+                                        Text(
+                                            text = getPaymentTypeLabel(paymentTypeId, null)
+                                                ?: paymentTypeId.toString(),
+                                            maxLines = 1
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                    }
+
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(vm.tuitionDetails) { item ->
+                        items(filteredTuitionDetails) { item ->
                             TuitionDetailItem(item, context, clipboardManager, vm.glassmorphismEnabled)
                         }
                         item { Spacer(Modifier.height(32.dp)) }
@@ -344,7 +431,7 @@ fun ProfileScreen(vm: MainViewModel) {
 
 @Composable
 fun TuitionDetailItem(
-    item: myedu.oshsu.kg.PaymentDetail, 
+    item: PaymentDetail,
     context: android.content.Context,
     clipboardManager: androidx.compose.ui.platform.ClipboardManager,
     glassmorphismEnabled: Boolean
@@ -468,6 +555,17 @@ fun TuitionDetailItem(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun getPaymentTypeLabel(paymentTypeId: Int?, fallbackTitle: String?): String? {
+    return when (paymentTypeId) {
+        PaymentTypeIds.CONTRACT_TUITION -> stringResource(R.string.payment_type_contract_training)
+        PaymentTypeIds.DIPLOMA_FEE -> stringResource(R.string.payment_type_diploma_fee)
+        PaymentTypeIds.DIPLOMA_SUPPLEMENT -> stringResource(R.string.payment_type_diploma_supplement)
+        PaymentTypeIds.ACADEMIC_DEBT_PAYMENT -> stringResource(R.string.payment_type_academic_debt_payment)
+        else -> fallbackTitle
     }
 }
 
