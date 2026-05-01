@@ -93,6 +93,7 @@ class MainViewModel : ViewModel() {
     var showTuitionSheet by mutableStateOf(false)
     var tuitionDetails by mutableStateOf<List<PaymentDetail>>(emptyList())
     var isTuitionLoading by mutableStateOf(false)
+    var lsDebt by mutableStateOf<List<LsDebtItem>>(emptyList())
 
     // --- LOCAL EDIT STATE ---
     var customName by mutableStateOf<String?>(null)
@@ -720,7 +721,7 @@ class MainViewModel : ViewModel() {
 
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
-        verify2FAStatus = null; cachedAvatarUri = null
+        verify2FAStatus = null; cachedAvatarUri = null; lsDebt = emptyList()
         appContext?.let { File(it.filesDir, "avatar_cache.jpg").delete() }
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
@@ -878,6 +879,7 @@ class MainViewModel : ViewModel() {
                 if (profile != null) {
                     try { val news = NetworkClient.api.getNews(); withContext(Dispatchers.Main) { newsList = news; prefs?.saveList("news_list", news) } } catch (_: Exception) {}
                     try { val pay = NetworkClient.api.getPayStatus(); withContext(Dispatchers.Main) { payStatus = pay; prefs?.saveData("pay_status", pay) } } catch (_: Exception) {}
+                    try { val debt = NetworkClient.api.getLsDebt(); withContext(Dispatchers.Main) { lsDebt = debt } } catch (_: Exception) {}
                     loadScheduleNetwork(profile)
                     fetchSession(profile)
                 }

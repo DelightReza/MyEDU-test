@@ -195,7 +195,46 @@ fun ProfileScreen(vm: MainViewModel) {
                         }
                         Spacer(Modifier.height(12.dp))
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text(stringResource(R.string.paid), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${pay.paid_summa?.toInt() ?: 0} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = Color(0xFF00FF88)) }; Column(horizontalAlignment = Alignment.End) { Text(stringResource(R.string.total), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${pay.need_summa?.toInt() ?: 0} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface) } }
-                        val debt = pay.getDebt(); if (debt > 0) { Spacer(Modifier.height(8.dp)); HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant); Spacer(Modifier.height(8.dp)); Text(stringResource(R.string.remaining, debt.toInt()), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
+                        
+                        val lsDebts = vm.lsDebt.filter { it.getDebt() > 0 }
+                        val lsDebtTotal = lsDebts.sumOf { it.getDebt() }
+                        val residualDebt = pay.getDebt() - lsDebtTotal
+                        if (residualDebt > 0) { Spacer(Modifier.height(8.dp)); HorizontalDivider(color=MaterialTheme.colorScheme.outlineVariant); Spacer(Modifier.height(8.dp)); Text(stringResource(R.string.remaining, residualDebt.toInt()), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold) }
+                        
+                        if (lsDebts.isNotEmpty()) {
+                            Spacer(Modifier.height(8.dp))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            Spacer(Modifier.height(8.dp))
+                            lsDebts.forEach { item ->
+                                val diplomaFeeTitle = stringResource(R.string.payment_type_diploma_fee)
+                                val diplomaSupplementTitle = stringResource(R.string.payment_type_diploma_supplement)
+                                val itemTitle = when {
+                                    item.payment_type?.title?.contains("корочку диплома", ignoreCase = true) == true -> diplomaFeeTitle
+                                    item.payment_type?.title?.contains("ЕПД", ignoreCase = true) == true -> diplomaSupplementTitle
+                                    item.payment_type?.title != null -> item.payment_type.title
+                                    else -> stringResource(R.string.remaining, item.getDebt().toInt())
+                                }
+                                Row(
+                                    Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = itemTitle,
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                    )
+                                    Text(
+                                        text = "${item.getDebt().toInt()} ${stringResource(R.string.currency_kgs)}",
+                                        color = MaterialTheme.colorScheme.error,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            }
+                        }
                         
                         // Combine warnings from Pay API and Profile Data
                         val combinedWarnings = remember(pay, profile) {
