@@ -42,7 +42,7 @@ class MainViewModel : ViewModel() {
     }
 
     private data class TuitionSnapshot(
-        val allPayments: List<PaymentDetail>,
+        val currentSemesterContractPayments: List<PaymentDetail>,
         val contractPaid: Double,
         val contractTotal: Double
     )
@@ -351,13 +351,13 @@ class MainViewModel : ViewModel() {
                 }
                 
                 val response = NetworkClient.api.getStudentPrice()
-                val snapshot = buildTuitionSnapshot(response)
+                val snapshot = buildTuitionSnapshot(response, profileData?.active_semester)
                 
                 withContext(Dispatchers.Main) { 
-                    tuitionDetails = snapshot.allPayments
+                    tuitionDetails = snapshot.currentSemesterContractPayments
                     contractPaidAmount = snapshot.contractPaid
                     contractTotalAmount = snapshot.contractTotal
-                    prefs?.saveList("tuition_details", snapshot.allPayments)
+                    prefs?.saveList("tuition_details", snapshot.currentSemesterContractPayments)
                     prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
                     prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                 }
@@ -385,16 +385,23 @@ class MainViewModel : ViewModel() {
         return matchedByTitle
     }
 
-    private fun buildTuitionSnapshot(price: List<StudentPriceResponse>): TuitionSnapshot {
-        val allPayments = price.flatMap { it.payment ?: emptyList() }
-            .sortedByDescending { it.id_semester ?: 0 }
+    private fun buildTuitionSnapshot(
+        price: List<StudentPriceResponse>,
+        activeSemester: Int?
+    ): TuitionSnapshot {
         val contractPayments = price
             .filter { isContractTuitionType(it) }
             .flatMap { it.payment ?: emptyList() }
+        val targetSemester = activeSemester ?: contractPayments.mapNotNull { it.id_semester }.maxOrNull()
+        val currentSemesterContractPayments = if (targetSemester != null) {
+            contractPayments.filter { it.id_semester == targetSemester }
+        } else {
+            contractPayments
+        }.sortedByDescending { it.id_semester ?: 0 }
         return TuitionSnapshot(
-            allPayments = allPayments,
-            contractPaid = contractPayments.sumOf { it.paid ?: 0.0 },
-            contractTotal = contractPayments.sumOf { it.total ?: 0.0 }
+            currentSemesterContractPayments = currentSemesterContractPayments,
+            contractPaid = currentSemesterContractPayments.sumOf { it.paid ?: 0.0 },
+            contractTotal = currentSemesterContractPayments.sumOf { it.total ?: 0.0 }
         )
     }
 
@@ -935,12 +942,12 @@ class MainViewModel : ViewModel() {
                     try { val debt = NetworkClient.api.getLsDebt(); withContext(Dispatchers.Main) { lsDebt = debt } } catch (_: Exception) {}
                     try {
                         val price = NetworkClient.api.getStudentPrice()
-                        val snapshot = buildTuitionSnapshot(price)
+                        val snapshot = buildTuitionSnapshot(price, profile.active_semester)
                         withContext(Dispatchers.Main) {
-                            tuitionDetails = snapshot.allPayments
+                            tuitionDetails = snapshot.currentSemesterContractPayments
                             contractPaidAmount = snapshot.contractPaid
                             contractTotalAmount = snapshot.contractTotal
-                            prefs?.saveList("tuition_details", snapshot.allPayments)
+                            prefs?.saveList("tuition_details", snapshot.currentSemesterContractPayments)
                             prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
                             prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                         }
