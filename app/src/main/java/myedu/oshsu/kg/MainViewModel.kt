@@ -41,15 +41,15 @@ class MainViewModel : ViewModel() {
         private const val CONTRACT_PAYMENT_TYPE_ID = 1
         private val CONTRACT_TITLE_TOKENS = listOf("контракт", "contract")
         private val EXTRA_TUITION_HISTORY_TITLE_TOKENS = listOf(
-            "корочку диплома",
+            "корочк",
             "епд",
             "diploma supplement",
-            "eds"
+            "european diploma supplement"
         )
     }
 
     private data class TuitionSnapshot(
-        val allContractPayments: List<PaymentDetail>,
+        val allTuitionHistoryPayments: List<PaymentDetail>,
         val currentSemesterContractPayments: List<PaymentDetail>,
         val contractPaid: Double,
         val contractTotal: Double
@@ -362,10 +362,10 @@ class MainViewModel : ViewModel() {
                 val snapshot = buildTuitionSnapshot(response, profileData?.active_semester)
                 
                 withContext(Dispatchers.Main) { 
-                    tuitionDetails = snapshot.allContractPayments
+                    tuitionDetails = snapshot.allTuitionHistoryPayments
                     contractPaidAmount = snapshot.contractPaid
                     contractTotalAmount = snapshot.contractTotal
-                    prefs?.saveList("tuition_details", snapshot.allContractPayments)
+                    prefs?.saveList("tuition_details", snapshot.allTuitionHistoryPayments)
                     prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
                     prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                 }
@@ -425,7 +425,7 @@ class MainViewModel : ViewModel() {
             emptyList()
         }
         return TuitionSnapshot(
-            allContractPayments = historyPayments,
+            allTuitionHistoryPayments = historyPayments,
             currentSemesterContractPayments = currentSemesterContractPayments,
             contractPaid = currentSemesterContractPayments.sumOf { it.paid ?: 0.0 },
             contractTotal = currentSemesterContractPayments.sumOf { it.total ?: 0.0 }
@@ -971,10 +971,10 @@ class MainViewModel : ViewModel() {
                         val price = NetworkClient.api.getStudentPrice()
                         val snapshot = buildTuitionSnapshot(price, profile.active_semester)
                         withContext(Dispatchers.Main) {
-                            tuitionDetails = snapshot.allContractPayments
+                            tuitionDetails = snapshot.allTuitionHistoryPayments
                             contractPaidAmount = snapshot.contractPaid
                             contractTotalAmount = snapshot.contractTotal
-                            prefs?.saveList("tuition_details", snapshot.allContractPayments)
+                            prefs?.saveList("tuition_details", snapshot.allTuitionHistoryPayments)
                             prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
                             prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                         }
