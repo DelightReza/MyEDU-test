@@ -392,12 +392,12 @@ class MainViewModel : ViewModel() {
         val contractPayments = price
             .filter { isContractTuitionType(it) }
             .flatMap { it.payment ?: emptyList() }
-        val targetSemester = activeSemester ?: contractPayments.mapNotNull { it.id_semester }.maxOrNull()
+        val targetSemester = activeSemester
         val currentSemesterContractPayments = if (targetSemester != null) {
             contractPayments.filter { it.id_semester == targetSemester }
         } else {
             emptyList()
-        }.sortedByDescending { it.id_semester ?: 0 }
+        }
         return TuitionSnapshot(
             currentSemesterContractPayments = currentSemesterContractPayments,
             contractPaid = currentSemesterContractPayments.sumOf { it.paid ?: 0.0 },
