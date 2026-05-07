@@ -41,6 +41,7 @@ import coil.request.ImageRequest
 import myedu.oshsu.kg.DebugLogger
 import myedu.oshsu.kg.MainViewModel
 import myedu.oshsu.kg.PaymentDetail
+import myedu.oshsu.kg.PaymentTypeIds
 import myedu.oshsu.kg.SavedAccount
 import myedu.oshsu.kg.R
 import myedu.oshsu.kg.secretDebugTrigger
@@ -369,7 +370,7 @@ fun ProfileScreen(vm: MainViewModel) {
                     val availablePaymentTypeIds = remember(vm.tuitionDetails) {
                         vm.tuitionDetails
                             .mapNotNull { it.sourcePaymentTypeId }
-                            .filter { it in PAYMENT_HISTORY_TAB_IDS }
+                            .filter { it in PaymentTypeIds.TUITION_HISTORY }
                             .distinct()
                     }
                     var selectedPaymentTypeId by remember(availablePaymentTypeIds) {
@@ -388,7 +389,7 @@ fun ProfileScreen(vm: MainViewModel) {
                             selectedTabIndex = availablePaymentTypeIds.indexOf(selectedPaymentTypeId).coerceAtLeast(0),
                             edgePadding = 0.dp
                         ) {
-                            availablePaymentTypeIds.forEachIndexed { index, paymentTypeId ->
+                            availablePaymentTypeIds.forEach { paymentTypeId ->
                                 Tab(
                                     selected = selectedPaymentTypeId == paymentTypeId,
                                     onClick = { selectedPaymentTypeId = paymentTypeId },
@@ -548,15 +549,13 @@ fun TuitionDetailItem(
     }
 }
 
-private val PAYMENT_HISTORY_TAB_IDS = setOf(1, 4, 9, 10)
-
 @Composable
 private fun getPaymentTypeLabel(paymentTypeId: Int?, fallbackTitle: String?): String? {
     return when (paymentTypeId) {
-        1 -> stringResource(R.string.payment_type_contract_training)
-        4 -> stringResource(R.string.payment_type_diploma_fee)
-        9 -> stringResource(R.string.payment_type_diploma_supplement)
-        10 -> stringResource(R.string.payment_type_academic_debt_payment)
+        PaymentTypeIds.CONTRACT_TUITION -> stringResource(R.string.payment_type_contract_training)
+        PaymentTypeIds.DIPLOMA_FEE -> stringResource(R.string.payment_type_diploma_fee)
+        PaymentTypeIds.DIPLOMA_SUPPLEMENT -> stringResource(R.string.payment_type_diploma_supplement)
+        PaymentTypeIds.ACADEMIC_DEBT_PAYMENT -> stringResource(R.string.payment_type_academic_debt_payment)
         else -> fallbackTitle
     }
 }

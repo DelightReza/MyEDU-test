@@ -36,11 +36,6 @@ import java.util.concurrent.TimeUnit
 enum class SortOption { DEFAULT, ALPHABETICAL, UPDATED_TIME, LOWEST_FIRST, HIGHEST_FIRST }
 
 class MainViewModel : ViewModel() {
-    companion object {
-        private const val CONTRACT_PAYMENT_TYPE_ID = 1
-        private val TUITION_HISTORY_PAYMENT_TYPE_IDS = setOf(1, 4, 9, 10)
-    }
-
     private data class TuitionSnapshot(
         val allTuitionHistoryPayments: List<PaymentDetail>,
         val currentSemesterContractPayments: List<PaymentDetail>,
@@ -376,7 +371,7 @@ class MainViewModel : ViewModel() {
     }
 
     private fun isContractTuitionType(item: StudentPriceResponse): Boolean {
-        val isContract = item.id == CONTRACT_PAYMENT_TYPE_ID
+        val isContract = item.id == PaymentTypeIds.CONTRACT_TUITION
         if (isContract) {
             DebugLogger.log("TUITION", "Detected contract payment type by id: id=${item.id}, title=${item.title}")
         }
@@ -384,7 +379,7 @@ class MainViewModel : ViewModel() {
     }
 
     private fun isTuitionHistoryType(item: StudentPriceResponse): Boolean {
-        val included = item.id in TUITION_HISTORY_PAYMENT_TYPE_IDS
+        val included = item.id in PaymentTypeIds.TUITION_HISTORY
         if (included) {
             DebugLogger.log("TUITION", "Detected tuition history payment type by id: id=${item.id}, title=${item.title}")
         }
