@@ -36,6 +36,17 @@ import java.util.concurrent.TimeUnit
 enum class SortOption { DEFAULT, ALPHABETICAL, UPDATED_TIME, LOWEST_FIRST, HIGHEST_FIRST }
 
 class MainViewModel : ViewModel() {
+    companion object {
+        private const val CONTRACT_PAYMENT_TYPE_ID = 1
+        private val CONTRACT_TITLE_TOKENS = listOf("контракт", "contract")
+    }
+
+    private data class TuitionSnapshot(
+        val allPayments: List<PaymentDetail>,
+        val contractPaid: Double,
+        val contractTotal: Double
+    )
+
     var appState by mutableStateOf("STARTUP")
     var currentTab by mutableStateOf(0)
     var isLoading by mutableStateOf(false)
@@ -340,19 +351,15 @@ class MainViewModel : ViewModel() {
                 }
                 
                 val response = NetworkClient.api.getStudentPrice()
-                val allPayments = response.flatMap { it.payment ?: emptyList() }
-                    .sortedByDescending { it.id_semester ?: 0 }
-                val contractPayments = response
-                    .filter { isContractTuitionType(it) }
-                    .flatMap { it.payment ?: emptyList() }
+                val snapshot = buildTuitionSnapshot(response)
                 
                 withContext(Dispatchers.Main) { 
-                    tuitionDetails = allPayments 
-                    contractPaidAmount = contractPayments.sumOf { it.paid ?: 0.0 }
-                    contractTotalAmount = contractPayments.sumOf { it.total ?: 0.0 }
-                    prefs?.saveList("tuition_details", allPayments)
-                    prefs?.saveData("contract_paid_amount", contractPaidAmount)
-                    prefs?.saveData("contract_total_amount", contractTotalAmount)
+                    tuitionDetails = snapshot.allPayments
+                    contractPaidAmount = snapshot.contractPaid
+                    contractTotalAmount = snapshot.contractTotal
+                    prefs?.saveList("tuition_details", snapshot.allPayments)
+                    prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
+                    prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                 }
             } catch (e: Exception) {
                 DebugLogger.log("TUITION", "Failed to fetch tuition: ${e.message}")
@@ -368,9 +375,27 @@ class MainViewModel : ViewModel() {
     }
 
     private fun isContractTuitionType(item: StudentPriceResponse): Boolean {
-        if (item.id == 1) return true
+        if (item.id == CONTRACT_PAYMENT_TYPE_ID) return true
+        // Fallback by title because some environments have inconsistent payment type IDs in legacy data.
         val title = item.title?.lowercase(Locale.ROOT) ?: return false
-        return title.contains("контракт") || title.contains("contract")
+        val matchedByTitle = CONTRACT_TITLE_TOKENS.any { title.contains(it) }
+        if (matchedByTitle) {
+            DebugLogger.log("TUITION", "Detected contract payment type by title fallback: id=${item.id}, title=${item.title}")
+        }
+        return matchedByTitle
+    }
+
+    private fun buildTuitionSnapshot(price: List<StudentPriceResponse>): TuitionSnapshot {
+        val allPayments = price.flatMap { it.payment ?: emptyList() }
+            .sortedByDescending { it.id_semester ?: 0 }
+        val contractPayments = price
+            .filter { isContractTuitionType(it) }
+            .flatMap { it.payment ?: emptyList() }
+        return TuitionSnapshot(
+            allPayments = allPayments,
+            contractPaid = contractPayments.sumOf { it.paid ?: 0.0 },
+            contractTotal = contractPayments.sumOf { it.total ?: 0.0 }
+        )
     }
 
     // --- UPDATER LOGIC ---
@@ -910,18 +935,14 @@ class MainViewModel : ViewModel() {
                     try { val debt = NetworkClient.api.getLsDebt(); withContext(Dispatchers.Main) { lsDebt = debt } } catch (_: Exception) {}
                     try {
                         val price = NetworkClient.api.getStudentPrice()
-                        val allPayments = price.flatMap { it.payment ?: emptyList() }
-                            .sortedByDescending { it.id_semester ?: 0 }
-                        val contractPayments = price
-                            .filter { isContractTuitionType(it) }
-                            .flatMap { it.payment ?: emptyList() }
+                        val snapshot = buildTuitionSnapshot(price)
                         withContext(Dispatchers.Main) {
-                            tuitionDetails = allPayments
-                            contractPaidAmount = contractPayments.sumOf { it.paid ?: 0.0 }
-                            contractTotalAmount = contractPayments.sumOf { it.total ?: 0.0 }
-                            prefs?.saveList("tuition_details", allPayments)
-                            prefs?.saveData("contract_paid_amount", contractPaidAmount)
-                            prefs?.saveData("contract_total_amount", contractTotalAmount)
+                            tuitionDetails = snapshot.allPayments
+                            contractPaidAmount = snapshot.contractPaid
+                            contractTotalAmount = snapshot.contractTotal
+                            prefs?.saveList("tuition_details", snapshot.allPayments)
+                            prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
+                            prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                         }
                     } catch (_: Exception) {}
                     loadScheduleNetwork(profile)
