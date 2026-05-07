@@ -280,7 +280,8 @@ data class PaymentDetail(
     val edu_form: String?,
     val total: Double?,
     val paid: Double?,
-    val tariff: String?
+    val tariff: String?,
+    val sourcePaymentTypeId: Int? = null
 ) {
     fun getRemaining(): Double = (total ?: 0.0) - (paid ?: 0.0)
 }

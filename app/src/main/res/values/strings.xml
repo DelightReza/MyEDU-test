@@ -126,8 +126,10 @@
     <string name="access_msg_library">Library debt: %d</string>
 
     <!-- Payment Types -->
+    <string name="payment_type_contract_training">Contract Training</string>
     <string name="payment_type_diploma_fee">Diploma Certificate Fee</string>
     <string name="payment_type_diploma_supplement">European Diploma Supplement (EDS)</string>
+    <string name="payment_type_academic_debt_payment">Academic Debt Payment</string>
 
     <!-- Personal Info Screen -->
     <string name="personal_error_load">Failed to load data</string>

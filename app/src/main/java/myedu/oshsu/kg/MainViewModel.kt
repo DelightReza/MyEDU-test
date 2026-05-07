@@ -37,15 +37,8 @@ enum class SortOption { DEFAULT, ALPHABETICAL, UPDATED_TIME, LOWEST_FIRST, HIGHE
 
 class MainViewModel : ViewModel() {
     companion object {
-        // Backend payment type id for contract-based tuition.
         private const val CONTRACT_PAYMENT_TYPE_ID = 1
-        private val CONTRACT_TITLE_TOKENS = listOf("контракт", "contract")
-        private val EXTRA_TUITION_HISTORY_TITLE_TOKENS = listOf(
-            "диплома",
-            "саплимент",
-            "diploma",
-            "supplement"
-        )
+        private val TUITION_HISTORY_PAYMENT_TYPE_IDS = setOf(1, 4, 9, 10)
     }
 
     private data class TuitionSnapshot(
@@ -383,27 +376,19 @@ class MainViewModel : ViewModel() {
     }
 
     private fun isContractTuitionType(item: StudentPriceResponse): Boolean {
-        if (item.id == CONTRACT_PAYMENT_TYPE_ID) {
+        val isContract = item.id == CONTRACT_PAYMENT_TYPE_ID
+        if (isContract) {
             DebugLogger.log("TUITION", "Detected contract payment type by id: id=${item.id}, title=${item.title}")
-            return true
         }
-        // Fallback by title because some environments have inconsistent payment type IDs in legacy data.
-        val title = item.title?.lowercase(Locale.ROOT) ?: return false
-        val matchedByTitle = CONTRACT_TITLE_TOKENS.any { title.contains(it) }
-        if (matchedByTitle) {
-            DebugLogger.log("TUITION", "Detected contract payment type by title fallback: id=${item.id}, title=${item.title}")
-        }
-        return matchedByTitle
+        return isContract
     }
 
     private fun isTuitionHistoryType(item: StudentPriceResponse): Boolean {
-        if (isContractTuitionType(item)) return true
-        val title = item.title?.lowercase(Locale.ROOT) ?: return false
-        val matchedExtraType = EXTRA_TUITION_HISTORY_TITLE_TOKENS.any { title.contains(it) }
-        if (matchedExtraType) {
-            DebugLogger.log("TUITION", "Detected extra tuition history type by title: id=${item.id}, title=${item.title}")
+        val included = item.id in TUITION_HISTORY_PAYMENT_TYPE_IDS
+        if (included) {
+            DebugLogger.log("TUITION", "Detected tuition history payment type by id: id=${item.id}, title=${item.title}")
         }
-        return matchedExtraType
+        return included
     }
 
     private fun buildTuitionSnapshot(
@@ -412,11 +397,19 @@ class MainViewModel : ViewModel() {
     ): TuitionSnapshot {
         val contractPayments = price
             .filter { isContractTuitionType(it) }
-            .flatMap { it.payment ?: emptyList() }
+            .flatMap { item ->
+                (item.payment ?: emptyList()).map { payment ->
+                    payment.copy(sourcePaymentTypeId = item.id)
+                }
+            }
             .sortedByDescending { it.id_semester ?: 0 }
         val historyPayments = price
             .filter { isTuitionHistoryType(it) }
-            .flatMap { it.payment ?: emptyList() }
+            .flatMap { item ->
+                (item.payment ?: emptyList()).map { payment ->
+                    payment.copy(sourcePaymentTypeId = item.id)
+                }
+            }
             .sortedByDescending { it.id_semester ?: 0 }
         val currentSemesterContractPayments = if (activeSemester != null) {
             contractPayments.filter { it.id_semester == activeSemester }

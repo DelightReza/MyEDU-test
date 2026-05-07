@@ -40,6 +40,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import myedu.oshsu.kg.DebugLogger
 import myedu.oshsu.kg.MainViewModel
+import myedu.oshsu.kg.PaymentDetail
 import myedu.oshsu.kg.SavedAccount
 import myedu.oshsu.kg.R
 import myedu.oshsu.kg.secretDebugTrigger
@@ -208,14 +209,10 @@ fun ProfileScreen(vm: MainViewModel) {
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                             Spacer(Modifier.height(8.dp))
                             lsDebts.forEach { item ->
-                                val diplomaFeeTitle = stringResource(R.string.payment_type_diploma_fee)
-                                val diplomaSupplementTitle = stringResource(R.string.payment_type_diploma_supplement)
-                                val itemTitle = when {
-                                    item.payment_type?.title?.contains("корочку диплома", ignoreCase = true) == true -> diplomaFeeTitle
-                                    item.payment_type?.title?.contains("ЕПД", ignoreCase = true) == true -> diplomaSupplementTitle
-                                    item.payment_type?.title != null -> item.payment_type.title
-                                    else -> stringResource(R.string.remaining, item.getDebt().toInt())
-                                }
+                                val itemTitle = getPaymentTypeLabel(
+                                    paymentTypeId = item.payment_type?.id,
+                                    fallbackTitle = item.payment_type?.title
+                                ) ?: stringResource(R.string.remaining, item.getDebt().toInt())
                                 Row(
                                     Modifier.fillMaxWidth().padding(bottom = 4.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -369,10 +366,49 @@ fun ProfileScreen(vm: MainViewModel) {
                         CircularProgressIndicator()
                     }
                 } else {
+                    val availablePaymentTypeIds = remember(vm.tuitionDetails) {
+                        vm.tuitionDetails
+                            .mapNotNull { it.sourcePaymentTypeId }
+                            .filter { it in PAYMENT_HISTORY_TAB_IDS }
+                            .distinct()
+                    }
+                    var selectedPaymentTypeId by remember(availablePaymentTypeIds) {
+                        mutableStateOf(availablePaymentTypeIds.firstOrNull())
+                    }
+                    val filteredTuitionDetails = remember(vm.tuitionDetails, selectedPaymentTypeId) {
+                        if (selectedPaymentTypeId == null) {
+                            vm.tuitionDetails
+                        } else {
+                            vm.tuitionDetails.filter { it.sourcePaymentTypeId == selectedPaymentTypeId }
+                        }
+                    }
+
+                    if (availablePaymentTypeIds.isNotEmpty()) {
+                        ScrollableTabRow(
+                            selectedTabIndex = availablePaymentTypeIds.indexOf(selectedPaymentTypeId).coerceAtLeast(0),
+                            edgePadding = 0.dp
+                        ) {
+                            availablePaymentTypeIds.forEachIndexed { index, paymentTypeId ->
+                                Tab(
+                                    selected = selectedPaymentTypeId == paymentTypeId,
+                                    onClick = { selectedPaymentTypeId = paymentTypeId },
+                                    text = {
+                                        Text(
+                                            text = getPaymentTypeLabel(paymentTypeId, null)
+                                                ?: paymentTypeId.toString(),
+                                            maxLines = 1
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                    }
+
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(vm.tuitionDetails) { item ->
+                        items(filteredTuitionDetails) { item ->
                             TuitionDetailItem(item, context, clipboardManager, vm.glassmorphismEnabled)
                         }
                         item { Spacer(Modifier.height(32.dp)) }
@@ -385,7 +421,7 @@ fun ProfileScreen(vm: MainViewModel) {
 
 @Composable
 fun TuitionDetailItem(
-    item: myedu.oshsu.kg.PaymentDetail, 
+    item: PaymentDetail,
     context: android.content.Context,
     clipboardManager: androidx.compose.ui.platform.ClipboardManager,
     glassmorphismEnabled: Boolean
@@ -509,6 +545,19 @@ fun TuitionDetailItem(
                 }
             }
         }
+    }
+}
+
+private val PAYMENT_HISTORY_TAB_IDS = setOf(1, 4, 9, 10)
+
+@Composable
+private fun getPaymentTypeLabel(paymentTypeId: Int?, fallbackTitle: String?): String? {
+    return when (paymentTypeId) {
+        1 -> stringResource(R.string.payment_type_contract_training)
+        4 -> stringResource(R.string.payment_type_diploma_fee)
+        9 -> stringResource(R.string.payment_type_diploma_supplement)
+        10 -> stringResource(R.string.payment_type_academic_debt_payment)
+        else -> fallbackTitle
     }
 }
 
