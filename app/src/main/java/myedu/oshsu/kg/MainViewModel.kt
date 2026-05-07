@@ -43,6 +43,7 @@ class MainViewModel : ViewModel() {
     }
 
     private data class TuitionSnapshot(
+        val allContractPayments: List<PaymentDetail>,
         val currentSemesterContractPayments: List<PaymentDetail>,
         val contractPaid: Double,
         val contractTotal: Double
@@ -355,10 +356,10 @@ class MainViewModel : ViewModel() {
                 val snapshot = buildTuitionSnapshot(response, profileData?.active_semester)
                 
                 withContext(Dispatchers.Main) { 
-                    tuitionDetails = snapshot.currentSemesterContractPayments
+                    tuitionDetails = snapshot.allContractPayments
                     contractPaidAmount = snapshot.contractPaid
                     contractTotalAmount = snapshot.contractTotal
-                    prefs?.saveList("tuition_details", snapshot.currentSemesterContractPayments)
+                    prefs?.saveList("tuition_details", snapshot.allContractPayments)
                     prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
                     prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                 }
@@ -403,6 +404,7 @@ class MainViewModel : ViewModel() {
             emptyList()
         }
         return TuitionSnapshot(
+            allContractPayments = contractPayments,
             currentSemesterContractPayments = currentSemesterContractPayments,
             contractPaid = currentSemesterContractPayments.sumOf { it.paid ?: 0.0 },
             contractTotal = currentSemesterContractPayments.sumOf { it.total ?: 0.0 }
@@ -948,10 +950,10 @@ class MainViewModel : ViewModel() {
                         val price = NetworkClient.api.getStudentPrice()
                         val snapshot = buildTuitionSnapshot(price, profile.active_semester)
                         withContext(Dispatchers.Main) {
-                            tuitionDetails = snapshot.currentSemesterContractPayments
+                            tuitionDetails = snapshot.allContractPayments
                             contractPaidAmount = snapshot.contractPaid
                             contractTotalAmount = snapshot.contractTotal
-                            prefs?.saveList("tuition_details", snapshot.currentSemesterContractPayments)
+                            prefs?.saveList("tuition_details", snapshot.allContractPayments)
                             prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
                             prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                         }
