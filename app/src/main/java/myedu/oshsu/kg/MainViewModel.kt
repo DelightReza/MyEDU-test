@@ -41,12 +41,10 @@ class MainViewModel : ViewModel() {
         private const val CONTRACT_PAYMENT_TYPE_ID = 1
         private val CONTRACT_TITLE_TOKENS = listOf("контракт", "contract")
         private val EXTRA_TUITION_HISTORY_TITLE_TOKENS = listOf(
-            "корочка диплома",
-            "корочки диплома",
-            "корочку диплома",
-            "епд",
-            "diploma supplement",
-            "european diploma supplement"
+            "диплома",
+            "саплимент",
+            "diploma",
+            "supplement"
         )
     }
 
