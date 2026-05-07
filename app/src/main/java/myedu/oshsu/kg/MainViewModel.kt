@@ -371,19 +371,11 @@ class MainViewModel : ViewModel() {
     }
 
     private fun isContractTuitionType(item: StudentPriceResponse): Boolean {
-        val isContract = item.id == PaymentTypeIds.CONTRACT_TUITION
-        if (isContract) {
-            DebugLogger.log("TUITION", "Detected contract payment type by id: id=${item.id}, title=${item.title}")
-        }
-        return isContract
+        return item.id == PaymentTypeIds.CONTRACT_TUITION
     }
 
     private fun isTuitionHistoryType(item: StudentPriceResponse): Boolean {
-        val included = item.id in PaymentTypeIds.TUITION_HISTORY
-        if (included) {
-            DebugLogger.log("TUITION", "Detected tuition history payment type by id: id=${item.id}, title=${item.title}")
-        }
-        return included
+        return item.id in PaymentTypeIds.TUITION_HISTORY
     }
 
     private fun buildTuitionSnapshot(

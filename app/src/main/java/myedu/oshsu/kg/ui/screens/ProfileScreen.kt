@@ -376,7 +376,7 @@ fun ProfileScreen(vm: MainViewModel) {
                     var selectedPaymentTypeId by remember(availablePaymentTypeIds) {
                         mutableStateOf(availablePaymentTypeIds.firstOrNull())
                     }
-                    LaunchedEffect(availablePaymentTypeIds, selectedPaymentTypeId) {
+                    LaunchedEffect(availablePaymentTypeIds) {
                         if (
                             selectedPaymentTypeId != null &&
                             selectedPaymentTypeId !in availablePaymentTypeIds
@@ -393,8 +393,7 @@ fun ProfileScreen(vm: MainViewModel) {
                     }
 
                     if (availablePaymentTypeIds.isNotEmpty()) {
-                        val selectedTabIndex = availablePaymentTypeIds.indexOf(selectedPaymentTypeId)
-                            .takeIf { it >= 0 } ?: 0
+                        val selectedTabIndex = availablePaymentTypeIds.indexOf(selectedPaymentTypeId).coerceAtLeast(0)
                         ScrollableTabRow(
                             selectedTabIndex = selectedTabIndex,
                             edgePadding = 0.dp
