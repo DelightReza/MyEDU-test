@@ -37,6 +37,7 @@ enum class SortOption { DEFAULT, ALPHABETICAL, UPDATED_TIME, LOWEST_FIRST, HIGHE
 
 class MainViewModel : ViewModel() {
     companion object {
+        // Backend payment type id for contract-based tuition.
         private const val CONTRACT_PAYMENT_TYPE_ID = 1
         private val CONTRACT_TITLE_TOKENS = listOf("контракт", "contract")
     }
@@ -375,7 +376,10 @@ class MainViewModel : ViewModel() {
     }
 
     private fun isContractTuitionType(item: StudentPriceResponse): Boolean {
-        if (item.id == CONTRACT_PAYMENT_TYPE_ID) return true
+        if (item.id == CONTRACT_PAYMENT_TYPE_ID) {
+            DebugLogger.log("TUITION", "Detected contract payment type by id: id=${item.id}, title=${item.title}")
+            return true
+        }
         // Fallback by title because some environments have inconsistent payment type IDs in legacy data.
         val title = item.title?.lowercase(Locale.ROOT) ?: return false
         val matchedByTitle = CONTRACT_TITLE_TOKENS.any { title.contains(it) }
