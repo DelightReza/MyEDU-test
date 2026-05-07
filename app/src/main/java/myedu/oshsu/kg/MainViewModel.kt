@@ -396,7 +396,7 @@ class MainViewModel : ViewModel() {
         val currentSemesterContractPayments = if (targetSemester != null) {
             contractPayments.filter { it.id_semester == targetSemester }
         } else {
-            contractPayments
+            emptyList()
         }.sortedByDescending { it.id_semester ?: 0 }
         return TuitionSnapshot(
             currentSemesterContractPayments = currentSemesterContractPayments,
