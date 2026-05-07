@@ -398,16 +398,15 @@ class MainViewModel : ViewModel() {
                 }
             }
             .sortedByDescending { it.id_semester ?: 0 }
-        val currentSemesterContractPayments = if (activeSemester != null) {
-            contractPayments.filter { it.id_semester == activeSemester }
-        } else {
-            emptyList()
-        }
+        val selectedContractPayments = activeSemester
+            ?.takeIf { it > 0 }
+            ?.let { semesterId -> contractPayments.filter { it.id_semester == semesterId } }
+            ?: contractPayments
         return TuitionSnapshot(
             allTuitionHistoryPayments = historyPayments,
-            currentSemesterContractPayments = currentSemesterContractPayments,
-            contractPaid = currentSemesterContractPayments.sumOf { it.paid ?: 0.0 },
-            contractTotal = currentSemesterContractPayments.sumOf { it.total ?: 0.0 }
+            currentSemesterContractPayments = selectedContractPayments,
+            contractPaid = selectedContractPayments.sumOf { it.paid ?: 0.0 },
+            contractTotal = selectedContractPayments.sumOf { it.total ?: 0.0 }
         )
     }
 

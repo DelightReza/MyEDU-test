@@ -11,11 +11,51 @@ on:
         type: boolean
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build:
+  pr_build:
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Extract Version from Gradle
+      id: extract_version
+      run: |
+        VERSION_NAME=$(grep 'versionName' app/build.gradle.kts | awk -F'"' '{print $2}')
+        echo "Detected Version: $VERSION_NAME"
+        echo "APP_VERSION=$VERSION_NAME" >> $GITHUB_ENV
+
+    - uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: '8.5'
+
+    - name: Build Debug APK
+      run: gradle assembleDebug --no-daemon --stacktrace
+
+    - name: Rename Debug APK
+      run: |
+        mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/MyEDU-v${{ env.APP_VERSION }}-debug.apk
+
+    - name: Upload Debug APK to Actions Tab
+      uses: actions/upload-artifact@v4
+      with:
+        name: MyEDU-v${{ env.APP_VERSION }}-debug
+        path: app/build/outputs/apk/debug/MyEDU-v${{ env.APP_VERSION }}-debug.apk
+
+  release:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - uses: actions/checkout@v4
@@ -57,7 +97,7 @@ jobs:
 
     # --- DELETE OLD RELEASE ---
     - name: Delete Existing Release
-      if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_release == true }}
+      if: ${{ inputs.create_release == true }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
@@ -69,7 +109,7 @@ jobs:
 
     # --- CREATE NEW RELEASE ---
     - name: Create GitHub Release
-      if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_release == true }}
+      if: ${{ inputs.create_release == true }}
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ env.APP_VERSION }}
