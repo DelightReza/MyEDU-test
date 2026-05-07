@@ -41,6 +41,7 @@ class MainViewModel : ViewModel() {
         private const val CONTRACT_PAYMENT_TYPE_ID = 1
         private val CONTRACT_TITLE_TOKENS = listOf("контракт", "contract")
         private val EXTRA_TUITION_HISTORY_TITLE_TOKENS = listOf(
+            // Match "корочка/корочки/корочку диплома" and similar declensions.
             "корочк",
             "епд",
             "diploma supplement",
@@ -418,9 +419,8 @@ class MainViewModel : ViewModel() {
             .filter { isTuitionHistoryType(it) }
             .flatMap { it.payment ?: emptyList() }
             .sortedByDescending { it.id_semester ?: 0 }
-        val targetSemester = activeSemester
-        val currentSemesterContractPayments = if (targetSemester != null) {
-            contractPayments.filter { it.id_semester == targetSemester }
+        val currentSemesterContractPayments = if (activeSemester != null) {
+            contractPayments.filter { it.id_semester == activeSemester }
         } else {
             emptyList()
         }
