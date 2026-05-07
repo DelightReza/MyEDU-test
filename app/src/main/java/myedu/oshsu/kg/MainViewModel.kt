@@ -965,7 +965,9 @@ class MainViewModel : ViewModel() {
                             prefs?.saveData("contract_paid_amount", snapshot.contractPaid)
                             prefs?.saveData("contract_total_amount", snapshot.contractTotal)
                         }
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        DebugLogger.log("TUITION", "Failed to refresh tuition snapshot: ${e.message}")
+                    }
                     loadScheduleNetwork(profile)
                     fetchSession(profile)
                 }

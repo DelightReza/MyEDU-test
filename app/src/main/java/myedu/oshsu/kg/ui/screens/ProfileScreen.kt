@@ -376,6 +376,14 @@ fun ProfileScreen(vm: MainViewModel) {
                     var selectedPaymentTypeId by remember(availablePaymentTypeIds) {
                         mutableStateOf(availablePaymentTypeIds.firstOrNull())
                     }
+                    LaunchedEffect(availablePaymentTypeIds, selectedPaymentTypeId) {
+                        if (
+                            selectedPaymentTypeId != null &&
+                            selectedPaymentTypeId !in availablePaymentTypeIds
+                        ) {
+                            selectedPaymentTypeId = availablePaymentTypeIds.firstOrNull()
+                        }
+                    }
                     val filteredTuitionDetails = remember(vm.tuitionDetails, selectedPaymentTypeId) {
                         if (selectedPaymentTypeId == null) {
                             vm.tuitionDetails
@@ -385,8 +393,10 @@ fun ProfileScreen(vm: MainViewModel) {
                     }
 
                     if (availablePaymentTypeIds.isNotEmpty()) {
+                        val selectedTabIndex = availablePaymentTypeIds.indexOf(selectedPaymentTypeId)
+                            .takeIf { it >= 0 } ?: 0
                         ScrollableTabRow(
-                            selectedTabIndex = availablePaymentTypeIds.indexOf(selectedPaymentTypeId).coerceAtLeast(0),
+                            selectedTabIndex = selectedTabIndex,
                             edgePadding = 0.dp
                         ) {
                             availablePaymentTypeIds.forEach { paymentTypeId ->
