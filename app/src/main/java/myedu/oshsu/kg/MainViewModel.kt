@@ -397,6 +397,7 @@ class MainViewModel : ViewModel() {
         val contractPayments = price
             .filter { isContractTuitionType(it) }
             .flatMap { it.payment ?: emptyList() }
+            .sortedByDescending { it.id_semester ?: 0 }
         val targetSemester = activeSemester
         val currentSemesterContractPayments = if (targetSemester != null) {
             contractPayments.filter { it.id_semester == targetSemester }
