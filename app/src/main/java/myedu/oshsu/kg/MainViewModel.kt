@@ -40,6 +40,12 @@ class MainViewModel : ViewModel() {
         // Backend payment type id for contract-based tuition.
         private const val CONTRACT_PAYMENT_TYPE_ID = 1
         private val CONTRACT_TITLE_TOKENS = listOf("контракт", "contract")
+        private val EXTRA_TUITION_HISTORY_TITLE_TOKENS = listOf(
+            "корочку диплома",
+            "епд",
+            "diploma supplement",
+            "eds"
+        )
     }
 
     private data class TuitionSnapshot(
@@ -390,12 +396,26 @@ class MainViewModel : ViewModel() {
         return matchedByTitle
     }
 
+    private fun isTuitionHistoryType(item: StudentPriceResponse): Boolean {
+        if (isContractTuitionType(item)) return true
+        val title = item.title?.lowercase(Locale.ROOT) ?: return false
+        val matchedExtraType = EXTRA_TUITION_HISTORY_TITLE_TOKENS.any { title.contains(it) }
+        if (matchedExtraType) {
+            DebugLogger.log("TUITION", "Detected extra tuition history type by title: id=${item.id}, title=${item.title}")
+        }
+        return matchedExtraType
+    }
+
     private fun buildTuitionSnapshot(
         price: List<StudentPriceResponse>,
         activeSemester: Int?
     ): TuitionSnapshot {
         val contractPayments = price
             .filter { isContractTuitionType(it) }
+            .flatMap { it.payment ?: emptyList() }
+            .sortedByDescending { it.id_semester ?: 0 }
+        val historyPayments = price
+            .filter { isTuitionHistoryType(it) }
             .flatMap { it.payment ?: emptyList() }
             .sortedByDescending { it.id_semester ?: 0 }
         val targetSemester = activeSemester
@@ -405,7 +425,7 @@ class MainViewModel : ViewModel() {
             emptyList()
         }
         return TuitionSnapshot(
-            allContractPayments = contractPayments,
+            allContractPayments = historyPayments,
             currentSemesterContractPayments = currentSemesterContractPayments,
             contractPaid = currentSemesterContractPayments.sumOf { it.paid ?: 0.0 },
             contractTotal = currentSemesterContractPayments.sumOf { it.total ?: 0.0 }
