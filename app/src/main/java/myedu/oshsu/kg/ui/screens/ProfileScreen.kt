@@ -194,7 +194,9 @@ fun ProfileScreen(vm: MainViewModel) {
                             Icon(Icons.Outlined.Payments, null, tint = MaterialTheme.colorScheme.primary) 
                         }
                         Spacer(Modifier.height(12.dp))
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text(stringResource(R.string.paid), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${pay.paid_summa?.toInt() ?: 0} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = Color(0xFF00FF88)) }; Column(horizontalAlignment = Alignment.End) { Text(stringResource(R.string.total), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${pay.need_summa?.toInt() ?: 0} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface) } }
+                        val paidDisplay = vm.contractPaidAmount ?: pay.paid_summa ?: 0.0
+                        val totalDisplay = vm.contractTotalAmount ?: pay.need_summa ?: 0.0
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Column { Text(stringResource(R.string.paid), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${paidDisplay.toInt()} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = Color(0xFF00FF88)) }; Column(horizontalAlignment = Alignment.End) { Text(stringResource(R.string.total), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant); Text("${totalDisplay.toInt()} ${stringResource(R.string.currency_kgs)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface) } }
                         
                         val lsDebts = vm.lsDebt.filter { it.getDebt() > 0 }
                         val lsDebtTotal = lsDebts.sumOf { it.getDebt() }

@@ -94,6 +94,8 @@ class MainViewModel : ViewModel() {
     var tuitionDetails by mutableStateOf<List<PaymentDetail>>(emptyList())
     var isTuitionLoading by mutableStateOf(false)
     var lsDebt by mutableStateOf<List<LsDebtItem>>(emptyList())
+    var contractPaidAmount by mutableStateOf<Double?>(null)
+    var contractTotalAmount by mutableStateOf<Double?>(null)
 
     // --- LOCAL EDIT STATE ---
     var customName by mutableStateOf<String?>(null)
@@ -340,16 +342,35 @@ class MainViewModel : ViewModel() {
                 val response = NetworkClient.api.getStudentPrice()
                 val allPayments = response.flatMap { it.payment ?: emptyList() }
                     .sortedByDescending { it.id_semester ?: 0 }
+                val contractPayments = response
+                    .filter { isContractTuitionType(it) }
+                    .flatMap { it.payment ?: emptyList() }
                 
                 withContext(Dispatchers.Main) { 
                     tuitionDetails = allPayments 
+                    contractPaidAmount = contractPayments.sumOf { it.paid ?: 0.0 }
+                    contractTotalAmount = contractPayments.sumOf { it.total ?: 0.0 }
+                    prefs?.saveList("tuition_details", allPayments)
+                    prefs?.saveData("contract_paid_amount", contractPaidAmount)
+                    prefs?.saveData("contract_total_amount", contractTotalAmount)
                 }
             } catch (e: Exception) {
                 DebugLogger.log("TUITION", "Failed to fetch tuition: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    tuitionDetails = prefs?.loadList("tuition_details") ?: tuitionDetails
+                    contractPaidAmount = prefs?.loadData("contract_paid_amount", Double::class.java) ?: contractPaidAmount
+                    contractTotalAmount = prefs?.loadData("contract_total_amount", Double::class.java) ?: contractTotalAmount
+                }
             } finally {
                 withContext(Dispatchers.Main) { isTuitionLoading = false }
             }
         }
+    }
+
+    private fun isContractTuitionType(item: StudentPriceResponse): Boolean {
+        if (item.id == 1) return true
+        val title = item.title?.lowercase(Locale.ROOT) ?: return false
+        return title.contains("контракт") || title.contains("contract")
     }
 
     // --- UPDATER LOGIC ---
@@ -559,6 +580,9 @@ class MainViewModel : ViewModel() {
             payStatus = p.loadData("pay_status", PayStatusResponse::class.java)
             verify2FAStatus = p.loadData("verify_2fa_status", Verify2FAResponse::class.java)
             newsList = p.loadList("news_list")
+            tuitionDetails = p.loadList("tuition_details")
+            contractPaidAmount = p.loadData("contract_paid_amount", Double::class.java)
+            contractTotalAmount = p.loadData("contract_total_amount", Double::class.java)
             fullSchedule = p.loadList("schedule_list")
             sessionData = p.loadList("session_list")
             transcriptData = p.loadList("transcript_list")
@@ -592,6 +616,9 @@ class MainViewModel : ViewModel() {
                             profileData = roomProfileData ?: prefs?.loadData("profile_data", StudentInfoResponse::class.java)
                             payStatus = roomPayStatus ?: prefs?.loadData("pay_status", PayStatusResponse::class.java)
                             verify2FAStatus = prefs?.loadData("verify_2fa_status", Verify2FAResponse::class.java)
+                            tuitionDetails = prefs?.loadList("tuition_details") ?: emptyList()
+                            contractPaidAmount = prefs?.loadData("contract_paid_amount", Double::class.java)
+                            contractTotalAmount = prefs?.loadData("contract_total_amount", Double::class.java)
                             
                             newsList = if (roomNews.isNotEmpty()) roomNews else prefs?.loadList("news_list") ?: emptyList()
                             fullSchedule = if (roomSchedule.isNotEmpty()) roomSchedule else prefs?.loadList("schedule_list") ?: emptyList()
@@ -722,6 +749,7 @@ class MainViewModel : ViewModel() {
         appState = "LOGIN"; currentTab = 0; userData = null; profileData = null; payStatus = null
         newsList = emptyList(); fullSchedule = emptyList(); sessionData = emptyList(); transcriptData = emptyList()
         verify2FAStatus = null; cachedAvatarUri = null; lsDebt = emptyList()
+        contractPaidAmount = null; contractTotalAmount = null
         appContext?.let { File(it.filesDir, "avatar_cache.jpg").delete() }
         prefs?.clearAll(); NetworkClient.cookieJar.clear(); NetworkClient.interceptor.authToken = null
         
@@ -880,6 +908,22 @@ class MainViewModel : ViewModel() {
                     try { val news = NetworkClient.api.getNews(); withContext(Dispatchers.Main) { newsList = news; prefs?.saveList("news_list", news) } } catch (_: Exception) {}
                     try { val pay = NetworkClient.api.getPayStatus(); withContext(Dispatchers.Main) { payStatus = pay; prefs?.saveData("pay_status", pay) } } catch (_: Exception) {}
                     try { val debt = NetworkClient.api.getLsDebt(); withContext(Dispatchers.Main) { lsDebt = debt } } catch (_: Exception) {}
+                    try {
+                        val price = NetworkClient.api.getStudentPrice()
+                        val allPayments = price.flatMap { it.payment ?: emptyList() }
+                            .sortedByDescending { it.id_semester ?: 0 }
+                        val contractPayments = price
+                            .filter { isContractTuitionType(it) }
+                            .flatMap { it.payment ?: emptyList() }
+                        withContext(Dispatchers.Main) {
+                            tuitionDetails = allPayments
+                            contractPaidAmount = contractPayments.sumOf { it.paid ?: 0.0 }
+                            contractTotalAmount = contractPayments.sumOf { it.total ?: 0.0 }
+                            prefs?.saveList("tuition_details", allPayments)
+                            prefs?.saveData("contract_paid_amount", contractPaidAmount)
+                            prefs?.saveData("contract_total_amount", contractTotalAmount)
+                        }
+                    } catch (_: Exception) {}
                     loadScheduleNetwork(profile)
                     fetchSession(profile)
                 }
